@@ -48,7 +48,7 @@ class VerticalReference(BaseModel):
     transform_method: str | None = None
 
     @model_validator(mode="after")
-    def validate_transform(self) -> "VerticalReference":
+    def validate_transform(self) -> VerticalReference:
         if self.datum_transform_status is DatumTransformStatus.TRANSFORMED:
             if self.vertical_datum is None or self.vertical_unit is None:
                 raise ValueError("transformed vertical references require datum and unit")
@@ -56,9 +56,11 @@ class VerticalReference(BaseModel):
                 raise ValueError("transformed vertical references require vertical_offset_m")
             if not self.transform_method:
                 raise ValueError("transformed vertical references require transform_method")
-        if self.datum_transform_status is DatumTransformStatus.COMPATIBLE:
-            if self.vertical_datum is None or self.vertical_unit is None:
-                raise ValueError("compatible vertical references require datum and unit")
+        if (
+            self.datum_transform_status is DatumTransformStatus.COMPATIBLE
+            and (self.vertical_datum is None or self.vertical_unit is None)
+        ):
+            raise ValueError("compatible vertical references require datum and unit")
         return self
 
 
@@ -69,7 +71,7 @@ class ResolutionMetadata(BaseModel):
     source_quality: str = "UNKNOWN"
 
     @model_validator(mode="after")
-    def validate_information_resolution(self) -> "ResolutionMetadata":
+    def validate_information_resolution(self) -> ResolutionMetadata:
         if (
             self.native_resolution_m is not None
             and self.effective_information_resolution_m is not None
