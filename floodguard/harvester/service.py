@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import tempfile
 from pathlib import Path
 from typing import Mapping
@@ -29,6 +30,7 @@ from floodguard.registry.contracts import (
 )
 
 HARVEST_NAMESPACE = UUID("6871d123-22f0-44d4-b17a-2cf9813e6396")
+_OBJECT_SEGMENT = re.compile(r"^[A-Za-z0-9._-]+$")
 
 
 class HarvestAccessError(PermissionError):
@@ -55,12 +57,37 @@ def _source_snapshot(source: SourceRead) -> dict[str, object]:
     return dict(source.model_dump(mode="json"))
 
 
+def _material_provenance(source: SourceRead) -> dict[str, object]:
+    return {
+        "provider": source.provider,
+        "dataset_name": source.dataset_name,
+        "endpoint": source.endpoint,
+        "access_method": source.access_method.value,
+        "format": source.format,
+        "licence": source.licence,
+        "redistribution_policy": source.redistribution_policy,
+        "authority_level": source.authority_level.value,
+        "horizontal_crs": source.horizontal_crs,
+        "vertical_datum": source.vertical_datum,
+        "spatial_resolution": source.spatial_resolution,
+        "temporal_resolution": source.temporal_resolution,
+    }
+
+
+def _safe_object_segment(value: str, *, field: str) -> str:
+    if not _OBJECT_SEGMENT.fullmatch(value):
+        raise ValueError(f"{field} contains characters unsafe for raw object keys")
+    return value
+
+
 def _resolve_credential(credential_ref: str) -> str:
     if credential_ref.startswith("env://"):
         name = credential_ref.removeprefix("env://")
         value = os.environ.get(name)
         if not value:
-            raise CredentialResolutionError(f"credential environment variable is not set: {name}")
+            raise CredentialResolutionError(
+                f"credential environment variable is not set: {name}"
+            )
         return value
     if credential_ref.startswith("docker-secret://"):
         name = credential_ref.removeprefix("docker-secret://")
@@ -85,7 +112,9 @@ def _authorization_headers(
     if source.authentication_type is AuthenticationType.NONE:
         return {}
     if not include_authorized:
-        raise HarvestAccessError("authorized source skipped unless include_authorized is explicitly enabled")
+        raise HarvestAccessError(
+            "authorized source skipped unless include_authorized is explicitly enabled"
+        )
     if source.credential_ref is None:
         raise CredentialResolutionError("authenticated source has no credential_ref")
     credential = _resolve_credential(source.credential_ref)
@@ -107,9 +136,10 @@ def _authorization_headers(
     )
 
 
-def _manifest_fingerprint(source_id: UUID, objects: list[DownloadedObject]) -> str:
+def _manifest_fingerprint(source: SourceRead, objects: list[DownloadedObject]) -> str:
     payload = {
-        "source_id": str(source_id),
+        "source_id": str(source.source_id),
+        "source_provenance": _material_provenance(source),
         "objects": [
             {
                 "filename": item.filename,
@@ -181,7 +211,8 @@ class HarvesterService:
                 total_bytes += item.byte_size
                 if total_bytes > self.max_total_bytes:
                     raise TotalDownloadLimitError(
-                        f"source download exceeded configured total limit of {self.max_total_bytes} bytes"
+                        "source download exceeded configured total limit of "
+                        f"{self.max_total_bytes} bytes"
                     )
                 downloaded.append(item)
             return self._persist_downloads(source, downloaded, total_bytes=total_bytes)
@@ -193,7 +224,7 @@ class HarvesterService:
         *,
         total_bytes: int,
     ) -> HarvestResult:
-        manifest_sha256 = _manifest_fingerprint(source.source_id, downloaded)
+        manifest_sha256 = _manifest_fingerprint(source, downloaded)
         dataset_id = dataset_id_for_source(source.source_id)
         existing = self.repository.find_by_manifest(source.source_id, manifest_sha256)
         if existing is not None:
@@ -209,7 +240,8 @@ class HarvesterService:
                     total_bytes=existing.total_bytes,
                 )
             raise HarvestConflictError(
-                "the same upstream manifest already has a non-complete version; inspect it before retry"
+                "the same upstream manifest already has a non-complete version; "
+                "inspect it before retry"
             )
 
         previous = self.repository.latest_complete(source.source_id)
@@ -239,12 +271,17 @@ class HarvesterService:
                 )
             raise HarvestConflictError("concurrent harvest reserved this manifest")
 
-        prefix = f"raw/{source.city_id}/{source.source_id}/{dataset_version_id}"
+        city_segment = _safe_object_segment(source.city_id, field="city_id")
+        prefix = f"raw/{city_segment}/{source.source_id}/{dataset_version_id}"
         persisted: list[RawObjectPersistence] = []
         try:
             for index, item in enumerate(downloaded):
                 object_key = f"{prefix}/objects/{index:04d}-{item.filename}"
-                self.vault.put_file_once(object_key, item.path, content_type=item.content_type)
+                self.vault.put_file_once(
+                    object_key,
+                    item.path,
+                    content_type=item.content_type,
+                )
                 persisted.append(
                     RawObjectPersistence(
                         object_id=uuid5(dataset_version_id, object_key),
@@ -330,14 +367,21 @@ class HarvesterService:
             for record in self.repository.list_for_source(source_id)
         ]
 
-    def readiness(self, *, city_id: str, sources: list[SourceRead], raw_bucket: str) -> HarvestReadiness:
+    def readiness(
+        self,
+        *,
+        city_id: str,
+        sources: list[SourceRead],
+        raw_bucket: str,
+    ) -> HarvestReadiness:
         permitted = [
             source
             for source in sources
             if source.city_id == city_id
             and source.automation_allowed
             and source.status is SourceStatus.AVAILABLE
-            and source.access_class in {AccessClass.OPEN_AUTOMATED, AccessClass.AUTHORIZATION_REQUIRED}
+            and source.access_class
+            in {AccessClass.OPEN_AUTOMATED, AccessClass.AUTHORIZATION_REQUIRED}
         ]
         harvested = self.repository.harvested_source_ids(city_id=city_id)
         complete_versions, failed_versions = self.repository.readiness_counts(city_id=city_id)
