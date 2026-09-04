@@ -1,4 +1,4 @@
-"""Sequence-1 FloodGuard-AI FastAPI application."""
+"""FloodGuard-AI FastAPI application."""
 
 import logging
 from collections.abc import Awaitable, Callable
@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.responses import Response
 
+from apps.api.routers.registry import router as registry_router
 from floodguard import __version__
 from floodguard.common.config import get_settings
 from floodguard.common.logging import configure_logging
@@ -22,8 +23,9 @@ logger = logging.getLogger("floodguard.api")
 app = FastAPI(
     title="FloodGuard-AI API",
     version=__version__,
-    description="Sequence-1 platform foundation API",
+    description="Urban flood digital twin platform API",
 )
+app.include_router(registry_router)
 
 
 class HealthResponse(BaseModel):
@@ -40,7 +42,7 @@ class ReadyResponse(BaseModel):
 class VersionResponse(BaseModel):
     name: Literal["FloodGuard-AI"] = "FloodGuard-AI"
     version: str
-    sequence: Literal[1] = 1
+    sequence: Literal[2] = 2
 
 
 @app.middleware("http")
