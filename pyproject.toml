@@ -4,13 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "floodguard-ai"
-version = "0.2.0"
+version = "0.3.0"
 description = "FloodGuard-AI urban flood digital twin and nowcasting platform"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
   "alembic==1.19.1",
   "fastapi==0.128.2",
+  "minio==7.2.20",
   "psycopg[binary]==3.3.5",
   "pydantic==2.13.4",
   "pydantic-settings==2.14.1",
