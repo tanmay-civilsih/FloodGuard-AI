@@ -37,9 +37,9 @@ def _selected_sources(
         if requested_ids and source.source_id not in requested_ids:
             continue
         parameters: dict[str, object] = {}
-        if source.access_method in SAFE_DEFAULT_METHODS:
-            selected.append((source, parameters))
-        elif source.access_method is AccessMethod.PBF_EXTRACT and include_pbf:
+        if source.access_method in SAFE_DEFAULT_METHODS or (
+            source.access_method is AccessMethod.PBF_EXTRACT and include_pbf
+        ):
             selected.append((source, parameters))
         elif source.access_method is AccessMethod.OVERPASS and overpass_query:
             parameters["query"] = overpass_query
