@@ -90,7 +90,10 @@ def get_json(url: str) -> dict[str, object]:
 
 def get_text(url: str) -> str:
     with urllib.request.urlopen(url, timeout=5) as response:
-        return response.read().decode("utf-8")
+        raw_body: object = response.read()
+    if not isinstance(raw_body, bytes):
+        raise SystemExit(f"Expected byte response body from {url}")
+    return raw_body.decode("utf-8")
 
 
 def verify_services() -> None:
