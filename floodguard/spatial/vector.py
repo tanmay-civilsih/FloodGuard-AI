@@ -238,7 +238,7 @@ def _transform_position(
     if not isinstance(position_value, list) or len(position_value) < 2:
         raise VectorNormalizationError("geometry position must contain at least x and y")
     x_value, y_value = position_value[0], position_value[1]
-    if not isinstance(x_value, (int, float)) or not isinstance(y_value, (int, float)):
+    if not isinstance(x_value, int | float) or not isinstance(y_value, int | float):
         raise VectorNormalizationError("geometry x/y coordinates must be numeric")
     x, y = float(x_value), float(y_value)
     target_x, target_y = forward.transform(x, y)
@@ -247,7 +247,7 @@ def _transform_position(
     error_m = math.hypot(check_x - target_x, check_y - target_y)
     transformed = [float(target_x), float(target_y)]
     for extra in position_value[2:]:
-        if isinstance(extra, (int, float)):
+        if isinstance(extra, int | float):
             transformed.append(float(extra))
     return transformed, error_m
 
@@ -259,8 +259,10 @@ def _transform_coordinates(
 ) -> tuple[object, float]:
     if not isinstance(value, list):
         raise VectorNormalizationError("geometry coordinates must be arrays")
-    if len(value) >= 2 and isinstance(value[0], (int, float)) and isinstance(
-        value[1], (int, float)
+    if (
+        len(value) >= 2
+        and isinstance(value[0], int | float)
+        and isinstance(value[1], int | float)
     ):
         return _transform_position(value, forward, inverse)
     transformed: list[object] = []
@@ -304,8 +306,10 @@ def _transform_geometry(
 def _coordinate_pairs(value: object) -> list[tuple[float, float]]:
     if not isinstance(value, list):
         return []
-    if len(value) >= 2 and isinstance(value[0], (int, float)) and isinstance(
-        value[1], (int, float)
+    if (
+        len(value) >= 2
+        and isinstance(value[0], int | float)
+        and isinstance(value[1], int | float)
     ):
         return [(float(value[0]), float(value[1]))]
     pairs: list[tuple[float, float]] = []
