@@ -36,7 +36,11 @@ class HarvesterRepository:
     def get_version(self, dataset_version_id: UUID) -> DatasetVersionRecord | None:
         return self.session.get(DatasetVersionRecord, dataset_version_id)
 
-    def find_by_manifest(self, source_id: UUID, manifest_sha256: str) -> DatasetVersionRecord | None:
+    def find_by_manifest(
+        self,
+        source_id: UUID,
+        manifest_sha256: str,
+    ) -> DatasetVersionRecord | None:
         statement = select(DatasetVersionRecord).where(
             DatasetVersionRecord.source_id == source_id,
             DatasetVersionRecord.manifest_sha256 == manifest_sha256,
