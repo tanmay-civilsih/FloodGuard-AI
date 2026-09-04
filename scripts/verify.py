@@ -102,7 +102,8 @@ def verify_services() -> None:
     registry = get_json("http://localhost:8000/registry/readiness")
     if registry.get("catalogue_complete") is not True:
         raise SystemExit("Sequence 2 registry catalogue is incomplete")
-    if not isinstance(registry.get("total_sources"), int) or registry["total_sources"] < 17:
+    total_sources = registry.get("total_sources")
+    if not isinstance(total_sources, int) or total_sources < 17:
         raise SystemExit("Sequence 2 registry source catalogue was not seeded")
     print("OK API /registry/readiness")
 
