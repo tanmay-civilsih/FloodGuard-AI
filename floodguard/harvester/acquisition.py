@@ -12,6 +12,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Protocol, cast
+from urllib.error import URLError
 from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
 
@@ -71,8 +72,11 @@ class AcquisitionTransport(Protocol):
 class UrlLibTransport:
     def get_json(self, url: str, *, headers: Mapping[str, str]) -> dict[str, object]:
         request = Request(url, headers=dict(headers), method="GET")
-        with urlopen(request, timeout=30) as response:
-            payload = json.loads(response.read())
+        try:
+            with urlopen(request, timeout=30) as response:
+                payload = json.loads(response.read())
+        except (URLError, json.JSONDecodeError) as exc:
+            raise AcquisitionError(f"failed to retrieve JSON metadata from {url}: {exc}") from exc
         if not isinstance(payload, dict):
             raise AcquisitionError(f"expected JSON object from {url}")
         return cast(dict[str, object], payload)
@@ -93,32 +97,37 @@ class UrlLibTransport:
         )
         digest = hashlib.sha256()
         size = 0
-        with urlopen(http_request, timeout=timeout_seconds) as response:
-            content_length = response.headers.get("Content-Length")
-            if content_length is not None and int(content_length) > max_bytes:
-                raise ObjectTooLargeError(
-                    f"remote object exceeds {max_bytes} bytes: {request.url}"
+        try:
+            with urlopen(http_request, timeout=timeout_seconds) as response:
+                content_length = response.headers.get("Content-Length")
+                if content_length is not None and int(content_length) > max_bytes:
+                    raise ObjectTooLargeError(
+                        f"remote object exceeds {max_bytes} bytes: {request.url}"
+                    )
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                with destination.open("wb") as output:
+                    while chunk := response.read(1024 * 1024):
+                        size += len(chunk)
+                        if size > max_bytes:
+                            raise ObjectTooLargeError(
+                                f"download exceeded {max_bytes} bytes: {request.url}"
+                            )
+                        digest.update(chunk)
+                        output.write(chunk)
+                return DownloadedObject(
+                    source_url=request.url,
+                    filename=request.filename,
+                    path=destination,
+                    sha256=digest.hexdigest(),
+                    byte_size=size,
+                    content_type=response.headers.get_content_type(),
+                    etag=response.headers.get("ETag"),
+                    last_modified=response.headers.get("Last-Modified"),
                 )
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            with destination.open("wb") as output:
-                while chunk := response.read(1024 * 1024):
-                    size += len(chunk)
-                    if size > max_bytes:
-                        raise ObjectTooLargeError(
-                            f"download exceeded {max_bytes} bytes: {request.url}"
-                        )
-                    digest.update(chunk)
-                    output.write(chunk)
-            return DownloadedObject(
-                source_url=request.url,
-                filename=request.filename,
-                path=destination,
-                sha256=digest.hexdigest(),
-                byte_size=size,
-                content_type=response.headers.get_content_type(),
-                etag=response.headers.get("ETag"),
-                last_modified=response.headers.get("Last-Modified"),
-            )
+        except ObjectTooLargeError:
+            raise
+        except (URLError, ValueError) as exc:
+            raise AcquisitionError(f"failed to download {request.url}: {exc}") from exc
 
 
 _FILENAME_RE = re.compile(r"[^A-Za-z0-9._-]+")
