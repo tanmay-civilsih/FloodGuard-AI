@@ -1,4 +1,4 @@
-"""Local verification entry point for Sequence 1."""
+"""Local verification entry point through Sequence 2."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ def run(command: list[str]) -> None:
 def verify_python() -> None:
     if sys.version_info[:2] != (3, 12):
         raise SystemExit(
-            f"FloodGuard-AI Sequence 1 requires Python 3.12.x; found {sys.version.split()[0]}"
+            f"FloodGuard-AI requires Python 3.12.x; found {sys.version.split()[0]}"
         )
     print(f"OK Python {sys.version.split()[0]}")
 
@@ -34,6 +34,10 @@ def verify_files() -> None:
         ROOT / ".env.example",
         ROOT / ".gitignore",
         ROOT / "agent.md",
+        ROOT / "alembic.ini",
+        ROOT / "migrations" / "versions" / "0001_sequence_2_registry.py",
+        ROOT / "floodguard" / "registry" / "contracts.py",
+        ROOT / "floodguard" / "registry" / "seed.py",
         ROOT / "docs" / "Urban_Flood_Digital_Twin_Authoritative_20_Sequence_Plan_FROZEN.md",
     ]
     missing = [str(path.relative_to(ROOT)) for path in required if not path.exists()]
@@ -57,6 +61,14 @@ def docker_service_id(service: str) -> str:
         text=True,
     )
     return result.stdout.strip()
+
+
+def get_json(url: str) -> dict[str, object]:
+    with urllib.request.urlopen(url, timeout=5) as response:
+        payload = json.loads(response.read())
+    if not isinstance(payload, dict):
+        raise SystemExit(f"Expected JSON object from {url}")
+    return payload
 
 
 def verify_services() -> None:
@@ -83,11 +95,16 @@ def verify_services() -> None:
                 raise SystemExit(f"Service {service} health is {status!r}, expected 'healthy'")
         print(f"OK service {service}")
 
-    with urllib.request.urlopen("http://localhost:8000/health", timeout=5) as response:
-        payload = json.loads(response.read())
-    if payload.get("status") != "ok":
+    if get_json("http://localhost:8000/health").get("status") != "ok":
         raise SystemExit("API health response is not ok")
     print("OK API /health")
+
+    registry = get_json("http://localhost:8000/registry/readiness")
+    if registry.get("catalogue_complete") is not True:
+        raise SystemExit("Sequence 2 registry catalogue is incomplete")
+    if not isinstance(registry.get("total_sources"), int) or registry["total_sources"] < 17:
+        raise SystemExit("Sequence 2 registry source catalogue was not seeded")
+    print("OK API /registry/readiness")
 
 
 def main() -> None:
@@ -95,7 +112,7 @@ def main() -> None:
     parser.add_argument(
         "--services",
         action="store_true",
-        help="also verify the running Docker Compose platform and API",
+        help="also verify the running Docker Compose platform and registry API",
     )
     args = parser.parse_args()
 
@@ -104,7 +121,7 @@ def main() -> None:
     verify_static_and_tests()
     if args.services:
         verify_services()
-    print("Sequence 1 verification PASSED")
+    print("Sequence 2 verification PASSED")
 
 
 if __name__ == "__main__":
