@@ -5,10 +5,8 @@ Run inside the application container so PostgreSQL and MinIO service names resol
     docker compose exec api python -m floodguard.harvester.bootstrap --city-id kolkata
 """
 
-from __future__ import annotations
-
 import argparse
-from uuid import UUID
+import uuid
 
 from floodguard.harvester.factory import build_harvester_service
 from floodguard.harvester.service import HarvestAccessError
@@ -27,7 +25,7 @@ SAFE_DEFAULT_METHODS = {
 def _selected_sources(
     sources: list[SourceRead],
     *,
-    requested_ids: set[UUID],
+    requested_ids: set[uuid.UUID],
     include_pbf: bool,
     overpass_query: str | None,
 ) -> list[tuple[SourceRead, dict[str, object]]]:
@@ -67,7 +65,7 @@ def main() -> None:
         help="explicit bounded Overpass query; no unbounded query is invented by the bootstrap job",
     )
     args = parser.parse_args()
-    requested_ids = {UUID(value) for value in args.source_id}
+    requested_ids = {uuid.UUID(value) for value in args.source_id}
 
     factory = get_session_factory()
     failures = 0
