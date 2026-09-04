@@ -8,7 +8,6 @@ Run inside the application container so PostgreSQL and MinIO service names resol
 from __future__ import annotations
 
 import argparse
-from collections.abc import Iterable
 from uuid import UUID
 
 from floodguard.harvester.factory import build_harvester_service
@@ -26,7 +25,7 @@ SAFE_DEFAULT_METHODS = {
 
 
 def _selected_sources(
-    sources: Iterable[SourceRead],
+    sources: list[SourceRead],
     *,
     requested_ids: set[UUID],
     include_pbf: bool,
