@@ -1,4 +1,4 @@
-# FloodGuard-AI Sequence 3 dependency lock.
+# FloodGuard-AI Sequence 4 dependency lock.
 # Runtime and development dependencies are pinned intentionally.
 # Refresh only as an explicit dependency-maintenance change.
 alembic==1.19.1
@@ -24,6 +24,7 @@ MarkupSafe==3.0.3
 minio==7.2.20
 mypy==1.17.1
 mypy-extensions==1.1.0
+numpy==2.5.2
 packaging==25.0
 pathspec==1.1.1
 pluggy==1.6.0
@@ -35,6 +36,7 @@ pydantic==2.13.4
 pydantic-core==2.46.4
 pydantic-settings==2.14.1
 Pygments==2.20.0
+pyproj==3.7.2
 pytest==9.0.2
 python-dotenv==1.2.2
 PyYAML==6.0.3
