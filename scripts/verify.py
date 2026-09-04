@@ -1,4 +1,4 @@
-"""Local verification entry point through Sequence 4."""
+"""Local verification entry point through Sequence 5."""
 
 from __future__ import annotations
 
@@ -38,6 +38,7 @@ def verify_files() -> None:
         ROOT / "migrations" / "versions" / "0001_sequence_2_registry.py",
         ROOT / "migrations" / "versions" / "0002_sequence_3_harvester.py",
         ROOT / "migrations" / "versions" / "0003_sequence_4_spatial.py",
+        ROOT / "migrations" / "versions" / "0004_sequence_5_reconstruction.py",
         ROOT / "floodguard" / "registry" / "contracts.py",
         ROOT / "floodguard" / "registry" / "seed.py",
         ROOT / "floodguard" / "harvester" / "contracts.py",
@@ -49,6 +50,16 @@ def verify_files() -> None:
         ROOT / "floodguard" / "spatial" / "resampling.py",
         ROOT / "floodguard" / "spatial" / "service.py",
         ROOT / "floodguard" / "spatial" / "bootstrap.py",
+        ROOT / "floodguard" / "reconstruction" / "contracts.py",
+        ROOT / "floodguard" / "reconstruction" / "pdf_native.py",
+        ROOT / "floodguard" / "reconstruction" / "service.py",
+        ROOT / "floodguard" / "reconstruction" / "bootstrap.py",
+        ROOT
+        / "floodguard"
+        / "reconstruction"
+        / "calibrations"
+        / "kmc-opencity-ward-7-v1.json",
+        ROOT / "docs" / "architecture" / "sequence-05-drainage-reconstruction.md",
         ROOT / "docs" / "architecture" / "sequence-04-spatial-normalization.md",
         ROOT / "docs" / "Urban_Flood_Digital_Twin_Authoritative_20_Sequence_Plan_FROZEN.md",
     ]
@@ -125,8 +136,8 @@ def verify_services() -> None:
     print("OK API /health")
 
     version = get_json("http://localhost:8000/version")
-    if version.get("sequence") != 4 or version.get("version") != "0.4.0":
-        raise SystemExit("API is not serving FloodGuard-AI Sequence 4 / v0.4.0")
+    if version.get("sequence") != 5 or version.get("version") != "0.5.0":
+        raise SystemExit("API is not serving FloodGuard-AI Sequence 5 / v0.5.0")
     print("OK API /version")
 
     registry = get_json("http://localhost:8000/registry/readiness")
@@ -158,6 +169,15 @@ def verify_services() -> None:
     if "MapLibre" not in get_text("http://localhost:8000/spatial/qa"):
         raise SystemExit("Sequence 4 QA viewer is not reachable")
     print("OK API /spatial/qa")
+
+    reconstruction = get_json("http://localhost:8000/reconstruction/readiness")
+    if "completion_gate_passed" not in reconstruction:
+        raise SystemExit("Sequence 5 reconstruction readiness contract is incomplete")
+    if "Drainage Reconstruction QA" not in get_text(
+        "http://localhost:8000/reconstruction/qa"
+    ):
+        raise SystemExit("Sequence 5 reconstruction QA viewer is not reachable")
+    print("OK API /reconstruction/readiness and /reconstruction/qa")
 
 
 def run_harvester_bootstrap_gate() -> None:
@@ -216,6 +236,49 @@ def run_spatial_bootstrap_gate() -> None:
     print("OK Kolkata spatial normalization and QA completion gate")
 
 
+def run_reconstruction_bootstrap_gate() -> None:
+    run(
+        [
+            "docker",
+            "compose",
+            "exec",
+            "-T",
+            "api",
+            "python",
+            "-m",
+            "floodguard.reconstruction.bootstrap",
+            "--city-id",
+            "kolkata",
+        ]
+    )
+    readiness = get_json("http://localhost:8000/reconstruction/readiness")
+    minimum_counts = {
+        "total_drains": 100,
+        "total_structures": 80,
+        "total_labels": 90,
+    }
+    for field, minimum in minimum_counts.items():
+        value = readiness.get(field)
+        if not isinstance(value, int) or value < minimum:
+            raise SystemExit(
+                f"Sequence 5 {field}={value!r} is below the pinned Ward 7 minimum {minimum}"
+            )
+    geographic = readiness.get("geographically_valid")
+    if not isinstance(geographic, int) or geographic < 1:
+        raise SystemExit("Sequence 5 has no reconstruction within its georeference tolerance")
+    native = readiness.get("native_vector_text_reconstructions")
+    if not isinstance(native, int) or native < 1:
+        raise SystemExit("Sequence 5 did not preserve native vector/text extraction")
+    if readiness.get("completion_gate_passed") is not True:
+        reason = readiness.get("completion_gate_reason")
+        raise SystemExit(f"Sequence 5 human-review completion gate is not passed: {reason}")
+    if "Drainage Reconstruction QA" not in get_text(
+        "http://localhost:8000/reconstruction/qa"
+    ):
+        raise SystemExit("Sequence 5 MapLibre reconstruction QA viewer gate failed")
+    print("OK real KMC drainage reconstruction and human-review completion gate")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -233,18 +296,33 @@ def main() -> None:
         action="store_true",
         help="run the Sequence 4 Kolkata spatial completion gate; implies --services",
     )
+    parser.add_argument(
+        "--reconstruction-bootstrap",
+        action="store_true",
+        help=(
+            "run the Sequence 5 real KMC map gate; requires a prior recorded human QA "
+            "approval and implies --services"
+        ),
+    )
     args = parser.parse_args()
 
     verify_python()
     verify_files()
     verify_static_and_tests()
-    if args.services or args.bootstrap or args.spatial_bootstrap:
+    if (
+        args.services
+        or args.bootstrap
+        or args.spatial_bootstrap
+        or args.reconstruction_bootstrap
+    ):
         verify_services()
     if args.bootstrap:
         run_harvester_bootstrap_gate()
     if args.spatial_bootstrap:
         run_spatial_bootstrap_gate()
-    print("Sequence 4 verification PASSED")
+    if args.reconstruction_bootstrap:
+        run_reconstruction_bootstrap_gate()
+    print("Sequence 5 verification PASSED")
 
 
 if __name__ == "__main__":

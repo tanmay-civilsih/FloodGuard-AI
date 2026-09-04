@@ -1,0 +1,46 @@
+{
+  "calibration_id": "kmc-opencity-ward-7-v1",
+  "ward_id": "7",
+  "source_filename": "Kolkata_-_Drainage_Network_Map_of_Ward_7.pdf",
+  "source_sha256": "54f6a133d6978a692eef902ed7727d561b61af1080b4aa1fbc5547f2b80417b4",
+  "source_page": 1,
+  "target_crs": "EPSG:4326",
+  "control_reference": "Kolkata Wards Map 2022, KMC via OpenCity, resource b3195f54-6c85-4cb4-afa0-06af482fe9df",
+  "control_reference_sha256": "e04e44d4d5d7f5a3e8f50a0b7fd68662a3e0623887ac9dccf9b5281b17395ced",
+  "georeference_method": "AFFINE_FOUR_WARD_BOUNDARY_EXTREMA",
+  "max_georeference_rmse_m": 15.0,
+  "control_points": [
+    {
+      "name": "ward_7_western_boundary_extreme",
+      "page_x": 1342.36,
+      "page_y": 506.68,
+      "target_x": 88.3637026517406,
+      "target_y": 22.60408472001098,
+      "match_description": "Western KMC ward-boundary extreme adjacent to the Hooghly river"
+    },
+    {
+      "name": "ward_7_northern_boundary_extreme",
+      "page_x": 2072.20,
+      "page_y": 2350.60,
+      "target_x": 88.36721534,
+      "target_y": 22.60805469542445,
+      "match_description": "Northern KMC ward-boundary extreme at the Circular Canal side"
+    },
+    {
+      "name": "ward_7_eastern_boundary_extreme",
+      "page_x": 849.16,
+      "page_y": 3174.28,
+      "target_x": 88.37416171503403,
+      "target_y": 22.60537456,
+      "match_description": "Eastern KMC ward-boundary extreme near the B. T. Road side"
+    },
+    {
+      "name": "ward_7_southern_boundary_extreme",
+      "page_x": 380.44,
+      "page_y": 1503.28,
+      "target_x": 88.37023230072496,
+      "target_y": 22.60199589064524,
+      "match_description": "Southern KMC ward-boundary extreme near Bagbazar Street"
+    }
+  ]
+}

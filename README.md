@@ -9,11 +9,16 @@ Development is governed by:
 
 ## Current milestone
 
-**Sequence 4 — Spatial Normalization, Variable-Specific Resampling and Reference Harmonization (v0.4)**
+**Sequence 5 — Legacy Municipal Drainage Reconstruction (v0.5 release candidate)**
 
-Sequence 4 preserves the immutable Sequence 3 raw vault and creates traceable normalized spatial products in a separate object-store bucket. It adds configurable metric CRS harmonization, explicit vertical-reference contracts, variable-specific categorical/elevation/rainfall resampling policies, rainfall volume-conservation diagnostics, and a minimal MapLibre engineering QA viewer.
+Sequence 5 reconstructs a hash-pinned, authentic KMC/OpenCity Ward 7 drainage PDF into traceable
+drain, manhole-candidate, and drainage-label vector features. It inspects native PDF vector/text
+content before OCR, uses a versioned four-point affine calibration, assigns confidence, preserves
+missing engineering attributes as `NULL`, and exposes an append-only human QA review gate.
 
-Drainage PDF reconstruction, hydraulic terrain conditioning, hydraulic surface classification, and hydraulic simulation remain later-sequence work.
+The code and automated real-object diagnostics are implemented. The release remains a candidate
+until a human inspects `/reconstruction/qa` and records approval. Hydraulically conditioned terrain,
+surface classification, and simulation remain later-sequence work.
 
 ## Requirements
 
@@ -72,7 +77,23 @@ python scripts/verify.py --spatial-bootstrap
 
 `--spatial-bootstrap` does not redownload public source data. It consumes the latest COMPLETE immutable raw versions already present in the Sequence 3 vault, normalizes supported vector layers, checks metric alignment and rainfall conservation, validates vertical metadata policy, and verifies the QA viewer.
 
-On container startup, Alembic migrates registry, harvester, and spatial schemas and the audited Kolkata source catalogue is seeded idempotently.
+Build the calibrated real Ward 7 reconstruction:
+
+```bash
+docker compose exec -T api python -m floodguard.reconstruction.bootstrap --city-id kolkata
+```
+
+Then inspect `http://localhost:8000/reconstruction/qa` and record a human review. The formal
+Sequence 5 completion gate is:
+
+```bash
+python scripts/verify.py --reconstruction-bootstrap
+```
+
+The gate intentionally fails while the real reconstruction is `PENDING_REVIEW`.
+
+On container startup, Alembic migrates registry, harvester, spatial, reconstruction, and review
+schemas and the audited Kolkata source catalogue is seeded idempotently.
 
 ## Sequence 3 immutable raw vault
 
@@ -97,6 +118,21 @@ normalized/{city_id}/{source_id}/{dataset_version_id}/{normalization_id}/qa.geoj
 The working representation uses the configured metric CRS. The QA derivative is WGS 84 GeoJSON for MapLibre display. Every record preserves the source dataset version, source raw-object key, source SHA-256 lineage, CRS metadata, geometry statistics, numerical round-trip error, resampling policy, vertical-reference metadata, and resolution/information-quality fields.
 
 Rerunning the same normalization reuses the existing deterministic result. Spatial object keys are never silently overwritten.
+
+## Sequence 5 reconstruction artifacts
+
+The initial real calibration is pinned to the Ward 7 PDF SHA-256 and the 2022 KMC ward-reference
+KML SHA-256. Reconstruction artifacts are immutable and deterministic:
+
+```text
+reconstruction/{city_id}/{source_id}/{dataset_version_id}/{reconstruction_id}/working.geojson
+reconstruction/{city_id}/{source_id}/{dataset_version_id}/{reconstruction_id}/qa.geojson
+reconstruction/{city_id}/{source_id}/{dataset_version_id}/{reconstruction_id}/audit.json
+```
+
+The working and WGS 84 QA layers preserve feature confidence, extraction method, source object,
+dataset version, page, and deterministic IDs. Diameter, invert, flow direction, and material remain
+`NULL`; source labels are annotations, not automatically accepted hydraulic parameters.
 
 ## Horizontal reference
 
@@ -164,7 +200,8 @@ CATCHMENT
 WATER_BODY
 ```
 
-Municipal drainage PDF objects are deliberately skipped here and preserved in the raw vault. Their reconstruction begins in Sequence 5 rather than being guessed or rasterized in Sequence 4.
+Municipal drainage PDF objects are deliberately skipped by Sequence 4 and preserved in the raw
+vault. The Sequence 5 worker reads the calibrated Ward 7 object without modifying it.
 
 ## Engineering QA viewer
 
@@ -174,7 +211,15 @@ After the Sequence 4 spatial bootstrap, open:
 http://localhost:8000/spatial/qa
 ```
 
-The MapLibre QA page displays normalized FloodGuard layers and their CRS/quality metadata. Its background basemap is visual context only, not a hydraulic input. Current real overlays include normalized ward, catchment, and water-body layers; future normalized roads/buildings, source-map derivatives, reconstructed drainage, and confidence markers use the same viewer contract.
+The spatial MapLibre page displays normalized layers and their CRS/quality metadata. The Sequence 5
+review page is:
+
+```text
+http://localhost:8000/reconstruction/qa
+```
+
+It renders reconstructed drainage, manhole candidates, labels, confidence, counts, source hash,
+and georeference error. Both basemaps are visual context only, not hydraulic inputs.
 
 ## API endpoints
 
@@ -193,9 +238,20 @@ The MapLibre QA page displays normalized FloodGuard layers and their CRS/quality
 | `GET /spatial/layers/{normalization_id}` | inspect one normalized layer |
 | `GET /spatial/layers/{normalization_id}/geojson` | QA-display GeoJSON |
 | `GET /spatial/qa` | MapLibre engineering QA page |
+| `GET /reconstruction/readiness` | Sequence 5 reconstruction and human-review gate |
+| `GET /reconstruction/maps` | list drainage reconstructions and provenance |
+| `GET /reconstruction/maps/{reconstruction_id}/geojson` | WGS 84 reconstruction QA layer |
+| `GET /reconstruction/maps/{reconstruction_id}/reviews` | append-only review history |
+| `POST /reconstruction/maps/{reconstruction_id}/reviews` | record human approval/rejection |
+| `GET /reconstruction/qa` | MapLibre drainage reconstruction QA page |
 
-There is intentionally no HTTP endpoint that performs heavy normalization. The CLI/worker path owns computation; FastAPI exposes read-only spatial metadata and QA artifacts.
+There is intentionally no HTTP endpoint that performs heavy normalization or PDF extraction. The
+CLI/worker path owns computation; FastAPI exposes metadata, QA artifacts, and the explicit review
+record endpoint.
 
 ## Scientific scope boundary
 
-Passing Sequence 4 means the current core Kolkata layers are reference-harmonized and the resampling/QA rules are implemented. It does **not** mean the terrain is hydraulically validated, municipal drains have been reconstructed, or street-scale flood forecasts are ready. Those claims depend on later frozen sequences and their validation gates.
+Passing Sequence 5 means one real municipal map is reconstructed, geographically checked within
+its declared legacy-map tolerance, provenance-preserving, and human-reviewed. It does **not** mean
+the drain network or terrain is hydraulically validated, nor that street-scale forecasts are ready.
+Those claims depend on later frozen sequences and their validation gates.

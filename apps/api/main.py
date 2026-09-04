@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from starlette.responses import Response
 
 from apps.api.routers.harvester import router as harvester_router
+from apps.api.routers.reconstruction import router as reconstruction_router
 from apps.api.routers.registry import router as registry_router
 from apps.api.routers.spatial import router as spatial_router
 from floodguard import __version__
@@ -30,6 +31,7 @@ app = FastAPI(
 app.include_router(registry_router)
 app.include_router(harvester_router)
 app.include_router(spatial_router)
+app.include_router(reconstruction_router)
 
 
 class HealthResponse(BaseModel):
@@ -46,7 +48,7 @@ class ReadyResponse(BaseModel):
 class VersionResponse(BaseModel):
     name: Literal["FloodGuard-AI"] = "FloodGuard-AI"
     version: str
-    sequence: Literal[4] = 4
+    sequence: Literal[5] = 5
 
 
 @app.middleware("http")
