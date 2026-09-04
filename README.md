@@ -9,9 +9,9 @@ Development is governed by:
 
 ## Current milestone
 
-**Sequence 1 — Platform Foundation, Contracts, Units, Time, Jobs and Events (v0.1)**
+**Sequence 2 — Data Source Registry, Access Governance and Fallback Sources (v0.2)**
 
-Sequence 1 establishes the reproducible software foundation only. It intentionally contains no GIS processing, rainfall model, drainage hydraulics, 2D hydraulic solver, 1D–2D coupling, AI/ML, or production dashboard.
+Sequence 2 adds an authoritative, version-controlled registry of external datasets and feeds while preserving the Sequence 1 foundation. It still contains no GIS processing, rainfall nowcasting, hydraulic solver, 1D–2D coupling, ML model, or production dashboard.
 
 ## Requirements
 
@@ -24,59 +24,37 @@ Sequence 1 establishes the reproducible software foundation only. It intentional
 python -m venv .venv
 ```
 
-Activate the environment:
+Activate the environment and install the pinned dependency set:
 
 ```bash
 # Linux/macOS
 source .venv/bin/activate
-
-# Windows PowerShell
-.venv\Scripts\Activate.ps1
-```
-
-Install the pinned Sequence 1 dependency set:
-
-```bash
 python -m pip install -r requirements.lock
 ```
 
-Optionally copy the development environment template:
+On Windows PowerShell:
 
-```bash
-cp .env.example .env
+```powershell
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.lock
 ```
 
-Do not commit `.env` or credentials.
+Copy `.env.example` to `.env` if needed. Never commit `.env`, tokens, passwords, or API keys.
 
-## Verify code and contracts
+## Verify
 
 ```bash
 python scripts/verify.py
 ```
 
-This runs Ruff, mypy, and pytest after checking the Python version and required repository files.
-
-## Start the complete Sequence 1 platform
+Start the complete platform:
 
 ```bash
 docker compose up -d --build
 python scripts/verify.py --services
 ```
 
-The compose platform includes:
-
-- PostgreSQL + PostGIS
-- Redis
-- NATS + JetStream
-- MinIO
-- Traefik
-- FloodGuard FastAPI application
-
-Stop it with:
-
-```bash
-docker compose down
-```
+On container startup, Alembic migrates the registry schema and the audited Kolkata source catalogue is seeded idempotently.
 
 ## API endpoints
 
@@ -84,26 +62,24 @@ docker compose down
 |---|---|
 | `GET /health` | process liveness |
 | `GET /ready` | application readiness |
-| `GET /version` | software version and active development sequence |
+| `GET /version` | software version and active sequence |
+| `GET /registry/sources` | list/filter registered data sources |
+| `GET /registry/sources/{source_id}` | inspect one source |
+| `POST /registry/sources` | add a governed source |
+| `PUT /registry/sources/{source_id}` | replace source metadata |
+| `GET /registry/readiness` | check catalogue coverage for Kolkata |
 
-Requests receive an `X-Correlation-ID` response header. A supplied correlation ID must be a valid UUID and is preserved end-to-end at the HTTP boundary.
+The registry stores `credential_ref` values such as `env://EARTHDATA_TOKEN`; it never stores raw credentials.
 
-## Canonical scientific units
+## Sequence 2 source-governance rules
 
-| Quantity | Internal unit |
-|---|---|
-| Distance | m |
-| Elevation | m |
-| Water depth | m |
-| Velocity | m/s |
-| Discharge | m³/s |
-| Area | m² |
-| Volume | m³ |
-| Simulation time | s |
-| Rain rate | mm/h |
+- Automated acquisition is allowed only when the source's access class permits it.
+- Public-view-only or unknown feeds are not scraped automatically.
+- OpenStreetMap data are ODbL and must be attributed; public Overpass is for bounded/fair-use queries, with Geofabrik extracts preferred for repeat or larger ingestion.
+- Source data, legal/access status, authority level, refresh policy, and fallback strategy remain explicit.
+- `AVAILABLE` means the source/product is known and usable subject to its recorded access requirements; it does not mean FloodGuard currently possesses credentials.
+- Planned IMD radar/nowcast, LiDAR, SCADA, drain-sensor and CCTV integrations remain explicitly non-operational until approved access exists.
 
-All internal timestamps are timezone-aware UTC values. Asia/Kolkata conversion is presentation-only.
+## Scientific scope boundary
 
-## Sequence 1 scope boundary
-
-Do not infer hydraulic validity from this release. Scientific hydraulics begins only in later sequences and remains subject to the frozen validation gates.
+Sequence 2 documents data governance. It does **not** make any hydraulic-validity or operational-live-data claim. Spatial normalization begins in later sequences; hydraulics remains subject to the frozen validation gates.
