@@ -1,6 +1,7 @@
-# FloodGuard-AI Sequence 1 dependency lock.
-# All runtime and development dependencies are pinned intentionally.
+# FloodGuard-AI Sequence 2 dependency lock.
+# Runtime and development dependencies are pinned intentionally.
 # Refresh only as an explicit dependency-maintenance change.
+alembic==1.19.1
 annotated-doc==0.0.4
 annotated-types==0.7.0
 anyio==4.13.0
@@ -8,17 +9,22 @@ certifi==2026.5.20
 click==8.1.8
 colorama==0.4.6; sys_platform == "win32"
 fastapi==0.128.2
+greenlet==3.5.5
 h11==0.16.0
 httpcore==1.0.9
 httptools==0.8.0; platform_python_implementation != "PyPy"
 httpx==0.28.1
 idna==3.17
 iniconfig==2.3.0
+Mako==1.4.1
+MarkupSafe==3.0.3
 mypy==1.17.1
 mypy-extensions==1.1.0
 packaging==25.0
 pathspec==1.1.1
 pluggy==1.6.0
+psycopg==3.3.5
+psycopg-binary==3.3.5
 pydantic==2.13.4
 pydantic-core==2.46.4
 pydantic-settings==2.14.1
@@ -28,6 +34,7 @@ python-dotenv==1.2.2
 PyYAML==6.0.3
 ruff==0.12.10
 setuptools==82.0.1
+SQLAlchemy==2.0.52
 starlette==0.50.0
 typing-extensions==4.16.0
 typing-inspection==0.4.2
