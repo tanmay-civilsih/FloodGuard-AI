@@ -138,9 +138,13 @@ class SpatialService:
         if dataset_version.status is not DatasetVersionStatus.COMPLETE:
             raise SpatialNormalizationError("only COMPLETE raw dataset versions can be normalized")
         if dataset_version.source_id != source.source_id:
-            raise SpatialNormalizationError("dataset version source_id does not match registry source")
+            raise SpatialNormalizationError(
+                "dataset version source_id does not match registry source"
+            )
         if dataset_version.city_id != source.city_id:
-            raise SpatialNormalizationError("dataset version city_id does not match registry source")
+            raise SpatialNormalizationError(
+                "dataset version city_id does not match registry source"
+            )
 
         variable_kind = _variable_kind(source)
         if variable_kind is not SpatialVariableKind.VECTOR:
