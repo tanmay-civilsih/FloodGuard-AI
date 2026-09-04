@@ -84,6 +84,7 @@ services:
     environment:
       FLOODGUARD_ENVIRONMENT: ${FLOODGUARD_ENVIRONMENT:-development}
       FLOODGUARD_LOG_LEVEL: ${FLOODGUARD_LOG_LEVEL:-INFO}
+      FLOODGUARD_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-floodguard}:${POSTGRES_PASSWORD:-floodguard_dev_only}@postgres:5432/${POSTGRES_DB:-floodguard}
     ports:
       - "8000:8000"
     depends_on:
