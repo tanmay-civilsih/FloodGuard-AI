@@ -71,7 +71,7 @@ class AcquisitionTransport(Protocol):
 class UrlLibTransport:
     def get_json(self, url: str, *, headers: Mapping[str, str]) -> dict[str, object]:
         request = Request(url, headers=dict(headers), method="GET")
-        with urlopen(request, timeout=30) as response:  # noqa: S310 - governed registry URLs
+        with urlopen(request, timeout=30) as response:
             payload = json.loads(response.read())
         if not isinstance(payload, dict):
             raise AcquisitionError(f"expected JSON object from {url}")
@@ -93,10 +93,7 @@ class UrlLibTransport:
         )
         digest = hashlib.sha256()
         size = 0
-        with urlopen(  # noqa: S310 - governed registry URLs
-            http_request,
-            timeout=timeout_seconds,
-        ) as response:
+        with urlopen(http_request, timeout=timeout_seconds) as response:
             content_length = response.headers.get("Content-Length")
             if content_length is not None and int(content_length) > max_bytes:
                 raise ObjectTooLargeError(
@@ -166,14 +163,19 @@ class AcquisitionPlanner:
         if method is AccessMethod.OVERPASS:
             query = params.get("query")
             if not isinstance(query, str) or not query.strip():
-                raise AcquisitionParametersRequired("OVERPASS acquisition requires a bounded query")
+                raise AcquisitionParametersRequired(
+                    "OVERPASS acquisition requires a bounded query"
+                )
             return [
                 RemoteRequest(
                     url=source.endpoint,
                     filename="overpass.osm",
                     method="POST",
                     body=urlencode({"data": query}).encode(),
-                    headers={**request_headers, "Content-Type": "application/x-www-form-urlencoded"},
+                    headers={
+                        **request_headers,
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
                 )
             ]
         if method is AccessMethod.STAC:
@@ -181,14 +183,19 @@ class AcquisitionPlanner:
         if method in {AccessMethod.WMS, AccessMethod.WFS, AccessMethod.WMTS}:
             query = params.get("query")
             if not isinstance(query, dict) or not query:
-                raise AcquisitionParametersRequired(f"{method.value} acquisition requires query parameters")
+                raise AcquisitionParametersRequired(
+                    f"{method.value} acquisition requires query parameters"
+                )
             encoded = urlencode({str(key): str(value) for key, value in query.items()})
             delimiter = "&" if "?" in source.endpoint else "?"
             url = f"{source.endpoint}{delimiter}{encoded}"
             return [
                 RemoteRequest(
                     url=url,
-                    filename=_url_filename(url, f"{method.value.lower()}-response.bin"),
+                    filename=_url_filename(
+                        url,
+                        f"{method.value.lower()}-response.bin",
+                    ),
                     headers=request_headers,
                 )
             ]
@@ -196,12 +203,17 @@ class AcquisitionPlanner:
             f"{source.access_method.value} has no generic automated adapter"
         )
 
-    def _plan_ckan(self, source: SourceRead, headers: Mapping[str, str]) -> list[RemoteRequest]:
+    def _plan_ckan(
+        self,
+        source: SourceRead,
+        headers: Mapping[str, str],
+    ) -> list[RemoteRequest]:
         parsed = urlparse(source.endpoint)
         slug = parsed.path.rstrip("/").rsplit("/", 1)[-1]
         if not slug:
             raise AcquisitionError("CKAN dataset endpoint does not contain a package slug")
-        api_url = f"{parsed.scheme}://{parsed.netloc}/api/3/action/package_show?{urlencode({'id': slug})}"
+        query = urlencode({"id": slug})
+        api_url = f"{parsed.scheme}://{parsed.netloc}/api/3/action/package_show?{query}"
         payload = self.transport.get_json(api_url, headers=headers)
         if payload.get("success") is not True:
             raise AcquisitionError(f"CKAN package_show failed for {source.endpoint}")
@@ -266,7 +278,10 @@ class AcquisitionPlanner:
             planned.append(
                 RemoteRequest(
                     url=href,
-                    filename=_url_filename(href, safe_filename(str(key), fallback="asset.bin")),
+                    filename=_url_filename(
+                        href,
+                        safe_filename(str(key), fallback="asset.bin"),
+                    ),
                     headers=headers,
                 )
             )
