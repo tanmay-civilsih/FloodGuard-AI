@@ -20,11 +20,17 @@ class Settings(BaseSettings):
     object_store_secret_key: str = "floodguard_dev_only"
     object_store_secure: bool = False
     raw_bucket: str = "floodguard-raw"
+    spatial_bucket: str = "floodguard-spatial"
 
     harvest_max_object_bytes: int = Field(default=128 * 1024 * 1024, ge=1)
     harvest_max_total_bytes: int = Field(default=768 * 1024 * 1024, ge=1)
     harvest_max_resources_per_source: int = Field(default=250, ge=1, le=5000)
     harvest_timeout_seconds: float = Field(default=60.0, gt=0, le=600)
+
+    working_crs: str = "EPSG:32645"
+    spatial_alignment_tolerance_m: float = Field(default=0.05, ge=0, le=10)
+    rainfall_conservation_tolerance: float = Field(default=1e-9, ge=0, le=1e-2)
+    spatial_max_object_bytes: int = Field(default=128 * 1024 * 1024, ge=1)
 
 
 @lru_cache
