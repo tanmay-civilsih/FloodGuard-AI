@@ -11,9 +11,8 @@ import argparse
 from collections.abc import Iterable
 from uuid import UUID
 
-from floodguard.harvester.acquisition import AcquisitionError
 from floodguard.harvester.factory import build_harvester_service
-from floodguard.harvester.service import HarvestAccessError, HarvestConflictError
+from floodguard.harvester.service import HarvestAccessError
 from floodguard.registry.contracts import AccessMethod, SourceRead
 from floodguard.registry.database import get_session_factory
 from floodguard.registry.service import RegistryService
@@ -49,7 +48,9 @@ def _selected_sources(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Harvest governed raw data into the immutable vault")
+    parser = argparse.ArgumentParser(
+        description="Harvest governed raw data into the immutable vault"
+    )
     parser.add_argument("--city-id", default="kolkata")
     parser.add_argument("--source-id", action="append", default=[])
     parser.add_argument(
@@ -91,7 +92,7 @@ def main() -> None:
                     parameters=parameters,
                     include_authorized=args.include_authorized,
                 )
-            except (AcquisitionError, HarvestAccessError, HarvestConflictError, RuntimeError) as exc:
+            except (HarvestAccessError, RuntimeError) as exc:
                 failures += 1
                 print(f"FAILED {source.dataset_name}: {exc}")
             else:
