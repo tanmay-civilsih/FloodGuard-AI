@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.responses import Response
 
+from apps.api.routers.harvester import router as harvester_router
 from apps.api.routers.registry import router as registry_router
 from floodguard import __version__
 from floodguard.common.config import get_settings
@@ -26,6 +27,7 @@ app = FastAPI(
     description="Urban flood digital twin platform API",
 )
 app.include_router(registry_router)
+app.include_router(harvester_router)
 
 
 class HealthResponse(BaseModel):
@@ -42,7 +44,7 @@ class ReadyResponse(BaseModel):
 class VersionResponse(BaseModel):
     name: Literal["FloodGuard-AI"] = "FloodGuard-AI"
     version: str
-    sequence: Literal[2] = 2
+    sequence: Literal[3] = 3
 
 
 @app.middleware("http")
