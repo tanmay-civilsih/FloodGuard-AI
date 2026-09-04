@@ -28,8 +28,9 @@ QA_VIEWER_HTML = """<!doctype html>
   <aside id="sidebar">
     <h1>FloodGuard-AI · Spatial QA</h1>
     <div class="muted">
-      Sequence 4 viewer. Normalized engineering layers are served from FloodGuard's immutable
-      spatial vault. The basemap is visual context only and is not a hydraulic input.
+      Sequence 4 MapLibre engineering QA viewer. Normalized engineering layers are served from
+      FloodGuard's immutable spatial vault. The basemap is visual context only and is not a
+      hydraulic input.
     </div>
     <div id="status" class="status">Loading readiness…</div>
     <div class="muted">
