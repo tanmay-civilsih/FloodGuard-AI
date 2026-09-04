@@ -77,9 +77,14 @@ def docker_service_id(service: str) -> str:
 
 def get_json(url: str) -> dict[str, object]:
     with urllib.request.urlopen(url, timeout=5) as response:
-        payload = json.loads(response.read())
-    if not isinstance(payload, dict):
+        raw_payload: object = json.loads(response.read())
+    if not isinstance(raw_payload, dict):
         raise SystemExit(f"Expected JSON object from {url}")
+    payload: dict[str, object] = {}
+    for key, value in raw_payload.items():
+        if not isinstance(key, str):
+            raise SystemExit(f"Expected string JSON object keys from {url}")
+        payload[key] = value
     return payload
 
 
