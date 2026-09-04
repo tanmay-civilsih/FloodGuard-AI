@@ -11,7 +11,7 @@ Development is governed by:
 
 **Sequence 1 — Platform Foundation, Contracts, Units, Time, Jobs and Events (v0.1)**
 
-Sequence 1 establishes the reproducible software foundation only. It intentionally contains no GIS processing, rainfall model, drainage hydraulics, 2D hydraulic solver, 1D–2D coupling, AI/ML, or production dashboard.
+Sequence 2 has been implemented and reviewed on the `sequence-2-registry` branch and is ready to be promoted as the next milestone.
 
 ## Requirements
 
@@ -34,7 +34,7 @@ source .venv/bin/activate
 .venv\Scripts\Activate.ps1
 ```
 
-Install the pinned Sequence 1 dependency set:
+Install the pinned dependency set:
 
 ```bash
 python -m pip install -r requirements.lock
@@ -54,56 +54,13 @@ Do not commit `.env` or credentials.
 python scripts/verify.py
 ```
 
-This runs Ruff, mypy, and pytest after checking the Python version and required repository files.
-
-## Start the complete Sequence 1 platform
+## Start platform
 
 ```bash
 docker compose up -d --build
 python scripts/verify.py --services
 ```
 
-The compose platform includes:
+## Scientific scope boundary
 
-- PostgreSQL + PostGIS
-- Redis
-- NATS + JetStream
-- MinIO
-- Traefik
-- FloodGuard FastAPI application
-
-Stop it with:
-
-```bash
-docker compose down
-```
-
-## API endpoints
-
-| Endpoint | Purpose |
-|---|---|
-| `GET /health` | process liveness |
-| `GET /ready` | application readiness |
-| `GET /version` | software version and active development sequence |
-
-Requests receive an `X-Correlation-ID` response header. A supplied correlation ID must be a valid UUID and is preserved end-to-end at the HTTP boundary.
-
-## Canonical scientific units
-
-| Quantity | Internal unit |
-|---|---|
-| Distance | m |
-| Elevation | m |
-| Water depth | m |
-| Velocity | m/s |
-| Discharge | m³/s |
-| Area | m² |
-| Volume | m³ |
-| Simulation time | s |
-| Rain rate | mm/h |
-
-All internal timestamps are timezone-aware UTC values. Asia/Kolkata conversion is presentation-only.
-
-## Sequence 1 scope boundary
-
-Do not infer hydraulic validity from this release. Scientific hydraulics begins only in later sequences and remains subject to the frozen validation gates.
+Do not infer hydraulic validity from these early releases. Scientific hydraulics begins only in later sequences and remains subject to the frozen validation gates.
