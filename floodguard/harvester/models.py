@@ -32,7 +32,11 @@ class DatasetVersionRecord(Base):
     manifest_object_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     object_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     total_bytes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    previous_version_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True), nullable=True)
+    previous_version_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("harvest_dataset_versions.dataset_version_id", ondelete="RESTRICT"),
+        nullable=True,
+    )
     source_snapshot: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
