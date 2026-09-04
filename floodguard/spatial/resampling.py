@@ -24,7 +24,11 @@ class ElevationRemap:
     source_uncertainty_m: float | None
 
 
-def _as_increasing_edges(values: NDArray[np.float64] | list[float], *, name: str) -> FloatArray:
+def _as_increasing_edges(
+    values: NDArray[np.float64] | list[float],
+    *,
+    name: str,
+) -> FloatArray:
     edges = np.asarray(values, dtype=np.float64)
     if edges.ndim != 1 or edges.size < 2:
         raise ValueError(f"{name} must be a one-dimensional edge array")
@@ -34,7 +38,9 @@ def _as_increasing_edges(values: NDArray[np.float64] | list[float], *, name: str
 
 
 def _as_increasing_centers(
-    values: NDArray[np.float64] | list[float], *, name: str
+    values: NDArray[np.float64] | list[float],
+    *,
+    name: str,
 ) -> FloatArray:
     centers = np.asarray(values, dtype=np.float64)
     if centers.ndim != 1 or centers.size < 1:
@@ -116,7 +122,10 @@ def rainfall_volume_m3(
 
 
 def _overlap_matrix(destination_edges: FloatArray, source_edges: FloatArray) -> FloatArray:
-    overlap = np.zeros((destination_edges.size - 1, source_edges.size - 1), dtype=np.float64)
+    overlap = np.zeros(
+        (destination_edges.size - 1, source_edges.size - 1),
+        dtype=np.float64,
+    )
     for destination_index in range(destination_edges.size - 1):
         destination_low = destination_edges[destination_index]
         destination_high = destination_edges[destination_index + 1]
@@ -147,7 +156,9 @@ def conservative_remap_rainfall(
     sy = _as_increasing_edges(source_y_edges_m, name="source_y_edges_m")
     dx = _as_increasing_edges(destination_x_edges_m, name="destination_x_edges_m")
     dy = _as_increasing_edges(destination_y_edges_m, name="destination_y_edges_m")
-    if not np.allclose([sx[0], sx[-1], sy[0], sy[-1]], [dx[0], dx[-1], dy[0], dy[-1]]):
+    source_extent = [sx[0], sx[-1], sy[0], sy[-1]]
+    destination_extent = [dx[0], dx[-1], dy[0], dy[-1]]
+    if not np.allclose(source_extent, destination_extent):
         raise ValueError("source and destination rainfall grids must cover the same domain")
 
     rates = np.asarray(rain_rate_mm_h, dtype=np.float64)
@@ -162,14 +173,18 @@ def conservative_remap_rainfall(
     x_overlap = _overlap_matrix(dx, sx)
     y_overlap = _overlap_matrix(dy, sy)
     destination_area = np.diff(dy)[:, np.newaxis] * np.diff(dx)[np.newaxis, :]
-    output = np.zeros((rates.shape[0], dy.size - 1, dx.size - 1), dtype=np.float64)
+    output = np.zeros(
+        (rates.shape[0], dy.size - 1, dx.size - 1),
+        dtype=np.float64,
+    )
     for time_index in range(rates.shape[0]):
         weighted = y_overlap @ rates[time_index] @ x_overlap.T
         output[time_index] = weighted / destination_area
 
     before = rainfall_volume_m3(rates, sx, sy, timestep_seconds=timestep_seconds)
     after = rainfall_volume_m3(output, dx, dy, timestep_seconds=timestep_seconds)
-    denominator = max(abs(before), np.finfo(np.float64).eps)
+    numerical_epsilon = float(np.finfo(np.float64).eps)
+    denominator = max(abs(before), numerical_epsilon)
     relative_error = abs(before - after) / denominator
     conservation = RainfallConservationResult(
         volume_before_m3=before,
