@@ -8,7 +8,7 @@ from typing import Protocol
 
 from minio import Minio
 from minio.error import S3Error
-from minio.versioningconfig import ENABLED, VersioningConfig
+from minio.versioningconfig import VersioningConfig
 
 
 class ImmutableObjectExistsError(RuntimeError):
@@ -56,7 +56,7 @@ class MinioRawVault:
     def ensure_ready(self) -> None:
         if not self.client.bucket_exists(self.bucket):
             self.client.make_bucket(self.bucket)
-        self.client.set_bucket_versioning(self.bucket, VersioningConfig(ENABLED))
+        self.client.set_bucket_versioning(self.bucket, VersioningConfig("Enabled"))
 
     def _assert_absent(self, object_key: str) -> None:
         try:
