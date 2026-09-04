@@ -33,6 +33,11 @@ def upgrade() -> None:
         sa.Column("error_message", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
+        sa.ForeignKeyConstraint(
+            ["previous_version_id"],
+            ["harvest_dataset_versions.dataset_version_id"],
+            ondelete="RESTRICT",
+        ),
         sa.PrimaryKeyConstraint("dataset_version_id"),
         sa.UniqueConstraint(
             "source_id",
