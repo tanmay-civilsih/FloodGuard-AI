@@ -31,6 +31,7 @@ from floodguard.registry.contracts import (
 
 HARVEST_NAMESPACE = UUID("6871d123-22f0-44d4-b17a-2cf9813e6396")
 _OBJECT_SEGMENT = re.compile(r"^[A-Za-z0-9._-]+$")
+_USER_AGENT = "FloodGuard-AI/0.3 (+https://github.com/tanmay-civilsih/FloodGuard-AI)"
 
 
 class HarvestAccessError(PermissionError):
@@ -109,8 +110,9 @@ def _authorization_headers(
     include_authorized: bool,
     parameters: Mapping[str, object],
 ) -> dict[str, str]:
+    headers = {"User-Agent": _USER_AGENT}
     if source.authentication_type is AuthenticationType.NONE:
-        return {}
+        return headers
     if not include_authorized:
         raise HarvestAccessError(
             "authorized source skipped unless include_authorized is explicitly enabled"
@@ -123,14 +125,16 @@ def _authorization_headers(
         AuthenticationType.OAUTH2,
         AuthenticationType.EARTHDATA_LOGIN,
     }:
-        return {"Authorization": f"Bearer {credential}"}
+        headers["Authorization"] = f"Bearer {credential}"
+        return headers
     if source.authentication_type is AuthenticationType.API_KEY:
         header_value = parameters.get("api_key_header")
         if not isinstance(header_value, str) or not header_value.strip():
             raise CredentialResolutionError(
                 "API_KEY acquisition requires an explicit api_key_header parameter"
             )
-        return {header_value: credential}
+        headers[header_value] = credential
+        return headers
     raise CredentialResolutionError(
         f"authentication type {source.authentication_type.value} has no generic adapter"
     )
