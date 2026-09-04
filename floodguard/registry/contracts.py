@@ -45,6 +45,9 @@ class AccessMethod(StrEnum):
     CKAN = "CKAN"
     REST = "REST"
     STAC = "STAC"
+    WMS = "WMS"
+    WFS = "WFS"
+    WMTS = "WMTS"
     OVERPASS = "OVERPASS"
     PBF_EXTRACT = "PBF_EXTRACT"
     PORTAL = "PORTAL"
@@ -140,7 +143,7 @@ class SourceCreate(SourceBase):
     @model_validator(mode="after")
     def validate_fallback(self) -> "SourceCreate":
         if self.fallback_source_id == self.source_id:
-            raise ValueError("a source cannot fall back to itself")
+            raise ValueError("source cannot reference itself as fallback")
         return self
 
 
@@ -148,9 +151,10 @@ class SourceReplace(SourceBase):
     pass
 
 
-class SourceRead(SourceCreate):
+class SourceRead(SourceBase):
     model_config = ConfigDict(from_attributes=True)
 
+    source_id: UUID
     created_at: UtcDateTime
     updated_at: UtcDateTime
 
