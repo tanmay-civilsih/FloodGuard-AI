@@ -7,8 +7,8 @@ import json
 import os
 import re
 import tempfile
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Mapping
 from uuid import UUID, uuid4, uuid5
 
 from floodguard.contracts.time import utc_now
