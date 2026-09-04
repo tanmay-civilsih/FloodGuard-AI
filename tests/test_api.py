@@ -29,5 +29,5 @@ def test_invalid_correlation_id_is_rejected() -> None:
 def test_version_endpoint() -> None:
     response = client.get("/version")
     assert response.status_code == 200
-    assert response.json()["sequence"] == 1
-    assert response.json()["version"] == "0.1.0"
+    assert response.json()["sequence"] == 2
+    assert response.json()["version"] == "0.2.0"
