@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from uuid import UUID
 
@@ -63,6 +63,13 @@ class HarvesterRepository:
         )
         return list(self.session.scalars(statement).all())
 
+    def harvested_source_ids(self, *, city_id: str) -> set[UUID]:
+        statement = select(DatasetVersionRecord.source_id).where(
+            DatasetVersionRecord.city_id == city_id,
+            DatasetVersionRecord.status == DatasetVersionStatus.COMPLETE.value,
+        )
+        return set(self.session.scalars(statement).all())
+
     def reserve_version(
         self,
         *,
@@ -114,7 +121,7 @@ class HarvesterRepository:
         if record.status != DatasetVersionStatus.PENDING.value:
             raise ValueError("only PENDING dataset versions can be completed")
         for item in objects:
-            self.session.add(RawObjectRecord(**item.__dict__))
+            self.session.add(RawObjectRecord(**asdict(item)))
         record.manifest_object_key = manifest_object_key
         record.object_count = len(objects)
         record.total_bytes = total_bytes
