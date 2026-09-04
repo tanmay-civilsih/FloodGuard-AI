@@ -14,7 +14,6 @@ from floodguard.registry.contracts import AccessMethod, SourceRead
 from floodguard.registry.database import get_session_factory
 from floodguard.registry.service import RegistryService
 
-
 SAFE_DEFAULT_METHODS = {
     AccessMethod.CKAN,
     AccessMethod.HTTP,
