@@ -12,6 +12,7 @@ from starlette.responses import Response
 
 from apps.api.routers.harvester import router as harvester_router
 from apps.api.routers.registry import router as registry_router
+from apps.api.routers.spatial import router as spatial_router
 from floodguard import __version__
 from floodguard.common.config import get_settings
 from floodguard.common.logging import configure_logging
@@ -28,6 +29,7 @@ app = FastAPI(
 )
 app.include_router(registry_router)
 app.include_router(harvester_router)
+app.include_router(spatial_router)
 
 
 class HealthResponse(BaseModel):
@@ -44,7 +46,7 @@ class ReadyResponse(BaseModel):
 class VersionResponse(BaseModel):
     name: Literal["FloodGuard-AI"] = "FloodGuard-AI"
     version: str
-    sequence: Literal[3] = 3
+    sequence: Literal[4] = 4
 
 
 @app.middleware("http")
