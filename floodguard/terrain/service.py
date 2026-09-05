@@ -38,7 +38,7 @@ from floodguard.terrain.models import TerrainRecord
 from floodguard.terrain.repository import TerrainRepository
 
 TERRAIN_NAMESPACE = UUID("8bb3b744-5f90-4a2b-a2a5-e1a11e8c2c1a")
-TERRAIN_PIPELINE_VERSION = "sequence-6-terrain-v1"
+TERRAIN_PIPELINE_VERSION = "sequence-6-terrain-v2"
 
 
 class TerrainConditioningError(RuntimeError):
@@ -88,11 +88,11 @@ def _fingerprint(
 def _readiness_status(package: TerrainPackage) -> TerrainReadinessStatus:
     vertical_is_usable = (
         package.source_surface_type.value in {"DSM", "DTM"}
-        and
-        package.vertical_quality is not VerticalQuality.UNKNOWN
+        and package.vertical_quality is not VerticalQuality.UNKNOWN
         and package.vertical_datum is not None
         and package.vertical_unit is not None
-        and package.datum_transform_status.value in {"COMPATIBLE", "TRANSFORMED"}
+        # A TRANSFORMED label alone does not establish transformation provenance.
+        and package.datum_transform_status.value == "COMPATIBLE"
     )
     assessments_complete = package.depression_assessment in {
         AssessmentStatus.CATALOGUED,
@@ -105,22 +105,19 @@ def _readiness_status(package: TerrainPackage) -> TerrainReadinessStatus:
         return TerrainReadinessStatus.VISUAL_READY
 
     validation = package.vertical_validation
-    checks_passed = all(
-        check in {ValidationCheckStatus.PASSED, ValidationCheckStatus.NOT_APPLICABLE}
+    checks_failed = any(
+        check is ValidationCheckStatus.FAILED
         for check in (
             validation.road_sag_validation,
             validation.underpass_validation,
             validation.drain_rim_elevation_consistency,
         )
     )
-    if (
-        validation.method
-        and validation.rmse_m is not None
-        and validation.rmse_m <= validation.rmse_limit_m
-        and validation.control_point_count >= 3
-        and checks_passed
+    if checks_failed or (
+        validation.rmse_m is not None and validation.rmse_m > validation.rmse_limit_m
     ):
-        return TerrainReadinessStatus.HYDRAULIC_VALIDATED
+        return TerrainReadinessStatus.VISUAL_READY
+    # Summary metadata is not independently recomputed validation evidence.
     return TerrainReadinessStatus.HYDRAULIC_SCENARIO_READY
 
 
@@ -157,6 +154,8 @@ class TerrainService:
             raise TerrainConditioningError("dataset version city does not match registry source")
         if raw_object.dataset_version_id != dataset_version.dataset_version_id:
             raise TerrainConditioningError("raw object does not belong to the dataset version")
+        if raw_object not in dataset_version.objects:
+            raise TerrainConditioningError("raw object does not match the immutable manifest entry")
         if raw_object.byte_size > self.max_object_bytes:
             raise TerrainConditioningError("raw elevation object exceeds configured size limit")
 
@@ -410,13 +409,19 @@ class TerrainService:
 
     def readiness(self, *, city_id: str) -> TerrainReadiness:
         records = self.repository.list_products(city_id=city_id)
+        # Preserve old artifacts but never let obsolete policy or superseded results pass a gate.
+        latest_by_pilot: dict[str, TerrainRecord] = {}
+        for record in records:
+            if record.pipeline_version == TERRAIN_PIPELINE_VERSION:
+                latest_by_pilot.setdefault(record.pilot_area_id, record)
+        eligible = list(latest_by_pilot.values())
         counts = {
             TerrainReadinessStatus.NOT_READY: 0,
             TerrainReadinessStatus.VISUAL_READY: 0,
             TerrainReadinessStatus.HYDRAULIC_SCENARIO_READY: 0,
             TerrainReadinessStatus.HYDRAULIC_VALIDATED: 0,
         }
-        for record in records:
+        for record in eligible:
             counts[TerrainReadinessStatus(record.readiness_status)] += 1
         rank = {
             TerrainReadinessStatus.NOT_READY: 0,
@@ -434,15 +439,17 @@ class TerrainService:
             TerrainReadinessStatus.HYDRAULIC_VALIDATED
         ] > 0
         reason = (
-            "At least one pilot terrain has explicit visual/hydraulic products, preserved "
-            "depression decisions, multi-level structure metadata, and conservative readiness."
+            "At least one current-pipeline pilot terrain has explicit visual/hydraulic products, "
+            "preserved depression decisions, multi-level metadata, and conservative readiness."
             if completion
-            else "No terrain is scenario-ready; supply a versioned metric elevation package and "
-            "complete depression, multi-level, and vertical-reference assessments."
+            else "No current-pipeline terrain is scenario-ready; rebuild a versioned metric "
+            "elevation package and complete depression, multi-level, and vertical assessments."
         )
         return TerrainReadiness(
             city_id=city_id,
             total_terrains=len(records),
+            eligible_terrains=len(eligible),
+            historical_terrains=len(records) - len(eligible),
             not_ready=counts[TerrainReadinessStatus.NOT_READY],
             visual_ready=counts[TerrainReadinessStatus.VISUAL_READY],
             hydraulic_scenario_ready=counts[TerrainReadinessStatus.HYDRAULIC_SCENARIO_READY],

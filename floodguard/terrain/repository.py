@@ -45,7 +45,9 @@ class TerrainRepository:
         statement = select(TerrainRecord)
         if city_id is not None:
             statement = statement.where(TerrainRecord.city_id == city_id)
-        statement = statement.order_by(TerrainRecord.created_at.desc())
+        statement = statement.order_by(
+            TerrainRecord.created_at.desc(), TerrainRecord.terrain_id.desc()
+        )
         return list(self.session.scalars(statement).all())
 
     @staticmethod
@@ -55,4 +57,3 @@ class TerrainRepository:
     @staticmethod
     def reads(records: Sequence[TerrainRecord]) -> list[TerrainProductRead]:
         return [TerrainProductRead.model_validate(record) for record in records]
-

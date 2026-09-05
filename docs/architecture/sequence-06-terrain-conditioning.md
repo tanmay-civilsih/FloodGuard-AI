@@ -61,11 +61,25 @@ drain_rim_elevation_consistency
 validation_limitations
 ```
 
-`HYDRAULIC_VALIDATED` requires a method, RMSE within its declared limit, at least three control
-points, and all three contextual checks passed or explicitly not applicable. If those observations
-are unavailable, readiness remains `HYDRAULIC_SCENARIO_READY` or `VISUAL_READY`. The completion gate
-requires at least one scenario-ready/validated product plus documented depression and multi-level
-assessments; CRS or metadata alone cannot pass it.
+### Atomic increment 6.1 — fail-closed inputs and readiness
+
+Input contracts reject non-finite values, all-nodata grids, blank evidence, duplicate JSON keys,
+unknown fields, contradictory catalogs and out-of-grid structures. Effective information resolution
+cannot be finer than either the native source or the computational grid. Supplied elevations are
+always metres; this worker does not perform implicit unit conversions.
+
+Summary RMSE/count/check labels alone cannot establish `HYDRAULIC_VALIDATED`. Missing observations
+cap readiness at `HYDRAULIC_SCENARIO_READY`. Explicit failed checks or RMSE above the declared limit
+downgrade to `VISUAL_READY`. A `TRANSFORMED` label without a supported transformation-evidence
+contract also remains visual-only. The default 5 m RMSE limit is a prototype screening setting,
+not an engineering acceptance standard.
+
+Readiness counts only the latest product per pilot from the current pipeline policy. Historical
+products remain readable and immutable but cannot satisfy the gate. The response distinguishes
+`total_terrains`, `eligible_terrains`, and `historical_terrains`; status counts cover eligible products.
+Rebuild packages after a pipeline-version change. The completion gate requires at least one eligible
+scenario-ready product plus documented depression and multi-level assessments; it is not a freeze
+approval or proof of real pilot observations.
 
 ## Artifacts and API
 

@@ -54,9 +54,17 @@ def package_bytes(package: TerrainPackage) -> bytes:
 
 def decode_package(payload: bytes) -> TerrainPackage:
     """Decode a versioned JSON terrain package from the immutable raw vault."""
+    def unique_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError(f"duplicate terrain JSON key: {key}")
+            result[key] = value
+        return result
+
     try:
-        raw: Any = json.loads(payload)
-    except json.JSONDecodeError as exc:
+        raw: Any = json.loads(payload.decode("utf-8"), object_pairs_hook=unique_keys)
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise ValueError("terrain input must be a UTF-8 JSON terrain package") from exc
     if not isinstance(raw, dict):
         raise ValueError("terrain input package must be a JSON object")

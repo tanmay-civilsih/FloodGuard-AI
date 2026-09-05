@@ -7,10 +7,14 @@ from sqlalchemy.pool import StaticPool
 
 from floodguard.registry.models import Base
 from floodguard.spatial.object_store import MemorySpatialObjectStore
-from floodguard.terrain.contracts import TerrainReadinessStatus, VerticalQuality
+from floodguard.terrain.contracts import TerrainPackage, TerrainReadinessStatus, VerticalQuality
 from floodguard.terrain.grid import package_bytes
 from floodguard.terrain.repository import TerrainRepository
-from floodguard.terrain.service import TerrainConditioningError, TerrainService
+from floodguard.terrain.service import (
+    TerrainConditioningError,
+    TerrainService,
+    _readiness_status,
+)
 from tests.terrain_fixtures import source_and_version, synthetic_package
 
 
@@ -128,5 +132,95 @@ def test_unknown_vertical_reference_stays_visual_ready() -> None:
         readiness = service.readiness(city_id="kolkata")
         assert readiness.completion_gate_passed is False
         assert readiness.visual_ready == 1
+    finally:
+        session.close()
+
+
+def test_summary_metrics_cannot_claim_hydraulic_validation() -> None:
+    data = synthetic_package().model_dump()
+    data["vertical_validation"].update(
+        method="claimed survey", rmse_m=0.1, control_point_count=100,
+        road_sag_validation="PASSED", underpass_validation="PASSED",
+        drain_rim_elevation_consistency="NOT_APPLICABLE",
+    )
+    assert _readiness_status(TerrainPackage.model_validate(data)) is (
+        TerrainReadinessStatus.HYDRAULIC_SCENARIO_READY
+    )
+
+
+@pytest.mark.parametrize(
+    "validation",
+    [
+        {"road_sag_validation": "FAILED"},
+        {"underpass_validation": "FAILED"},
+        {"drain_rim_elevation_consistency": "FAILED"},
+        {"rmse_m": 6, "control_point_count": 3},
+    ],
+)
+def test_failed_validation_is_not_scenario_ready(validation) -> None:
+    data = synthetic_package().model_dump()
+    data["vertical_validation"].update(validation)
+    assert _readiness_status(TerrainPackage.model_validate(data)) is (
+        TerrainReadinessStatus.VISUAL_READY
+    )
+
+
+def test_transform_label_without_evidence_is_not_scenario_ready() -> None:
+    data = synthetic_package().model_dump()
+    data["datum_transform_status"] = "TRANSFORMED"
+    assert _readiness_status(TerrainPackage.model_validate(data)) is (
+        TerrainReadinessStatus.VISUAL_READY
+    )
+
+
+def test_old_pipeline_cannot_satisfy_current_gate() -> None:
+    source, version, raw_object, payload = source_and_version()
+    service, session = _service(raw_object.object_key, payload)
+    try:
+        result = service.build_from_raw(source, version, raw_object)
+        record = service.repository.get(result.terrain_id)
+        assert record is not None
+        record.pipeline_version = "sequence-6-terrain-v1"
+        record.readiness_status = "HYDRAULIC_VALIDATED"
+        session.commit()
+        readiness = service.readiness(city_id="kolkata")
+        assert not readiness.completion_gate_passed
+        assert readiness.best_readiness_status is TerrainReadinessStatus.NOT_READY
+        assert readiness.eligible_terrains == 0
+        assert readiness.historical_terrains == readiness.total_terrains == 1
+        assert service.get(result.terrain_id).pipeline_version == "sequence-6-terrain-v1"
+    finally:
+        session.close()
+
+
+def test_unlisted_raw_object_is_rejected() -> None:
+    source, version, raw_object, payload = source_and_version()
+    service, session = _service(raw_object.object_key, payload)
+    try:
+        with pytest.raises(TerrainConditioningError, match="immutable manifest entry"):
+            service.build_from_raw(source, version.model_copy(update={"objects": []}), raw_object)
+    finally:
+        session.close()
+
+
+def test_new_failed_pilot_product_supersedes_earlier_scenario_ready_product() -> None:
+    source, version, raw_object, payload = source_and_version()
+    service, session = _service(raw_object.object_key, payload)
+    try:
+        service.build_from_raw(source, version, raw_object)
+        data = synthetic_package().model_dump()
+        data["vertical_validation"]["underpass_validation"] = "FAILED"
+        new_payload = package_bytes(TerrainPackage.model_validate(data))
+        new_source, new_version, new_object, _ = source_and_version(new_payload)
+        # Replacing a store is confined to this test; real raw objects remain immutable.
+        service.object_store = MemorySpatialObjectStore(
+            raw_objects={new_object.object_key: new_payload}
+        )
+        service.build_from_raw(new_source, new_version, new_object)
+        readiness = service.readiness(city_id="kolkata")
+        assert readiness.total_terrains == 2
+        assert readiness.eligible_terrains == readiness.historical_terrains == 1
+        assert readiness.visual_ready == 1
+        assert not readiness.completion_gate_passed
     finally:
         session.close()

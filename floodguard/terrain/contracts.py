@@ -11,6 +11,7 @@ from __future__ import annotations
 import math
 from datetime import datetime
 from enum import StrEnum
+from typing import Annotated
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -73,7 +74,16 @@ class AssessmentStatus(StrEnum):
     CONFIRMED_NONE = "CONFIRMED_NONE"
 
 
-class TerrainGrid(BaseModel):
+class TerrainInput(BaseModel):
+    """Fail closed on misspelled fields, non-finite numbers and blank evidence."""
+
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False, str_strip_whitespace=True)
+
+
+EvidenceText = Annotated[str, Field(min_length=1)]
+
+
+class TerrainGrid(TerrainInput):
     """A rectilinear metric grid with explicit source and computational shape."""
 
     width: int = Field(ge=1)
@@ -94,6 +104,12 @@ class TerrainGrid(BaseModel):
             for value in row:
                 if value is not None and not math.isfinite(value):
                     raise ValueError("elevations_m values must be finite or null")
+        if not any(value is not None for row in self.elevations_m for value in row):
+            raise ValueError("terrain grid must contain at least one elevation")
+        if not all(math.isfinite(value) for value in self.bounds):
+            raise ValueError("terrain grid bounds must be finite")
+        if self.bounds[2] <= self.origin_x_m or self.bounds[3] <= self.origin_y_m:
+            raise ValueError("terrain grid bounds must have positive area")
         return self
 
     @property
@@ -106,7 +122,7 @@ class TerrainGrid(BaseModel):
         ]
 
 
-class TerrainIntervention(BaseModel):
+class TerrainIntervention(TerrainInput):
     """One explicit, provenance-backed change to the hydraulic surface."""
 
     row: int = Field(ge=0)
@@ -128,7 +144,7 @@ class TerrainIntervention(BaseModel):
         return self
 
 
-class MultiLevelStructure(BaseModel):
+class MultiLevelStructure(TerrainInput):
     """A separately catalogued upper/lower level affecting hydraulic connectivity."""
 
     structure_id: str = Field(min_length=1, max_length=160)
@@ -151,10 +167,10 @@ class MultiLevelStructure(BaseModel):
         return self
 
 
-class VerticalValidation(BaseModel):
+class VerticalValidation(TerrainInput):
     """Evidence used to distinguish scenario-ready from hydraulically validated terrain."""
 
-    method: str | None = Field(default=None, max_length=300)
+    method: str | None = Field(default=None, min_length=1, max_length=300)
     rmse_m: float | None = Field(default=None, ge=0)
     control_point_count: int = Field(default=0, ge=0)
     rmse_limit_m: float = Field(default=5.0, gt=0)
@@ -163,7 +179,7 @@ class VerticalValidation(BaseModel):
     drain_rim_elevation_consistency: ValidationCheckStatus = (
         ValidationCheckStatus.NOT_ASSESSED
     )
-    limitations: list[str] = Field(min_length=1)
+    limitations: list[EvidenceText] = Field(min_length=1)
 
     @model_validator(mode="after")
     def validate_metrics(self) -> VerticalValidation:
@@ -171,21 +187,19 @@ class VerticalValidation(BaseModel):
             raise ValueError("vertical_rmse_m must be finite")
         if self.rmse_m is not None and self.control_point_count == 0:
             raise ValueError("vertical RMSE requires at least one control point")
-        if self.rmse_m is not None and self.rmse_m > self.rmse_limit_m:
-            return self
         if self.method is not None and self.control_point_count == 0:
             raise ValueError("vertical validation method requires control points")
         return self
 
 
-class TerrainPackage(BaseModel):
+class TerrainPackage(TerrainInput):
     """Immutable input package consumed by the terrain worker."""
 
     pilot_area_id: str = Field(min_length=1, max_length=160)
     grid: TerrainGrid
     source_surface_type: SurfaceType
-    vertical_datum: str | None = None
-    vertical_unit: str | None = None
+    vertical_datum: str | None = Field(default=None, min_length=1)
+    vertical_unit: str | None = Field(default=None, min_length=1)
     datum_transform_status: DatumTransformStatus = DatumTransformStatus.UNRESOLVED
     vertical_quality: VerticalQuality = VerticalQuality.UNKNOWN
     native_horizontal_resolution_m: float = Field(gt=0)
@@ -197,31 +211,48 @@ class TerrainPackage(BaseModel):
     multi_level_structures: list[MultiLevelStructure] = Field(default_factory=list)
     vertical_validation: VerticalValidation
     max_conditioning_adjustment_m: float = Field(default=10.0, gt=0)
-    limitations: list[str] = Field(min_length=1)
+    limitations: list[EvidenceText] = Field(min_length=1)
 
     @model_validator(mode="after")
     def validate_resolution_and_reference(self) -> TerrainPackage:
-        if self.effective_information_resolution_m < self.native_horizontal_resolution_m:
+        if self.effective_information_resolution_m < max(
+            self.native_horizontal_resolution_m, self.computational_resolution_m
+        ):
             raise ValueError(
-                "effective_information_resolution_m cannot imply finer source information"
+                "effective_information_resolution_m cannot imply finer source or grid information"
             )
         if self.grid.cell_size_m != self.computational_resolution_m:
             raise ValueError("grid cell_size_m must equal computational_resolution_m")
-        if self.vertical_quality is not VerticalQuality.UNKNOWN:
-            if not self.vertical_datum or not self.vertical_unit:
-                raise ValueError("known vertical quality requires datum and unit")
-            if self.vertical_unit.lower() not in {
-                "m",
-                "metre",
-                "meter",
-                "metres",
-                "meters",
-            }:
-                raise ValueError("terrain elevation units must be metres")
+        if self.vertical_quality is not VerticalQuality.UNKNOWN and (
+            not self.vertical_datum or not self.vertical_unit
+        ):
+            raise ValueError("known vertical quality requires datum and unit")
+        if self.vertical_unit is not None and self.vertical_unit.lower() not in {
+            "m", "metre", "meter", "metres", "meters",
+        }:
+            raise ValueError("terrain elevation units must be metres")
         if self.multi_level_assessment is AssessmentStatus.CATALOGUED and not (
             self.multi_level_structures
         ):
             raise ValueError("catalogued multi-level assessment requires a structure catalog")
+        if self.multi_level_structures and self.multi_level_assessment is not (
+            AssessmentStatus.CATALOGUED
+        ):
+            raise ValueError("structure catalog requires CATALOGUED assessment")
+        structure_ids = [item.structure_id for item in self.multi_level_structures]
+        if len(structure_ids) != len(set(structure_ids)):
+            raise ValueError("structure IDs must be unique")
+        xmin, ymin, xmax, ymax = self.grid.bounds
+        for structure in self.multi_level_structures:
+            sxmin, symin, sxmax, symax = structure.bounds_working
+            if sxmax <= xmin or symax <= ymin or sxmin >= xmax or symin >= ymax:
+                raise ValueError("structure bounds must intersect the terrain grid")
+        preserved = any(
+            item.kind is TerrainInterventionKind.PRESERVE_DEPRESSION
+            for item in self.interventions
+        )
+        if (self.depression_assessment is AssessmentStatus.CATALOGUED) != preserved:
+            raise ValueError("catalogued depression assessment requires preserved depression cells")
         return self
 
 
@@ -297,6 +328,8 @@ class TerrainBuildResult(BaseModel):
 class TerrainReadiness(BaseModel):
     city_id: str
     total_terrains: int
+    eligible_terrains: int = 0
+    historical_terrains: int = 0
     not_ready: int
     visual_ready: int
     hydraulic_scenario_ready: int
