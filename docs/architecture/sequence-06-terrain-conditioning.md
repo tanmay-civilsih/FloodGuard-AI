@@ -119,6 +119,29 @@ terrain/{city_id}/{source_id}/{dataset_version_id}/{terrain_id}/
 `GET /terrain/qa` expose metadata and bounded WGS 84 QA geometry. Heavy work belongs to
 `floodguard.terrain.bootstrap`, never to a request handler.
 
+### Atomic increment 6.3 — trustworthy QA geometry and viewer
+
+QA emits at most 2,500 **terrain-cell** polygons, including on narrow grids. It prioritizes explicit
+intervention cells and samples the remaining valid cells deterministically. If interventions alone
+exceed the cap, their omitted count is reported. Each polygon covers its actual single source cell:
+no stride-sized block borrows one sampled elevation, no nodata hole is painted over, and no final
+cell extends beyond the grid. Multi-level catalog polygons are separate from the cell cap and retain
+their projected corners and provenance.
+
+The GeoJSON includes a finite WGS84 `bbox` and `sampling` metadata (valid/displayed/omitted cells,
+omitted interventions, method and cap). The viewer uses that bbox, or a coordinate-pair-preserving
+fallback for historical artifacts. It shows the selected product's status, marks historical products
+excluded from the gate, explains sampling and limitations, and links to the audit. City selection
+uses `/terrain/qa?city_id=kolkata`. Metadata is inserted as literal text, never HTML; obsolete async
+responses cannot replace a newer selection.
+
+The runtime policy is `sequence-6-terrain-v4`; rebuild existing raw packages to create new immutable
+products. Readiness exposes `current_pipeline_version` so the viewer can distinguish historical
+products. Tests cover thin grids, individual cell footprints, nodata, catalog corners and invalid
+projection results. Five Node.js tests execute the actual viewer script with DOM/MapLibre doubles,
+including unsafe-looking metadata, HTTP failures and selection races. They are skipped explicitly
+when Node.js is absent. They do not replace a real browser/WebGL/CDN or Docker integration check.
+
 ## Scientific boundary
 
 This checkpoint demonstrates defensible preparation and auditable conditioning logic. It is not a

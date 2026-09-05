@@ -39,7 +39,7 @@ from floodguard.terrain.repository import TerrainRepository
 from floodguard.terrain.validation import VerticalEvaluation, evaluate_vertical_controls
 
 TERRAIN_NAMESPACE = UUID("8bb3b744-5f90-4a2b-a2a5-e1a11e8c2c1a")
-TERRAIN_PIPELINE_VERSION = "sequence-6-terrain-v3"
+TERRAIN_PIPELINE_VERSION = "sequence-6-terrain-v4"
 
 
 class TerrainConditioningError(RuntimeError):
@@ -472,6 +472,7 @@ class TerrainService:
         )
         return TerrainReadiness(
             city_id=city_id,
+            current_pipeline_version=TERRAIN_PIPELINE_VERSION,
             total_terrains=len(records),
             eligible_terrains=len(eligible),
             historical_terrains=len(records) - len(eligible),

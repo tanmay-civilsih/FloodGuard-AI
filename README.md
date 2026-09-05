@@ -16,6 +16,10 @@ hydraulic terrain as separate immutable products. It applies only explicit, prov
 conditioning interventions, preserves genuine depressions, catalogs multi-level structures, and
 assigns conservative readiness from vertical validation evidence.
 
+Atomic follow-on checkpoints harden input/readiness rules, recompute supplied control-observation
+residuals, and make the QA map's sampling and selected-product status explicit. These checkpoints
+are not the Sequence 6 freeze; real pilot terrain evidence and service/engineering QA remain required.
+
 The checkpoint intentionally accepts an approved metric `*.terrain.json` package as a small,
 deterministic interchange contract. It does not fabricate a DEM, silently convert DSM to DTM, or
 claim hydraulic validation where vertical observations are unavailable. Sequence 5's real Ward 7
@@ -25,6 +29,7 @@ reconstruction remains available through its human-reviewed QA record.
 
 - Python **3.12.x**
 - Docker Engine + Docker Compose v2
+- Node.js (optional: enables the five terrain-viewer JavaScript behavior tests)
 
 ## Local setup
 
@@ -108,6 +113,11 @@ python scripts/verify.py --terrain-bootstrap
 
 The command reports a clear limitation when no approved metric terrain package is present; it never
 uses an arbitrary elevation object as a substitute.
+
+After pulling a terrain pipeline update, rebuild the API image and rerun the terrain bootstrap.
+This preserves historical artifacts while creating current-policy products. Historical products
+remain inspectable but cannot pass the current readiness gate. The viewer reports sampling
+omissions and product-specific limitations, and links to `/terrain/products/{terrain_id}/audit`.
 
 On container startup, Alembic migrates registry, harvester, spatial, reconstruction, and review
 schemas, terrain products, and the audited Kolkata source catalogue is seeded idempotently.

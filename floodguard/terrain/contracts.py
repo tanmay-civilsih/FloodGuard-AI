@@ -355,6 +355,7 @@ class TerrainBuildResult(BaseModel):
 
 class TerrainReadiness(BaseModel):
     city_id: str
+    current_pipeline_version: str = ""
     total_terrains: int
     eligible_terrains: int = 0
     historical_terrains: int = 0

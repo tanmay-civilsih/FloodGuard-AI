@@ -35,10 +35,9 @@ def grid_from_array(template: TerrainGrid, values: FloatGrid) -> TerrainGrid:
         raise ValueError("terrain array shape does not match the grid metadata")
     elevations: list[list[float | None]] = []
     for row in values:
-        elevations.append([
-            None if not math.isfinite(float(value)) else float(value)
-            for value in row
-        ])
+        elevations.append(
+            [None if not math.isfinite(float(value)) else float(value) for value in row]
+        )
     return template.model_copy(update={"elevations_m": elevations})
 
 
@@ -54,6 +53,7 @@ def package_bytes(package: TerrainPackage) -> bytes:
 
 def decode_package(payload: bytes) -> TerrainPackage:
     """Decode a versioned JSON terrain package from the immutable raw vault."""
+
     def unique_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
         result: dict[str, Any] = {}
         for key, value in pairs:
@@ -97,21 +97,39 @@ def artifact_bytes(
     return json.dumps(document, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
 
-def _transform_bounds(
+def _transformed_ring(
     bounds: list[float],
     *,
     transformer: Transformer,
-) -> list[float]:
+) -> list[list[float]]:
     minimum_x, minimum_y, maximum_x, maximum_y = bounds
-    points = [
-        transformer.transform(minimum_x, minimum_y),
-        transformer.transform(minimum_x, maximum_y),
-        transformer.transform(maximum_x, minimum_y),
-        transformer.transform(maximum_x, maximum_y),
-    ]
-    longitudes = [float(point[0]) for point in points]
-    latitudes = [float(point[1]) for point in points]
-    return [min(longitudes), min(latitudes), max(longitudes), max(latitudes)]
+    ring: list[list[float]] = []
+    for x, y in [
+        (minimum_x, minimum_y),
+        (maximum_x, minimum_y),
+        (maximum_x, maximum_y),
+        (minimum_x, maximum_y),
+        (minimum_x, minimum_y),
+    ]:
+        longitude, latitude = transformer.transform(x, y, errcheck=True)
+        if not (
+            math.isfinite(longitude)
+            and math.isfinite(latitude)
+            and -180 <= longitude <= 180
+            and -90 <= latitude <= 90
+        ):
+            raise ValueError("terrain QA transformation produced invalid WGS84 coordinates")
+        ring.append([float(longitude), float(latitude)])
+    return ring
+
+
+def _sample_ordinals(population: int, count: int) -> set[int]:
+    count = min(population, count)
+    if count <= 0:
+        return set()
+    if count == 1:
+        return {population // 2}
+    return {index * (population - 1) // (count - 1) for index in range(count)}
 
 
 def qa_geojson(
@@ -125,67 +143,71 @@ def qa_geojson(
     """Create a bounded WGS84 QA layer without pretending it is a simulation raster."""
     if max_cells < 1:
         raise ValueError("max_cells must be positive")
+    metadata = package.grid.model_dump(exclude={"elevations_m"})
+    if any(grid.model_dump(exclude={"elevations_m"}) != metadata for grid in (visual, hydraulic)):
+        raise ValueError("QA grids must share source grid metadata")
     transformer = Transformer.from_crs(visual.crs, "EPSG:4326", always_xy=True)
-    stride = max(
-        1,
-        math.ceil(math.sqrt((visual.width * visual.height) / max_cells)),
-    )
-    features: list[dict[str, Any]] = []
-    visual_values = grid_array(visual)
-    hydraulic_values = grid_array(hydraulic)
-    for row in range(0, visual.height, stride):
-        for column in range(0, visual.width, stride):
-            visual_value = visual_values[row, column]
-            hydraulic_value = hydraulic_values[row, column]
-            if not math.isfinite(float(visual_value)):
+    valid_cells = sum(value is not None for row in visual.elevations_m for value in row)
+    priority = sorted({(item.row, item.column) for item in package.interventions})
+    for row, column in priority:
+        if (
+            row >= visual.height
+            or column >= visual.width
+            or visual.elevations_m[row][column] is None
+        ):
+            raise ValueError("QA intervention must address an in-grid elevation cell")
+    priority_set = set(priority)
+    selected = {priority[index] for index in _sample_ordinals(len(priority), max_cells)}
+    remaining = max_cells - len(selected)
+    background = _sample_ordinals(valid_cells - len(priority), remaining)
+    ordinal = 0
+    for row, values in enumerate(visual.elevations_m):
+        for column, value in enumerate(values):
+            if value is None or (row, column) in priority_set:
                 continue
-            x0 = visual.origin_x_m + column * visual.cell_size_m
-            y0 = visual.origin_y_m + row * visual.cell_size_m
-            x1 = x0 + visual.cell_size_m * stride
-            y1 = y0 + visual.cell_size_m * stride
-            corners = [
-                transformer.transform(x0, y0),
-                transformer.transform(x1, y0),
-                transformer.transform(x1, y1),
-                transformer.transform(x0, y1),
-                transformer.transform(x0, y0),
-            ]
-            features.append(
-                {
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "Polygon",
-                        "coordinates": [[[float(x), float(y)] for x, y in corners]],
-                    },
-                    "properties": {
-                        "feature_kind": "TERRAIN_CELL",
-                        "terrain_id": terrain_id,
-                        "raw_elevation_m": float(visual_value),
-                        "hydraulic_elevation_m": (
-                            None
-                            if not math.isfinite(float(hydraulic_value))
-                            else float(hydraulic_value)
-                        ),
-                        "conditioning_delta_m": (
-                            None
-                            if not math.isfinite(float(hydraulic_value))
-                            else float(hydraulic_value - visual_value)
-                        ),
-                    },
-                }
-            )
-
-    for structure in package.multi_level_structures:
-        bounds = _transform_bounds(structure.bounds_working, transformer=transformer)
-        west, south, east, north = bounds
+            if ordinal in background:
+                selected.add((row, column))
+            ordinal += 1
+    features: list[dict[str, Any]] = []
+    for row, column in sorted(selected):
+        visual_value = visual.elevations_m[row][column]
+        hydraulic_value = hydraulic.elevations_m[row][column]
+        x0 = visual.origin_x_m + column * visual.cell_size_m
+        y0 = visual.origin_y_m + row * visual.cell_size_m
+        x1 = x0 + visual.cell_size_m
+        y1 = y0 + visual.cell_size_m
+        corners = _transformed_ring([x0, y0, x1, y1], transformer=transformer)
         features.append(
             {
                 "type": "Feature",
                 "geometry": {
                     "type": "Polygon",
-                    "coordinates": [
-                        [[west, south], [east, south], [east, north], [west, north], [west, south]]
-                    ],
+                    "coordinates": [corners],
+                },
+                "properties": {
+                    "feature_kind": "TERRAIN_CELL",
+                    "terrain_id": terrain_id,
+                    "row": row,
+                    "column": column,
+                    "raw_elevation_m": visual_value,
+                    "hydraulic_elevation_m": hydraulic_value,
+                    "conditioning_delta_m": (
+                        None
+                        if hydraulic_value is None or visual_value is None
+                        else float(hydraulic_value - visual_value)
+                    ),
+                },
+            }
+        )
+
+    for structure in package.multi_level_structures:
+        ring = _transformed_ring(structure.bounds_working, transformer=transformer)
+        features.append(
+            {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [ring],
                 },
                 "properties": {
                     "feature_kind": "MULTI_LEVEL_STRUCTURE",
@@ -197,10 +219,33 @@ def qa_geojson(
                     "upper_level_role": structure.upper_level_role,
                     "lower_level_role": structure.lower_level_role,
                     "confidence": structure.confidence,
+                    "source_reference": structure.source_reference,
                 },
             }
         )
-    return {"type": "FeatureCollection", "features": features}
+    points = _transformed_ring(visual.bounds, transformer=transformer)
+    for feature in features:
+        points.extend(feature["geometry"]["coordinates"][0])
+    return {
+        "type": "FeatureCollection",
+        "features": features,
+        "bbox": [
+            min(p[0] for p in points),
+            min(p[1] for p in points),
+            max(p[0] for p in points),
+            max(p[1] for p in points),
+        ],
+        "sampling": {
+            "method": "actual-cells-intervention-first-v1",
+            "total_cells": visual.width * visual.height,
+            "valid_cells": valid_cells,
+            "displayed_cells": len(selected),
+            "omitted_cells": valid_cells - len(selected),
+            "omitted_intervention_cells": len(priority_set - selected),
+            "max_cells": max_cells,
+            "sampled": len(selected) < valid_cells,
+        },
+    }
 
 
 def sha256(payload: bytes) -> str:
