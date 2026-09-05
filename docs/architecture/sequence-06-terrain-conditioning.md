@@ -83,6 +83,32 @@ approval or proof of real pilot observations.
 
 ## Artifacts and API
 
+### Atomic increment 6.2 — recomputed control residuals
+
+`vertical_validation.control_points` optionally supplies independent observations at grid-cell
+centres. Each contains `control_id`, zero-based `row`/`column`, `reference_elevation_m`, the same
+`vertical_datum`, `source_reference`, and timezone-aware `measured_at` (normalized to UTC). The
+survey `method` is required. Duplicate IDs/cells, out-of-domain or nodata observations, incompatible
+datums and non-finite values are rejected. Coordinates are computed from the grid origin and cell
+size; this adapter does not interpolate off-centre survey observations.
+
+The worker computes residual = hydraulic elevation minus observed elevation, RMSE, mean bias and
+maximum absolute error using `hydraulic-cell-centre-residuals-v1`. Reported count/RMSE must agree
+with supplied observations; a 0.000001 m absolute RMSE tolerance covers serialization/round-off
+only, not engineering accuracy. Product RMSE/count fields now contain computed values only:
+without observations they are null/zero, even if an unverified summary was supplied. The immutable
+audit retains that reported summary, every control's provenance and every computed residual.
+
+Passing the prototype RMSE screen **does not grant `HYDRAULIC_VALIDATED`**. Independent survey
+authenticity, spatial coverage, contextual evidence and an engineering acceptance policy still need
+review. Failed computed screens downgrade readiness. No observations or zero error is never
+invented. This additive input contract and revised output semantics use a new pipeline fingerprint;
+older products remain historical, with no destructive database migration.
+
+`GET /terrain/products/{terrain_id}/audit` exposes these results. All terrain artifact endpoints
+verify SHA-256 before returning bytes; corruption produces HTTP 409. Tests include the analytical
+residuals `[3, 1, -2]` m (RMSE `sqrt(14/3)` m) and a preserved 1,000 m3 road-sag storage volume.
+
 Artifacts are content-addressed by a deterministic fingerprint under:
 
 ```text

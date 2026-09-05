@@ -9,12 +9,12 @@ same contract from a GeoTIFF/COG without changing the conditioning rules.
 from __future__ import annotations
 
 import math
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from floodguard.spatial.contracts import DatumTransformStatus
 
@@ -37,6 +37,7 @@ class TerrainProductKind(StrEnum):
     HYDRAULIC_TERRAIN = "HYDRAULIC_TERRAIN"
     MULTI_LEVEL_STRUCTURE_CATALOG = "MULTI_LEVEL_STRUCTURE_CATALOG"
     QA = "QA"
+    AUDIT = "AUDIT"
 
 
 class TerrainReadinessStatus(StrEnum):
@@ -167,12 +168,30 @@ class MultiLevelStructure(TerrainInput):
         return self
 
 
+class TerrainControlPoint(TerrainInput):
+    """An independently supplied elevation observation at a declared grid-cell centre."""
+
+    control_id: str = Field(min_length=1, max_length=160)
+    row: int = Field(ge=0)
+    column: int = Field(ge=0)
+    reference_elevation_m: float
+    vertical_datum: str = Field(min_length=1, max_length=160)
+    source_reference: str = Field(min_length=2, max_length=500)
+    measured_at: AwareDatetime
+
+    @field_validator("measured_at")
+    @classmethod
+    def normalize_time(cls, value: datetime) -> datetime:
+        return value.astimezone(UTC)
+
+
 class VerticalValidation(TerrainInput):
     """Evidence used to distinguish scenario-ready from hydraulically validated terrain."""
 
     method: str | None = Field(default=None, min_length=1, max_length=300)
     rmse_m: float | None = Field(default=None, ge=0)
     control_point_count: int = Field(default=0, ge=0)
+    control_points: list[TerrainControlPoint] = Field(default_factory=list)
     rmse_limit_m: float = Field(default=5.0, gt=0)
     road_sag_validation: ValidationCheckStatus = ValidationCheckStatus.NOT_ASSESSED
     underpass_validation: ValidationCheckStatus = ValidationCheckStatus.NOT_ASSESSED
@@ -185,9 +204,18 @@ class VerticalValidation(TerrainInput):
     def validate_metrics(self) -> VerticalValidation:
         if self.rmse_m is not None and not math.isfinite(self.rmse_m):
             raise ValueError("vertical_rmse_m must be finite")
-        if self.rmse_m is not None and self.control_point_count == 0:
+        if self.control_points:
+            if not self.method:
+                raise ValueError("control observations require a survey method")
+            if self.control_point_count not in {0, len(self.control_points)}:
+                raise ValueError("reported control count must match supplied observations")
+            ids = [point.control_id for point in self.control_points]
+            cells = [(point.row, point.column) for point in self.control_points]
+            if len(set(ids)) != len(ids) or len(set(cells)) != len(cells):
+                raise ValueError("control observations require unique IDs and cells")
+        if self.rmse_m is not None and not (self.control_point_count or self.control_points):
             raise ValueError("vertical RMSE requires at least one control point")
-        if self.method is not None and self.control_point_count == 0:
+        if self.method is not None and not (self.control_point_count or self.control_points):
             raise ValueError("vertical validation method requires control points")
         return self
 

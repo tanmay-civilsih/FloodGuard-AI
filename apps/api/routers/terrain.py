@@ -14,7 +14,7 @@ from floodguard.terrain.contracts import (
 )
 from floodguard.terrain.factory import build_terrain_service
 from floodguard.terrain.qa_viewer import QA_VIEWER_HTML
-from floodguard.terrain.service import TerrainService
+from floodguard.terrain.service import TerrainConditioningError, TerrainService
 
 router = APIRouter(prefix="/terrain", tags=["terrain"])
 
@@ -57,6 +57,12 @@ def _artifact_response(
 ) -> Response:
     try:
         payload = service.read_artifact(terrain_id, product)
+    except TerrainConditioningError as exc:
+        raise HTTPException(
+            status_code=409, detail="terrain artifact integrity check failed"
+        ) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail="terrain artifact unavailable") from exc
     except LookupError as exc:
         raise HTTPException(status_code=404, detail="terrain product not found") from exc
     media_type = "application/geo+json" if product is TerrainProductKind.QA else "application/json"
@@ -110,3 +116,11 @@ def get_qa_geojson(
 @router.get("/qa", response_class=HTMLResponse)
 def qa_viewer() -> HTMLResponse:
     return HTMLResponse(QA_VIEWER_HTML)
+
+
+@router.get("/products/{terrain_id}/audit")
+def get_audit(
+    terrain_id: UUID,
+    service: TerrainService = Depends(get_terrain_service),
+) -> Response:
+    return _artifact_response(terrain_id, TerrainProductKind.AUDIT, service)

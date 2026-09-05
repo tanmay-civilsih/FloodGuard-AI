@@ -32,6 +32,19 @@ def test_no_interventions_means_no_automatic_sink_filling_or_dsm_conversion() ->
     assert result.max_adjustment_m == 0.0
 
 
+def test_road_sag_storage_volume_is_preserved_benchmark() -> None:
+    package = synthetic_package()
+    result = condition_package(package)
+    # A 10 m by 10 m cell, 10 m below a 100 m spill level stores exactly 1,000 m3.
+    # Conditioning elsewhere must not remove this flood-relevant depression volume.
+    spill_level_m = 100.0
+    for surface in (package.grid, result.visual, result.hydraulic):
+        sag_elevation = surface.elevations_m[2][2]
+        assert sag_elevation is not None
+        volume_m3 = (spill_level_m - sag_elevation) * surface.cell_size_m ** 2
+        assert volume_m3 == 1000.0
+
+
 @pytest.mark.parametrize(
     ("kind", "target"),
     [

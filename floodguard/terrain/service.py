@@ -36,9 +36,10 @@ from floodguard.terrain.grid import (
 )
 from floodguard.terrain.models import TerrainRecord
 from floodguard.terrain.repository import TerrainRepository
+from floodguard.terrain.validation import VerticalEvaluation, evaluate_vertical_controls
 
 TERRAIN_NAMESPACE = UUID("8bb3b744-5f90-4a2b-a2a5-e1a11e8c2c1a")
-TERRAIN_PIPELINE_VERSION = "sequence-6-terrain-v2"
+TERRAIN_PIPELINE_VERSION = "sequence-6-terrain-v3"
 
 
 class TerrainConditioningError(RuntimeError):
@@ -85,7 +86,9 @@ def _fingerprint(
     ).hexdigest()
 
 
-def _readiness_status(package: TerrainPackage) -> TerrainReadinessStatus:
+def _readiness_status(
+    package: TerrainPackage, evaluation: VerticalEvaluation | None = None
+) -> TerrainReadinessStatus:
     vertical_is_usable = (
         package.source_surface_type.value in {"DSM", "DTM"}
         and package.vertical_quality is not VerticalQuality.UNKNOWN
@@ -113,7 +116,7 @@ def _readiness_status(package: TerrainPackage) -> TerrainReadinessStatus:
             validation.drain_rim_elevation_consistency,
         )
     )
-    if checks_failed or (
+    if checks_failed or (evaluation and evaluation.status is ValidationCheckStatus.FAILED) or (
         validation.rmse_m is not None and validation.rmse_m > validation.rmse_limit_m
     ):
         return TerrainReadinessStatus.VISUAL_READY
@@ -197,6 +200,7 @@ class TerrainService:
             )
 
         conditioned = condition_package(package)
+        evaluation = evaluate_vertical_controls(package, conditioned.hydraulic)
         terrain_id = uuid5(TERRAIN_NAMESPACE, fingerprint)
         prefix = (
             f"terrain/{source.city_id}/{source.source_id}/{dataset_version.dataset_version_id}/"
@@ -241,10 +245,10 @@ class TerrainService:
             sort_keys=True,
             separators=(",", ":"),
         ).encode("utf-8")
-        readiness_status = _readiness_status(package)
+        readiness_status = _readiness_status(package, evaluation)
         validation = package.vertical_validation
         audit = {
-            "artifact_version": "sequence-6-audit-v1",
+            "artifact_version": "sequence-6-audit-v2",
             "terrain_id": str(terrain_id),
             "terrain_fingerprint": fingerprint,
             "pipeline_version": TERRAIN_PIPELINE_VERSION,
@@ -273,15 +277,23 @@ class TerrainService:
             "readiness_status": readiness_status.value,
             "vertical_validation": {
                 "method": validation.method,
-                "rmse_m": validation.rmse_m,
-                "control_point_count": validation.control_point_count,
+                "rmse_m": evaluation.rmse_m,
+                "control_point_count": evaluation.control_point_count,
                 "rmse_limit_m": validation.rmse_limit_m,
                 "road_sag_validation": validation.road_sag_validation.value,
                 "underpass_validation": validation.underpass_validation.value,
                 "drain_rim_elevation_consistency": (
                     validation.drain_rim_elevation_consistency.value
                 ),
-                "limitations": validation.limitations,
+                "limitations": evaluation.limitations,
+                "reported_summary": {
+                    "rmse_m": validation.rmse_m,
+                    "control_point_count": validation.control_point_count,
+                },
+                "control_observations": [
+                    point.model_dump(mode="json") for point in validation.control_points
+                ],
+                "computed_evaluation": evaluation.model_dump(mode="json"),
             },
             "limitations": package.limitations,
         }
@@ -353,12 +365,12 @@ class TerrainService:
             vertical_unit=package.vertical_unit,
             datum_transform_status=package.datum_transform_status.value,
             vertical_validation_method=validation.method,
-            vertical_rmse_m=validation.rmse_m,
-            control_point_count=validation.control_point_count,
+            vertical_rmse_m=evaluation.rmse_m,
+            control_point_count=evaluation.control_point_count,
             road_sag_validation=validation.road_sag_validation.value,
             underpass_validation=validation.underpass_validation.value,
             drain_rim_elevation_consistency=validation.drain_rim_elevation_consistency.value,
-            validation_limitations=validation.limitations,
+            validation_limitations=evaluation.limitations,
             depression_assessment=package.depression_assessment.value,
             multi_level_assessment=package.multi_level_assessment.value,
             preserved_depression_count=conditioned.preserved_depression_count,
@@ -398,14 +410,27 @@ class TerrainService:
         if record is None:
             raise LookupError(str(terrain_id))
         if product is TerrainProductKind.RAW_ELEVATION:
-            return self.object_store.read_raw(record.raw_elevation_object_key)
-        keys = {
-            TerrainProductKind.VISUAL_TERRAIN: record.visual_terrain_object_key,
-            TerrainProductKind.HYDRAULIC_TERRAIN: record.hydraulic_terrain_object_key,
-            TerrainProductKind.MULTI_LEVEL_STRUCTURE_CATALOG: record.multi_level_object_key,
-            TerrainProductKind.QA: record.qa_object_key,
-        }
-        return self.object_store.read_spatial(keys[product])
+            payload = self.object_store.read_raw(record.raw_elevation_object_key)
+            expected_sha = record.raw_elevation_sha256
+        else:
+            artifacts = {
+                TerrainProductKind.VISUAL_TERRAIN: (
+                    record.visual_terrain_object_key, record.visual_terrain_sha256
+                ),
+                TerrainProductKind.HYDRAULIC_TERRAIN: (
+                    record.hydraulic_terrain_object_key, record.hydraulic_terrain_sha256
+                ),
+                TerrainProductKind.MULTI_LEVEL_STRUCTURE_CATALOG: (
+                    record.multi_level_object_key, record.multi_level_sha256
+                ),
+                TerrainProductKind.QA: (record.qa_object_key, record.qa_sha256),
+                TerrainProductKind.AUDIT: (record.audit_object_key, record.audit_sha256),
+            }
+            key, expected_sha = artifacts[product]
+            payload = self.object_store.read_spatial(key)
+        if sha256(payload) != expected_sha:
+            raise TerrainConditioningError("terrain artifact failed its SHA-256 integrity check")
+        return payload
 
     def readiness(self, *, city_id: str) -> TerrainReadiness:
         records = self.repository.list_products(city_id=city_id)

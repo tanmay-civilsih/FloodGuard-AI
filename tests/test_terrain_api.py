@@ -51,6 +51,7 @@ def test_terrain_readiness_products_and_qa_api() -> None:
             ("hydraulic", "application/json"),
             ("multi-level-structures", "application/json"),
             ("qa", "application/geo+json"),
+            ("audit", "application/json"),
         ):
             response = client.get(f"/terrain/products/{result.terrain_id}/{path}")
             assert response.status_code == 200
@@ -59,6 +60,17 @@ def test_terrain_readiness_products_and_qa_api() -> None:
         viewer = client.get("/terrain/qa")
         assert viewer.status_code == 200
         assert "Terrain QA" in viewer.text
+
+        audit = client.get(f"/terrain/products/{result.terrain_id}/audit").json()
+        assert audit["vertical_validation"]["computed_evaluation"]["status"] == "NOT_ASSESSED"
+        assert audit["vertical_validation"]["rmse_m"] is None
+        audit_key = service.get(result.terrain_id).audit_object_key
+        service.object_store.spatial_objects[audit_key] = b"bad"
+        corrupted = client.get(f"/terrain/products/{result.terrain_id}/audit")
+        assert corrupted.status_code == 409
+        assert "integrity" in corrupted.json()["detail"]
+        service.object_store.spatial_objects.pop(audit_key)
+        assert client.get(f"/terrain/products/{result.terrain_id}/audit").status_code == 503
     finally:
         app.dependency_overrides.clear()
         session.close()
