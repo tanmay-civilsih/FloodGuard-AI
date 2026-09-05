@@ -92,6 +92,7 @@ def artifact_bytes(
         "vertical_datum": package.vertical_datum,
         "vertical_unit": package.vertical_unit,
         "datum_transform_status": package.datum_transform_status.value,
+        "derivation": package.derivation.model_dump(mode="json") if package.derivation else None,
         "grid": (grid or package.grid).model_dump(mode="json"),
     }
     return json.dumps(document, sort_keys=True, separators=(",", ":")).encode("utf-8")

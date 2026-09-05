@@ -20,8 +20,9 @@ Atomic follow-on checkpoints harden input/readiness rules, recompute supplied co
 residuals, and make the QA map's sampling and selected-product status explicit. These checkpoints
 are not the Sequence 6 freeze; real pilot terrain evidence and service/engineering QA remain required.
 
-The checkpoint intentionally accepts an approved metric `*.terrain.json` package as a small,
-deterministic interchange contract. It does not fabricate a DEM, silently convert DSM to DTM, or
+The checkpoint accepts a versioned metric `*.terrain.json` package as a small, deterministic
+interchange contract. An explicit local importer can now prepare one from an original SRTMGL1 HGT
+file using the latest approved reconstruction's extent. It does not fabricate a DEM, silently convert DSM to DTM, or
 claim hydraulic validation where vertical observations are unavailable. Sequence 5's real Ward 7
 reconstruction remains available through its human-reviewed QA record.
 
@@ -99,7 +100,18 @@ python scripts/verify.py --reconstruction-bootstrap
 The gate requires the recorded human QA approval for the real reconstruction; it remains a separate
 gate from Sequence 6 terrain readiness.
 
-Build Sequence 6 products when an approved terrain package has been harvested:
+If no terrain product exists, inspect the real-data input requirements first:
+
+```bash
+docker compose exec -T api python -m floodguard.terrain.import_srtm --plan
+```
+
+The registered SRTM entry is a portal, not an automatic download adapter. Obtain the required
+original HGT using your authorized access, then follow the **Local PowerShell workflow** in
+[the terrain guide](docs/architecture/sequence-06-terrain-conditioning.md). Planning and dry runs
+write no data; importing creates a provenance-preserving raw version and visual-only terrain.
+
+Build Sequence 6 products when a versioned terrain package is available:
 
 ```bash
 docker compose exec -T api python -m floodguard.terrain.bootstrap --city-id kolkata
@@ -111,7 +123,7 @@ Inspect `http://localhost:8000/terrain/qa`. The terrain completion gate is expli
 python scripts/verify.py --terrain-bootstrap
 ```
 
-The command reports a clear limitation when no approved metric terrain package is present; it never
+The command reports a clear limitation when no versioned metric terrain package is present; it never
 uses an arbitrary elevation object as a substitute.
 
 After pulling a terrain pipeline update, rebuild the API image and rerun the terrain bootstrap.
@@ -181,8 +193,8 @@ limitations. With incomplete validation the status is `HYDRAULIC_SCENARIO_READY`
 becomes `HYDRAULIC_VALIDATED` from CRS metadata alone.
 
 The package contract is documented in
-`docs/architecture/sequence-06-terrain-conditioning.md`. Production raster/COG adapters may emit
-the same contract later; this checkpoint does not invent one from unavailable source bytes.
+`docs/architecture/sequence-06-terrain-conditioning.md`. The SRTMGL1 HGT importer preserves and
+verifies original raster bytes. General GeoTIFF/COG adapters remain future work.
 
 ## Horizontal reference
 

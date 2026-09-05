@@ -36,10 +36,16 @@ from floodguard.terrain.grid import (
 )
 from floodguard.terrain.models import TerrainRecord
 from floodguard.terrain.repository import TerrainRepository
+from floodguard.terrain.srtm import (
+    SRTM_INFORMATION_FLOOR_M,
+    decode_hgt,
+    native_post_spacing_m,
+    sample_hgt_grid,
+)
 from floodguard.terrain.validation import VerticalEvaluation, evaluate_vertical_controls
 
 TERRAIN_NAMESPACE = UUID("8bb3b744-5f90-4a2b-a2a5-e1a11e8c2c1a")
-TERRAIN_PIPELINE_VERSION = "sequence-6-terrain-v4"
+TERRAIN_PIPELINE_VERSION = "sequence-6-terrain-v5"
 
 
 class TerrainConditioningError(RuntimeError):
@@ -116,8 +122,10 @@ def _readiness_status(
             validation.drain_rim_elevation_consistency,
         )
     )
-    if checks_failed or (evaluation and evaluation.status is ValidationCheckStatus.FAILED) or (
-        validation.rmse_m is not None and validation.rmse_m > validation.rmse_limit_m
+    if (
+        checks_failed
+        or (evaluation and evaluation.status is ValidationCheckStatus.FAILED)
+        or (validation.rmse_m is not None and validation.rmse_m > validation.rmse_limit_m)
     ):
         return TerrainReadinessStatus.VISUAL_READY
     # Summary metadata is not independently recomputed validation evidence.
@@ -140,6 +148,63 @@ class TerrainService:
         self.object_store = object_store
         self.working_crs = working_crs
         self.max_object_bytes = max_object_bytes
+
+    def _original_elevation(
+        self, package: TerrainPackage, version: DatasetVersionRead, package_object: RawObjectRead
+    ) -> RawObjectRead:
+        derivation = package.derivation
+        if derivation is None:
+            return package_object
+        candidates = [
+            item
+            for item in version.objects
+            if item.filename == derivation.source_filename
+            and item.sha256 == derivation.source_sha256
+        ]
+        if len(candidates) != 1:
+            raise TerrainConditioningError(
+                "derived package requires one matching original elevation object"
+            )
+        original = candidates[0]
+        if original.dataset_version_id != version.dataset_version_id:
+            raise TerrainConditioningError(
+                "original elevation does not belong to this dataset version"
+            )
+        if original.byte_size > self.max_object_bytes:
+            raise TerrainConditioningError(
+                "original elevation object exceeds configured size limit"
+            )
+        payload = self.object_store.read_raw(original.object_key)
+        if len(payload) != original.byte_size or sha256(payload) != original.sha256:
+            raise TerrainConditioningError(
+                "original elevation bytes do not match the immutable manifest"
+            )
+        tile = decode_hgt(payload, original.filename)
+        grid = package.grid
+        reproduced = sample_hgt_grid(
+            tile,
+            width=grid.width,
+            height=grid.height,
+            origin_x_m=grid.origin_x_m,
+            origin_y_m=grid.origin_y_m,
+            cell_size_m=grid.cell_size_m,
+            crs=grid.crs,
+        )
+        if reproduced != grid:
+            raise TerrainConditioningError(
+                "derived grid does not reproduce the original elevation bytes"
+            )
+        if (
+            package.source_surface_type.value != "DSM"
+            or package.vertical_datum != "EGM96"
+            or package.vertical_quality is not VerticalQuality.COARSE_GLOBAL_DEM
+            or package.native_horizontal_resolution_m != native_post_spacing_m(tile)
+            or package.effective_information_resolution_m < SRTM_INFORMATION_FLOOR_M
+        ):
+            raise TerrainConditioningError(
+                "derived SRTM metadata overstates or changes source information"
+            )
+        return original
 
     def build_from_raw(
         self,
@@ -172,16 +237,12 @@ class TerrainService:
             package = decode_package(payload)
         except ValueError as exc:
             raise TerrainConditioningError(str(exc)) from exc
-        if package.derivation is not None:
-            raise TerrainConditioningError(
-                "derived packages require verified original elevation input; "
-                "use the terrain importer when available"
-            )
         if package.grid.crs != self.working_crs:
             raise TerrainConditioningError(
                 "terrain package must be in the configured metric working CRS; "
                 "run the raster reference-system adapter before conditioning"
             )
+        original_elevation = self._original_elevation(package, dataset_version, raw_object)
 
         fingerprint = _fingerprint(
             source=source,
@@ -233,8 +294,7 @@ class TerrainService:
                 "artifact_version": "sequence-6-structure-catalog-v1",
                 "terrain_id": str(terrain_id),
                 "structures": [
-                    item.model_dump(mode="json")
-                    for item in package.multi_level_structures
+                    item.model_dump(mode="json") for item in package.multi_level_structures
                 ],
             },
             sort_keys=True,
@@ -265,7 +325,7 @@ class TerrainService:
                 "source_sha256": raw_object.sha256,
             },
             "products": {
-                "raw_elevation": raw_object.object_key,
+                "raw_elevation": original_elevation.object_key,
                 "visual_terrain": visual_key,
                 "hydraulic_terrain": hydraulic_key,
                 "multi_level_structure_catalog": structure_key,
@@ -280,6 +340,14 @@ class TerrainService:
                 "automatic_dsm_to_dtm_conversion": False,
             },
             "readiness_status": readiness_status.value,
+            "derivation": package.derivation.model_dump(mode="json")
+            if package.derivation
+            else None,
+            "original_elevation": {
+                "object_id": str(original_elevation.object_id),
+                "object_key": original_elevation.object_key,
+                "sha256": original_elevation.sha256,
+            },
             "vertical_validation": {
                 "method": validation.method,
                 "rmse_m": evaluation.rmse_m,
@@ -347,13 +415,13 @@ class TerrainService:
             pipeline_version=TERRAIN_PIPELINE_VERSION,
             working_crs=self.working_crs,
             source_surface_type=package.source_surface_type.value,
-            raw_elevation_object_key=raw_object.object_key,
+            raw_elevation_object_key=original_elevation.object_key,
             visual_terrain_object_key=visual_key,
             hydraulic_terrain_object_key=hydraulic_key,
             multi_level_object_key=structure_key,
             qa_object_key=qa_key,
             audit_object_key=audit_key,
-            raw_elevation_sha256=raw_object.sha256,
+            raw_elevation_sha256=original_elevation.sha256,
             visual_terrain_sha256=sha256(visual_bytes),
             hydraulic_terrain_sha256=sha256(hydraulic_bytes),
             multi_level_sha256=sha256(structure_bytes),
@@ -420,13 +488,16 @@ class TerrainService:
         else:
             artifacts = {
                 TerrainProductKind.VISUAL_TERRAIN: (
-                    record.visual_terrain_object_key, record.visual_terrain_sha256
+                    record.visual_terrain_object_key,
+                    record.visual_terrain_sha256,
                 ),
                 TerrainProductKind.HYDRAULIC_TERRAIN: (
-                    record.hydraulic_terrain_object_key, record.hydraulic_terrain_sha256
+                    record.hydraulic_terrain_object_key,
+                    record.hydraulic_terrain_sha256,
                 ),
                 TerrainProductKind.MULTI_LEVEL_STRUCTURE_CATALOG: (
-                    record.multi_level_object_key, record.multi_level_sha256
+                    record.multi_level_object_key,
+                    record.multi_level_sha256,
                 ),
                 TerrainProductKind.QA: (record.qa_object_key, record.qa_sha256),
                 TerrainProductKind.AUDIT: (record.audit_object_key, record.audit_sha256),
@@ -465,9 +536,10 @@ class TerrainService:
             if available_statuses
             else TerrainReadinessStatus.NOT_READY
         )
-        completion = counts[TerrainReadinessStatus.HYDRAULIC_SCENARIO_READY] > 0 or counts[
-            TerrainReadinessStatus.HYDRAULIC_VALIDATED
-        ] > 0
+        completion = (
+            counts[TerrainReadinessStatus.HYDRAULIC_SCENARIO_READY] > 0
+            or counts[TerrainReadinessStatus.HYDRAULIC_VALIDATED] > 0
+        )
         reason = (
             "At least one current-pipeline pilot terrain has explicit visual/hydraulic products, "
             "preserved depression decisions, multi-level metadata, and conservative readiness."

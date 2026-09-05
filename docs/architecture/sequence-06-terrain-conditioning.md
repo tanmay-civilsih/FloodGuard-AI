@@ -2,6 +2,11 @@
 
 Status: v0.6 checkpoint on `sequence-6-conditioned-terrain`.
 
+Local validation reported by the project operator on 2026-09-05 for checkpoint `b341430`:
+130 tests, Ruff, mypy and all six Docker services passed. The real terrain gate failed with zero
+products and no COMPLETE SRTM raw version. This records software/service success and a remaining
+data dependency; it is not a Sequence 6 freeze approval.
+
 The `terrain-worker` prepares elevation products for later hydraulic simulation while retaining
 source limitations. This sequence owns terrain provenance and conditioning; it does not run a
 surface solver, infer missing elevations, or certify a hydraulic model.
@@ -142,8 +147,6 @@ projection results. Five Node.js tests execute the actual viewer script with DOM
 including unsafe-looking metadata, HTTP failures and selection races. They are skipped explicitly
 when Node.js is absent. They do not replace a real browser/WebGL/CDN or Docker integration check.
 
-## Scientific boundary
-
 ### Atomic increment 6.4 — explicit SRTM HGT conversion
 
 `floodguard.terrain.srtm` converts an original uncompressed SRTMGL1 HGT tile into a bounded metric
@@ -159,6 +162,68 @@ coarser computational cells raise that floor. This is not a local accuracy certi
 void-fill regions may be coarser. Datum compatibility and terrain assessments remain unresolved,
 so conversion alone produces `VISUAL_READY`. GeoTIFFs, ZIPs, mosaics and 3-arc-second HGT tiles are
 explicitly unsupported by this adapter. Its tests use synthetic ramps/voids solely as benchmarks.
+
+### Atomic increment 6.5 — local raster import and original-byte verification
+
+The existing automatic harvester cannot acquire a portal entry or convert an HGT. The terrain
+importer adds an explicit operator-supplied file path using the existing raw-vault/version contracts;
+it does not change the source registry, weaken the automated harvester's access checks, or download
+anything. It accepts only the registered NASA SRTMGL1 source when its status/access class permits
+local import. `imported_by` and the actual `access_reference` are mandatory and recorded as operator
+assertions, not independently verified authorization. Never put credentials into the receipt.
+
+The CLI selects the latest reconstruction for the requested city/ward and requires its recorded
+human approval. Its metric extent and working-artifact checksum become the crop's boundary
+reference. This does not turn the map extent into a hydrologic catchment or approve terrain quality.
+
+Each input version stores the original HGT, derived `pilot.terrain.json`, import receipt and manifest.
+Repeated identical inputs/receipt reuse the version; changed provenance creates a new version.
+Failed writes remain FAILED, never COMPLETE, and cannot pass readiness. `--plan` and `--dry-run`
+write no versions or objects. The plan identifies the needed tile; the dry run also validates the file.
+
+The terrain worker requires the original HGT in the same immutable manifest, verifies its hash,
+and recomputes every derived grid cell before building/reusing a terrain product. Unsupported
+metadata changes and information-resolution overstatements are rejected. `/raw` returns original
+HGT bytes as `application/octet-stream` for these products; existing JSON inputs retain JSON
+responses. The audit records both the input-package and original-raster lineage. Policy version is
+`sequence-6-terrain-v5`; existing products remain historical until rebuilt.
+
+#### Local PowerShell workflow
+
+Pull `sequence-6-conditioned-terrain`, then rebuild and inspect the required input:
+
+```powershell
+docker compose up -d --build --wait --wait-timeout 180
+docker compose exec -T api python -m floodguard.terrain.import_srtm --plan
+```
+
+Obtain the indicated **SRTMGL1 V003** tile from its
+[NASA Earthdata product page](https://www.earthdata.nasa.gov/data/catalog/lpcloud-srtmgl1-003),
+using your authorized access. For the current Kolkata pilot the tile is `N22E088.hgt`. Extract the
+original HGT from its downloaded ZIP; keep its original filename. A screenshot, GeoTIFF, renamed
+ZIP, fabricated grid or a different elevation product is not a substitute.
+
+For an original file saved at `D:\Terrain\N22E088.hgt` (replace that path as needed):
+
+```powershell
+docker compose cp "D:\Terrain\N22E088.hgt" api:/tmp/N22E088.hgt
+$accessReference = Read-Host "Describe the actual download source and access basis"
+docker compose exec -T api python -m floodguard.terrain.import_srtm --file /tmp/N22E088.hgt --imported-by "$env:USERNAME" --access-reference "$accessReference" --dry-run
+```
+
+When the dry run succeeds, run the same command without `--dry-run`:
+
+```powershell
+docker compose exec -T api python -m floodguard.terrain.import_srtm --file /tmp/N22E088.hgt --imported-by "$env:USERNAME" --access-reference "$accessReference"
+python scripts\verify.py --services
+Start-Process "http://localhost:8000/terrain/qa?city_id=kolkata"
+```
+
+Initial readiness is `VISUAL_READY`. The real terrain gate intentionally remains pending until
+local vertical-reference compatibility, depression decisions and multi-level assessments are
+documented. No controls, elevations, classifications or approvals are invented by this workflow.
+
+## Scientific boundary
 
 This checkpoint demonstrates defensible preparation and auditable conditioning logic. It is not a
 claim that Kolkata has a newly validated DEM, that the pilot has hydraulic terrain observations, or

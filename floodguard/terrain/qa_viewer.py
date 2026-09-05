@@ -128,9 +128,15 @@ async function loadQa() {
   [state.readiness, state.records] = await Promise.all([
     fetchJson(`/terrain/readiness?${query}`), fetchJson(`/terrain/products?${query}`)
   ]);
-  if (!state.records.length) throw new Error('No terrain product is available. Build a versioned metric terrain package first.');
   const selector = element('product');
   selector.replaceChildren();
+  if (!state.records.length) {
+    addText(selector, 'option', 'No terrain products');
+    selector.disabled = true;
+    element('status').className = 'visual';
+    element('status').textContent = 'No terrain product exists yet. Import an elevation dataset to populate this map.';
+    return;
+  }
   state.records.forEach(record => {
     const option = addText(selector, 'option', `${record.pilot_area_id} · ${record.readiness_status} · ${record.terrain_id}`);
     option.value = record.terrain_id;

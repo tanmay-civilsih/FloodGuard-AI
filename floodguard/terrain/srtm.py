@@ -158,13 +158,7 @@ def convert_srtm(
         cell_size_m=step,
         crs=target.working_crs,
     )
-    # Conservative scalar spacing: larger WGS84 axis spacing, rounded up to a metre.
-    geod = Geod(ellps="WGS84")
-    _, _, east_spacing = geod.inv(tile.west, tile.south, tile.west + 1 / 3600, tile.south)
-    _, _, north_spacing = geod.inv(tile.west, tile.south, tile.west, tile.south + 1 / 3600)
-    _, _, north_top = geod.inv(tile.west, tile.south + 1 - 1 / 3600, tile.west, tile.south + 1)
-    _, _, east_top = geod.inv(tile.west, tile.south + 1, tile.west + 1 / 3600, tile.south + 1)
-    native_m = float(math.ceil(max(east_spacing, north_spacing, north_top, east_top)))
+    native_m = native_post_spacing_m(tile)
     return TerrainPackage(
         pilot_area_id=pilot_area_id,
         grid=grid,
@@ -178,7 +172,7 @@ def convert_srtm(
         source_surface_type=SurfaceType.DSM,
         vertical_datum="EGM96",
         vertical_unit="m",
-        # Source datum is known, but compatibility with local engineering levels is not established.
+        # Source datum is known, but compatibility with engineering levels is not established.
         datum_transform_status=DatumTransformStatus.UNRESOLVED,
         vertical_quality=VerticalQuality.COARSE_GLOBAL_DEM,
         native_horizontal_resolution_m=native_m,
@@ -201,3 +195,13 @@ def convert_srtm(
             "Depression and multi-level structure assessments remain NOT_ASSESSED.",
         ],
     )
+
+
+def native_post_spacing_m(tile: HgtTile) -> float:
+    """Larger WGS84 axis spacing over the tile, conservatively rounded up to a metre."""
+    geod = Geod(ellps="WGS84")
+    _, _, east_spacing = geod.inv(tile.west, tile.south, tile.west + 1 / 3600, tile.south)
+    _, _, north_spacing = geod.inv(tile.west, tile.south, tile.west, tile.south + 1 / 3600)
+    _, _, north_top = geod.inv(tile.west, tile.south + 1 - 1 / 3600, tile.west, tile.south + 1)
+    _, _, east_top = geod.inv(tile.west, tile.south + 1, tile.west + 1 / 3600, tile.south + 1)
+    return float(math.ceil(max(east_spacing, north_spacing, north_top, east_top)))

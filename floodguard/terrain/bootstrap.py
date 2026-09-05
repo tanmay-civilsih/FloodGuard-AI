@@ -1,4 +1,4 @@
-"""Build Sequence 6 products from an approved immutable terrain package.
+"""Build Sequence 6 products from a versioned immutable terrain package.
 
 The worker intentionally accepts only an explicit ``*.terrain.json`` package.  It does not
 download, invent, or infer elevation data from a generic source object.
@@ -65,7 +65,7 @@ def main() -> None:
             packages = _terrain_objects(version)
             if not packages:
                 print(
-                    f"SKIPPED {source.dataset_name}: no approved *.terrain.json package in "
+                    f"SKIPPED {source.dataset_name}: no *.terrain.json package in "
                     "the latest immutable version; no DEM was invented"
                 )
                 continue
@@ -88,7 +88,11 @@ def main() -> None:
     if failures:
         raise SystemExit(f"Terrain bootstrap completed with {failures} failure(s)")
     if not built:
-        print("Terrain bootstrap completed: no approved terrain package was available")
+        raise SystemExit(
+            "No versioned terrain package is available. For a downloaded SRTMGL1 HGT, run "
+            "python -m floodguard.terrain.import_srtm --plan inside the API container. "
+            "A registry portal entry alone does not acquire or convert elevation data."
+        )
     else:
         print(f"Terrain bootstrap completed successfully: {built} package(s)")
 

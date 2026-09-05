@@ -66,6 +66,10 @@ def _artifact_response(
     except LookupError as exc:
         raise HTTPException(status_code=404, detail="terrain product not found") from exc
     media_type = "application/geo+json" if product is TerrainProductKind.QA else "application/json"
+    if product is TerrainProductKind.RAW_ELEVATION and service.get(
+        terrain_id
+    ).raw_elevation_object_key.lower().endswith(".hgt"):
+        media_type = "application/octet-stream"
     return Response(content=payload, media_type=media_type)
 
 
