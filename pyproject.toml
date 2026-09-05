@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "floodguard-ai"
-version = "0.4.0"
+version = "0.5.0"
 description = "FloodGuard-AI urban flood digital twin and nowcasting platform"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
@@ -16,6 +16,7 @@ dependencies = [
   "psycopg[binary]==3.3.5",
   "pydantic==2.13.4",
   "pydantic-settings==2.14.1",
+  "pypdf==6.10.0",
   "pyproj==3.7.2",
   "SQLAlchemy==2.0.52",
   "uvicorn[standard]==0.48.0",
@@ -31,6 +32,9 @@ dev = [
 
 [tool.setuptools.packages.find]
 include = ["floodguard*", "apps*"]
+
+[tool.setuptools.package-data]
+"floodguard.reconstruction" = ["calibrations/*.json"]
 
 [tool.pytest.ini_options]
 addopts = "-q --strict-markers"
@@ -48,6 +52,7 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 "apps/api/routers/*.py" = ["B008"]
 "floodguard/registry/seed.py" = ["E501"]
 "floodguard/spatial/qa_viewer.py" = ["E501"]
+"floodguard/reconstruction/qa_viewer.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"

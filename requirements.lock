@@ -1,4 +1,4 @@
-# FloodGuard-AI Sequence 4 dependency lock.
+# FloodGuard-AI Sequence 5 dependency lock.
 # Runtime and development dependencies are pinned intentionally.
 # Refresh only as an explicit dependency-maintenance change.
 alembic==1.19.1
@@ -35,6 +35,7 @@ pycryptodome==3.23.0
 pydantic==2.13.4
 pydantic-core==2.46.4
 pydantic-settings==2.14.1
+pypdf==6.10.0
 Pygments==2.20.0
 pyproj==3.7.2
 pytest==9.0.2
