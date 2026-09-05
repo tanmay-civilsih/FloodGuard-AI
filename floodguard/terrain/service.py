@@ -172,6 +172,11 @@ class TerrainService:
             package = decode_package(payload)
         except ValueError as exc:
             raise TerrainConditioningError(str(exc)) from exc
+        if package.derivation is not None:
+            raise TerrainConditioningError(
+                "derived packages require verified original elevation input; "
+                "use the terrain importer when available"
+            )
         if package.grid.crs != self.working_crs:
             raise TerrainConditioningError(
                 "terrain package must be in the configured metric working CRS; "

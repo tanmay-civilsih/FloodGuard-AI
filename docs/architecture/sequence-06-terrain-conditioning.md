@@ -144,6 +144,22 @@ when Node.js is absent. They do not replace a real browser/WebGL/CDN or Docker i
 
 ## Scientific boundary
 
+### Atomic increment 6.4 — explicit SRTM HGT conversion
+
+`floodguard.terrain.srtm` converts an original uncompressed SRTMGL1 HGT tile into a bounded metric
+pilot grid using nearest source posts. The adapter checks exact dimensions/byte count and tile
+coordinates, retains negative elevations and nodata, rejects out-of-tile sampling, and caps JSON
+output at 250,000 cells. Grid origins are snapped outward to the requested metric cell size.
+The source remains unchanged; a new optional `derivation` contract records its SHA-256, filename,
+conversion policy and pilot-boundary reference. Existing hand-prepared JSON inputs remain supported.
+
+Format and datum follow the [LP DAAC SRTM User Guide](https://lpdaac.usgs.gov/documents/179/SRTM_User_Guide_V3.pdf).
+Native post spacing is reported separately from an 80 m effective-information screening floor;
+coarser computational cells raise that floor. This is not a local accuracy certification, and source
+void-fill regions may be coarser. Datum compatibility and terrain assessments remain unresolved,
+so conversion alone produces `VISUAL_READY`. GeoTIFFs, ZIPs, mosaics and 3-arc-second HGT tiles are
+explicitly unsupported by this adapter. Its tests use synthetic ramps/voids solely as benchmarks.
+
 This checkpoint demonstrates defensible preparation and auditable conditioning logic. It is not a
 claim that Kolkata has a newly validated DEM, that the pilot has hydraulic terrain observations, or
 that the later coupled solver can already be calibrated. Missing source access remains an explicit

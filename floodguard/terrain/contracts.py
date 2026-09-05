@@ -11,7 +11,7 @@ from __future__ import annotations
 import math
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -220,10 +220,24 @@ class VerticalValidation(TerrainInput):
         return self
 
 
+class TerrainDerivation(TerrainInput):
+    """Trace a converted grid to an original elevation object in the same raw manifest."""
+
+    adapter_version: Literal["srtmgl1-nearest-v1"]
+    source_filename: str = Field(min_length=1, max_length=100)
+    source_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_format: Literal["SRTMGL1_HGT"] = "SRTMGL1_HGT"
+    source_crs: Literal["EPSG:4326"] = "EPSG:4326"
+    sampling_method: Literal["NEAREST_POST"] = "NEAREST_POST"
+    boundary_reference: str = Field(min_length=2, max_length=500)
+    vertical_metadata_reference: str = Field(min_length=2, max_length=500)
+
+
 class TerrainPackage(TerrainInput):
     """Immutable input package consumed by the terrain worker."""
 
     pilot_area_id: str = Field(min_length=1, max_length=160)
+    derivation: TerrainDerivation | None = None
     grid: TerrainGrid
     source_surface_type: SurfaceType
     vertical_datum: str | None = Field(default=None, min_length=1)
