@@ -1,4 +1,4 @@
-"""Local verification entry point through Sequence 5."""
+"""Local verification entry point through Sequence 6."""
 
 from __future__ import annotations
 
@@ -39,6 +39,7 @@ def verify_files() -> None:
         ROOT / "migrations" / "versions" / "0002_sequence_3_harvester.py",
         ROOT / "migrations" / "versions" / "0003_sequence_4_spatial.py",
         ROOT / "migrations" / "versions" / "0004_sequence_5_reconstruction.py",
+        ROOT / "migrations" / "versions" / "0005_sequence_6_terrain.py",
         ROOT / "floodguard" / "registry" / "contracts.py",
         ROOT / "floodguard" / "registry" / "seed.py",
         ROOT / "floodguard" / "harvester" / "contracts.py",
@@ -54,12 +55,18 @@ def verify_files() -> None:
         ROOT / "floodguard" / "reconstruction" / "pdf_native.py",
         ROOT / "floodguard" / "reconstruction" / "service.py",
         ROOT / "floodguard" / "reconstruction" / "bootstrap.py",
+        ROOT / "floodguard" / "terrain" / "contracts.py",
+        ROOT / "floodguard" / "terrain" / "conditioning.py",
+        ROOT / "floodguard" / "terrain" / "service.py",
+        ROOT / "floodguard" / "terrain" / "bootstrap.py",
+        ROOT / "floodguard" / "terrain" / "qa_viewer.py",
         ROOT
         / "floodguard"
         / "reconstruction"
         / "calibrations"
         / "kmc-opencity-ward-7-v1.json",
         ROOT / "docs" / "architecture" / "sequence-05-drainage-reconstruction.md",
+        ROOT / "docs" / "architecture" / "sequence-06-terrain-conditioning.md",
         ROOT / "docs" / "architecture" / "sequence-04-spatial-normalization.md",
         ROOT / "docs" / "Urban_Flood_Digital_Twin_Authoritative_20_Sequence_Plan_FROZEN.md",
     ]
@@ -136,8 +143,8 @@ def verify_services() -> None:
     print("OK API /health")
 
     version = get_json("http://localhost:8000/version")
-    if version.get("sequence") != 5 or version.get("version") != "0.5.0":
-        raise SystemExit("API is not serving FloodGuard-AI Sequence 5 / v0.5.0")
+    if version.get("sequence") != 6 or version.get("version") != "0.6.0":
+        raise SystemExit("API is not serving FloodGuard-AI Sequence 6 / v0.6.0")
     print("OK API /version")
 
     registry = get_json("http://localhost:8000/registry/readiness")
@@ -178,6 +185,15 @@ def verify_services() -> None:
     ):
         raise SystemExit("Sequence 5 reconstruction QA viewer is not reachable")
     print("OK API /reconstruction/readiness and /reconstruction/qa")
+
+    terrain = get_json("http://localhost:8000/terrain/readiness")
+    if "completion_gate_passed" not in terrain:
+        raise SystemExit("Sequence 6 terrain readiness contract is incomplete")
+    if terrain.get("qa_viewer_path") != "/terrain/qa":
+        raise SystemExit("Sequence 6 terrain QA path is unexpected")
+    if "Terrain QA" not in get_text("http://localhost:8000/terrain/qa"):
+        raise SystemExit("Sequence 6 terrain QA viewer is not reachable")
+    print("OK API /terrain/readiness and /terrain/qa")
 
 
 def run_harvester_bootstrap_gate() -> None:
@@ -279,6 +295,35 @@ def run_reconstruction_bootstrap_gate() -> None:
     print("OK real KMC drainage reconstruction and human-review completion gate")
 
 
+def run_terrain_bootstrap_gate() -> None:
+    run(
+        [
+            "docker",
+            "compose",
+            "exec",
+            "-T",
+            "api",
+            "python",
+            "-m",
+            "floodguard.terrain.bootstrap",
+            "--city-id",
+            "kolkata",
+        ]
+    )
+    readiness = get_json("http://localhost:8000/terrain/readiness")
+    if readiness.get("completion_gate_passed") is not True:
+        reason = readiness.get("completion_gate_reason")
+        raise SystemExit(f"Sequence 6 terrain completion gate is not passed: {reason}")
+    if readiness.get("best_readiness_status") not in {
+        "HYDRAULIC_SCENARIO_READY",
+        "HYDRAULIC_VALIDATED",
+    }:
+        raise SystemExit("Sequence 6 terrain readiness is not hydraulically usable")
+    if "Terrain QA" not in get_text("http://localhost:8000/terrain/qa"):
+        raise SystemExit("Sequence 6 terrain MapLibre QA viewer gate failed")
+    print("OK terrain conditioning and conservative readiness completion gate")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -304,6 +349,14 @@ def main() -> None:
             "approval and implies --services"
         ),
     )
+    parser.add_argument(
+        "--terrain-bootstrap",
+        action="store_true",
+        help=(
+            "run the Sequence 6 terrain completion gate; requires an approved metric "
+            "*.terrain.json package and implies --services"
+        ),
+    )
     args = parser.parse_args()
 
     verify_python()
@@ -314,6 +367,7 @@ def main() -> None:
         or args.bootstrap
         or args.spatial_bootstrap
         or args.reconstruction_bootstrap
+        or args.terrain_bootstrap
     ):
         verify_services()
     if args.bootstrap:
@@ -322,7 +376,9 @@ def main() -> None:
         run_spatial_bootstrap_gate()
     if args.reconstruction_bootstrap:
         run_reconstruction_bootstrap_gate()
-    print("Sequence 5 verification PASSED")
+    if args.terrain_bootstrap:
+        run_terrain_bootstrap_gate()
+    print("Sequence 6 verification PASSED")
 
 
 if __name__ == "__main__":

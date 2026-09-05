@@ -9,16 +9,17 @@ Development is governed by:
 
 ## Current milestone
 
-**Sequence 5 — Legacy Municipal Drainage Reconstruction (v0.5 release candidate)**
+**Sequence 6 — Hydraulically Conditioned Terrain and Multi-Level Urban Structures (v0.6 checkpoint)**
 
-Sequence 5 reconstructs a hash-pinned, authentic KMC/OpenCity Ward 7 drainage PDF into traceable
-drain, manhole-candidate, and drainage-label vector features. It inspects native PDF vector/text
-content before OCR, uses a versioned four-point affine calibration, assigns confidence, preserves
-missing engineering attributes as `NULL`, and exposes an append-only human QA review gate.
+Sequence 6 adds a deterministic `terrain-worker` that keeps raw elevation, visual terrain, and
+hydraulic terrain as separate immutable products. It applies only explicit, provenance-backed
+conditioning interventions, preserves genuine depressions, catalogs multi-level structures, and
+assigns conservative readiness from vertical validation evidence.
 
-The code and automated real-object diagnostics are implemented. The release remains a candidate
-until a human inspects `/reconstruction/qa` and records approval. Hydraulically conditioned terrain,
-surface classification, and simulation remain later-sequence work.
+The checkpoint intentionally accepts an approved metric `*.terrain.json` package as a small,
+deterministic interchange contract. It does not fabricate a DEM, silently convert DSM to DTM, or
+claim hydraulic validation where vertical observations are unavailable. Sequence 5's real Ward 7
+reconstruction remains available through its human-reviewed QA record.
 
 ## Requirements
 
@@ -90,10 +91,26 @@ Sequence 5 completion gate is:
 python scripts/verify.py --reconstruction-bootstrap
 ```
 
-The gate intentionally fails while the real reconstruction is `PENDING_REVIEW`.
+The gate requires the recorded human QA approval for the real reconstruction; it remains a separate
+gate from Sequence 6 terrain readiness.
+
+Build Sequence 6 products when an approved terrain package has been harvested:
+
+```bash
+docker compose exec -T api python -m floodguard.terrain.bootstrap --city-id kolkata
+```
+
+Inspect `http://localhost:8000/terrain/qa`. The terrain completion gate is explicit and conservative:
+
+```bash
+python scripts/verify.py --terrain-bootstrap
+```
+
+The command reports a clear limitation when no approved metric terrain package is present; it never
+uses an arbitrary elevation object as a substitute.
 
 On container startup, Alembic migrates registry, harvester, spatial, reconstruction, and review
-schemas and the audited Kolkata source catalogue is seeded idempotently.
+schemas, terrain products, and the audited Kolkata source catalogue is seeded idempotently.
 
 ## Sequence 3 immutable raw vault
 
@@ -133,6 +150,29 @@ reconstruction/{city_id}/{source_id}/{dataset_version_id}/{reconstruction_id}/au
 The working and WGS 84 QA layers preserve feature confidence, extraction method, source object,
 dataset version, page, and deterministic IDs. Diameter, invert, flow direction, and material remain
 `NULL`; source labels are annotations, not automatically accepted hydraulic parameters.
+
+## Sequence 6 conditioned terrain artifacts
+
+Terrain inputs remain immutable in the raw vault. A successful terrain build writes deterministic
+artifacts to the spatial bucket:
+
+```text
+terrain/{city_id}/{source_id}/{dataset_version_id}/{terrain_id}/visual_terrain.json
+terrain/{city_id}/{source_id}/{dataset_version_id}/{terrain_id}/hydraulic_terrain.json
+terrain/{city_id}/{source_id}/{dataset_version_id}/{terrain_id}/multi_level_structures.json
+terrain/{city_id}/{source_id}/{dataset_version_id}/{terrain_id}/qa.geojson
+terrain/{city_id}/{source_id}/{dataset_version_id}/{terrain_id}/audit.json
+```
+
+The source package records `native_horizontal_resolution_m`, `computational_resolution_m`,
+`effective_information_resolution_m`, and `vertical_quality` separately. Vertical validation keeps
+the method, RMSE, control count, road-sag check, underpass check, drain-rim consistency, and
+limitations. With incomplete validation the status is `HYDRAULIC_SCENARIO_READY` or lower; it never
+becomes `HYDRAULIC_VALIDATED` from CRS metadata alone.
+
+The package contract is documented in
+`docs/architecture/sequence-06-terrain-conditioning.md`. Production raster/COG adapters may emit
+the same contract later; this checkpoint does not invent one from unavailable source bytes.
 
 ## Horizontal reference
 
@@ -244,6 +284,15 @@ and georeference error. Both basemaps are visual context only, not hydraulic inp
 | `GET /reconstruction/maps/{reconstruction_id}/reviews` | append-only review history |
 | `POST /reconstruction/maps/{reconstruction_id}/reviews` | record human approval/rejection |
 | `GET /reconstruction/qa` | MapLibre drainage reconstruction QA page |
+| `GET /terrain/readiness` | Sequence 6 terrain readiness and completion gate |
+| `GET /terrain/products` | List immutable terrain products and lineage |
+| `GET /terrain/products/{terrain_id}` | Inspect one terrain product and validation metadata |
+| `GET /terrain/products/{terrain_id}/raw` | Read the immutable raw terrain package |
+| `GET /terrain/products/{terrain_id}/visual` | Read the visual terrain artifact |
+| `GET /terrain/products/{terrain_id}/hydraulic` | Read the explicitly conditioned hydraulic artifact |
+| `GET /terrain/products/{terrain_id}/multi-level-structures` | Read the separate structure catalog |
+| `GET /terrain/products/{terrain_id}/qa` | Read WGS 84 terrain QA GeoJSON |
+| `GET /terrain/qa` | MapLibre terrain engineering QA page |
 
 There is intentionally no HTTP endpoint that performs heavy normalization or PDF extraction. The
 CLI/worker path owns computation; FastAPI exposes metadata, QA artifacts, and the explicit review
@@ -251,7 +300,8 @@ record endpoint.
 
 ## Scientific scope boundary
 
-Passing Sequence 5 means one real municipal map is reconstructed, geographically checked within
-its declared legacy-map tolerance, provenance-preserving, and human-reviewed. It does **not** mean
-the drain network or terrain is hydraulically validated, nor that street-scale forecasts are ready.
-Those claims depend on later frozen sequences and their validation gates.
+Passing Sequence 6 means a pilot terrain package has separate documented visual/hydraulic products,
+explicit depression and multi-level decisions, source-resolution limitations, and conservative
+readiness. It does **not** mean the terrain is hydraulically validated unless the declared vertical
+validation gate passes, nor that street-scale forecasts are ready. Those claims depend on later
+frozen sequences and their validation gates.

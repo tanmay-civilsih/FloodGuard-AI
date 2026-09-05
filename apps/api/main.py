@@ -14,6 +14,7 @@ from apps.api.routers.harvester import router as harvester_router
 from apps.api.routers.reconstruction import router as reconstruction_router
 from apps.api.routers.registry import router as registry_router
 from apps.api.routers.spatial import router as spatial_router
+from apps.api.routers.terrain import router as terrain_router
 from floodguard import __version__
 from floodguard.common.config import get_settings
 from floodguard.common.logging import configure_logging
@@ -32,6 +33,7 @@ app.include_router(registry_router)
 app.include_router(harvester_router)
 app.include_router(spatial_router)
 app.include_router(reconstruction_router)
+app.include_router(terrain_router)
 
 
 class HealthResponse(BaseModel):
@@ -48,7 +50,7 @@ class ReadyResponse(BaseModel):
 class VersionResponse(BaseModel):
     name: Literal["FloodGuard-AI"] = "FloodGuard-AI"
     version: str
-    sequence: Literal[5] = 5
+    sequence: Literal[6] = 6
 
 
 @app.middleware("http")

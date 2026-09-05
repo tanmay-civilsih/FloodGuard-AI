@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "floodguard-ai"
-version = "0.5.0"
+version = "0.6.0"
 description = "FloodGuard-AI urban flood digital twin and nowcasting platform"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
@@ -53,6 +53,7 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 "floodguard/registry/seed.py" = ["E501"]
 "floodguard/spatial/qa_viewer.py" = ["E501"]
 "floodguard/reconstruction/qa_viewer.py" = ["E501"]
+"floodguard/terrain/qa_viewer.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"
