@@ -26,12 +26,66 @@ from floodguard.registry.models import Base
 from floodguard.registry.seed import kolkata_seed_sources, seed_id
 from floodguard.spatial.object_store import MemorySpatialObjectStore
 from floodguard.terrain import bootstrap, import_srtm
+from floodguard.terrain.assessment import (
+    ASSESSMENT_FILENAME,
+    TerrainAssessment,
+    assessment_bytes,
+    assessment_template,
+    decode_assessment,
+)
+from floodguard.terrain.contracts import TerrainPackage
 from floodguard.terrain.grid import decode_package, package_bytes, sha256
 from floodguard.terrain.import_srtm import select_pilot
 from floodguard.terrain.importer import SrtmImportRequest, TerrainInputImporter
 from floodguard.terrain.repository import TerrainRepository
 from floodguard.terrain.service import TerrainConditioningError, TerrainService
-from floodguard.terrain.srtm import SRTM_SIDE, SrtmTarget
+from floodguard.terrain.srtm import SRTM_SIDE, SrtmTarget, convert_srtm
+
+
+def completed_assessment(package: TerrainPackage) -> TerrainAssessment:
+    """Synthetic review of the 42 m test raster; never real pilot evidence."""
+    data = assessment_template(sha256(package_bytes(package)))
+    data.update(
+        reviewed_by="Synthetic benchmark reviewer",
+        reviewed_at=utc_now().isoformat(),
+        datum_transform_status="COMPATIBLE",
+        local_vertical_datum="EGM96",
+        vertical_reference_evidence="Synthetic controls share the fixture EGM96 reference.",
+        surface_use_evidence="Synthetic DSM for contract tests only, not a surveyed urban surface.",
+        depression_assessment="CATALOGUED",
+        depression_evidence="Synthetic protected cell is declared at row 0, column 0.",
+        multi_level_assessment="CATALOGUED",
+        multi_level_evidence="Synthetic bridge connects two explicitly declared levels.",
+        interventions=[{
+            "row": 0, "column": 0, "kind": "PRESERVE_DEPRESSION",
+            "source_reference": "test://protected-cell", "reason": "Preserve test storage",
+        }],
+        multi_level_structures=[{
+            "structure_id": "synthetic-bridge", "kind": "BRIDGE",
+            "bounds_working": package.grid.bounds,
+            "lower_elevation_m": 42.0, "upper_elevation_m": 48.0,
+            "lower_level_role": "synthetic ground", "upper_level_role": "synthetic road",
+            "source_reference": "test://bridge-design", "confidence": 1.0,
+        }],
+        vertical_validation={
+            "method": "Synthetic cell-centre benchmark",
+            "control_points": [{
+                "control_id": "synthetic-control", "row": 0, "column": 0,
+                "reference_elevation_m": 40.0, "vertical_datum": "EGM96",
+                "source_reference": "test://two-metre-residual", "measured_at": utc_now(),
+            }],
+            "limitations": ["Synthetic benchmark; no real survey is represented."],
+        },
+        limitations=["Synthetic fixture; cannot justify freezing a real pilot."],
+    )
+    return TerrainAssessment.model_validate(data)
+
+
+def package_for(hgt_bytes, request) -> TerrainPackage:
+    return convert_srtm(
+        hgt_bytes, filename=request.filename, target=request.target,
+        pilot_area_id=request.pilot_area_id, boundary_reference=request.boundary_reference,
+    )
 
 
 @pytest.fixture(scope="module")
@@ -249,7 +303,9 @@ def test_pilot_selection_requires_latest_approved_reconstruction() -> None:
         select_pilot([approved], "kolkata", "7", "EPSG:32644")
 
 
-@pytest.mark.parametrize("mode", ["plan", "dry-run", "import"])
+@pytest.mark.parametrize(
+    "mode", ["plan", "dry-run", "import", "template", "review-dry-run", "review-import"]
+)
 def test_import_cli_end_to_end(
     import_context, hgt_bytes, tmp_path, monkeypatch, capsys, mode
 ) -> None:
@@ -310,8 +366,22 @@ def test_import_cli_end_to_end(
                 "Synthetic test fixture only",
             ]
         )
-        if mode == "dry-run":
+        if mode in {"dry-run", "review-dry-run"}:
             args.append("--dry-run")
+        if mode == "template":
+            args.extend(["--assessment-template", str(tmp_path / "assessment.json")])
+        if mode.startswith("review-"):
+            cli_request = request.model_copy(update={
+                "pilot_area_id": "kolkata-ward-7",
+                "boundary_reference": (
+                    f"reconstruction://{pilot.reconstruction_id}"
+                    f"#working_sha256={pilot.working_sha256}"
+                ),
+            })
+            review = completed_assessment(package_for(hgt_bytes, cli_request))
+            review_path = tmp_path / "assessment.json"
+            review_path.write_bytes(assessment_bytes(review))
+            args.extend(["--assessment", str(review_path)])
     monkeypatch.setattr("sys.argv", args)
     import_srtm.main()
     output = capsys.readouterr().out
@@ -319,12 +389,18 @@ def test_import_cli_end_to_end(
         plan = json.loads(output)
         assert plan["required_tiles"] == ["N22E088.hgt"]
         assert plan["supported"] and not plan["writes_performed"]
-    elif mode == "dry-run":
+    elif mode in {"dry-run", "template", "review-dry-run"}:
         assert '"dry_run": true' in output
+        if mode == "template":
+            with pytest.raises(ValidationError):
+                decode_assessment((tmp_path / "assessment.json").read_bytes())
+    elif mode == "review-import":
+        assert '"readiness_status": "HYDRAULIC_SCENARIO_READY"' in output
     else:
         assert '"readiness_status": "VISUAL_READY"' in output
-    assert len(repository.list_for_source(source.source_id)) == (1 if mode == "import" else 0)
-    assert bool(vault.objects) == (mode == "import")
+    written = mode in {"import", "review-import"}
+    assert len(repository.list_for_source(source.source_id)) == int(written)
+    assert bool(vault.objects) == written
 
 
 def test_import_respects_raw_vault_object_limit(import_context, hgt_bytes) -> None:
@@ -356,3 +432,133 @@ def test_empty_bootstrap_fails_with_actionable_import_instruction(
     with pytest.raises(SystemExit, match="import_srtm --plan"):
         bootstrap.main()
     assert vault.objects == {} and terrain.list_products() == []
+
+
+def test_assessed_import_retains_original_and_computes_two_metre_residual(
+    import_context, hgt_bytes
+) -> None:
+    importer, repository, vault, terrain, source, request = import_context
+    initial = importer.import_srtm(source, hgt_bytes, request)
+    originals = dict(vault.objects)
+    review = completed_assessment(package_for(hgt_bytes, request))
+    preview = importer.import_srtm(source, hgt_bytes, request, assessment=review, dry_run=True)
+    assert preview.base_package_sha256 == review.base_package_sha256
+    assert vault.objects == originals
+    result = importer.import_srtm(source, hgt_bytes, request, assessment=review)
+    assert result.dataset_version_id != initial.dataset_version_id
+    assert result.terrain.readiness_status.value == "HYDRAULIC_SCENARIO_READY"
+    record = terrain.get(result.terrain.terrain_id)
+    assert record.vertical_rmse_m == 2.0 and record.control_point_count == 1
+    assert record.preserved_depression_count == record.multi_level_structure_count == 1
+    assert terrain.read_artifact(record.terrain_id, "RAW_ELEVATION") == hgt_bytes
+    visual = json.loads(terrain.read_artifact(record.terrain_id, "VISUAL_TERRAIN"))
+    hydraulic = json.loads(terrain.read_artifact(record.terrain_id, "HYDRAULIC_TERRAIN"))
+    assert visual["grid"] == hydraulic["grid"]
+    assert hydraulic["grid"]["elevations_m"][0][0] == 42.0
+    assert all(vault.objects[key] == value for key, value in originals.items())
+    audit = json.loads(terrain.read_artifact(record.terrain_id, "AUDIT"))
+    assert audit["terrain_assessment"] == review.model_dump(mode="json")
+    assert audit["assessment_evidence_verification"].startswith("OPERATOR_ASSERTED")
+    version = repository.get_version(result.dataset_version_id)
+    assert version.object_count == 4
+    reviewed_objects = dict(vault.objects)
+    reused = importer.import_srtm(source, hgt_bytes, request, assessment=review)
+    assert reused.dataset_version_id == result.dataset_version_id
+    assert not reused.terrain.created and vault.objects == reviewed_objects
+    assert terrain.readiness(city_id="kolkata").completion_gate_passed
+
+    failed = review.model_dump(mode="json")
+    failed["vertical_validation"]["road_sag_validation"] = "FAILED"
+    downgraded = importer.import_srtm(
+        source, hgt_bytes, request, assessment=TerrainAssessment.model_validate(failed)
+    )
+    assert downgraded.terrain.readiness_status.value == "VISUAL_READY"
+    assert not terrain.readiness(city_id="kolkata").completion_gate_passed
+
+
+@pytest.mark.parametrize("change", ["source", "pilot", "grid", "intervention", "rmse"])
+def test_stale_or_invalid_assessment_fails_before_writing(
+    import_context, hgt_bytes, change
+) -> None:
+    importer, repository, vault, _, source, request = import_context
+    review = completed_assessment(package_for(hgt_bytes, request))
+    if change == "source":
+        hgt_bytes = np.full((SRTM_SIDE, SRTM_SIDE), 43, dtype=">i2").tobytes()
+    elif change == "pilot":
+        request = request.model_copy(update={"boundary_reference": "test://new-pilot-extent"})
+    elif change == "grid":
+        request = request.model_copy(update={
+            "target": request.target.model_copy(update={"cell_size_m": 60.0}),
+        })
+    else:
+        data = review.model_dump(mode="json")
+        if change == "intervention":
+            data["interventions"][0]["row"] = 99999
+        else:
+            data["vertical_validation"]["rmse_m"] = 0.0
+        review = TerrainAssessment.model_validate(data)
+    for dry_run in (True, False):
+        with pytest.raises(ValueError):
+            importer.import_srtm(source, hgt_bytes, request, assessment=review, dry_run=dry_run)
+    assert vault.objects == {} and repository.list_for_source(source.source_id) == []
+
+
+@pytest.mark.parametrize("change", ["missing", "corrupt", "other_version", "duplicate"])
+def test_terrain_build_rechecks_immutable_assessment(import_context, hgt_bytes, change) -> None:
+    importer, repository, vault, terrain, source, request = import_context
+    review = completed_assessment(package_for(hgt_bytes, request))
+    built = importer.import_srtm(source, hgt_bytes, request, assessment=review)
+    version = DatasetVersionRead.model_validate(repository.get_version(built.dataset_version_id))
+    package = next(item for item in version.objects if item.filename == "pilot.terrain.json")
+    evidence = next(item for item in version.objects if item.filename == ASSESSMENT_FILENAME)
+    objects = [item for item in version.objects if item != evidence]
+    if change == "corrupt":
+        vault.objects[evidence.object_key] = b"{}"
+        objects.append(evidence)
+    elif change == "other_version":
+        objects.append(evidence.model_copy(update={"dataset_version_id": uuid4()}))
+    elif change == "duplicate":
+        objects.extend([evidence, evidence])
+    version = version.model_copy(update={"objects": objects})
+    with pytest.raises(TerrainConditioningError):
+        terrain.build_from_raw(source, version, package)
+
+
+@pytest.mark.parametrize(
+    "change", ["blank", "naive_time", "wrong_datum", "invented_controls", "unknown_field"]
+)
+def test_assessment_requires_explicit_valid_evidence(import_context, hgt_bytes, change) -> None:
+    *_, request = import_context
+    data = completed_assessment(package_for(hgt_bytes, request)).model_dump(mode="json")
+    if change == "blank":
+        data["depression_evidence"] = "  "
+    elif change == "naive_time":
+        data["reviewed_at"] = "2026-09-05T12:00:00"
+    elif change == "wrong_datum":
+        data["local_vertical_datum"] = "local datum unknown"
+    elif change == "invented_controls":
+        data["vertical_validation"]["control_points"] = []
+        data["vertical_validation"]["control_point_count"] = 100
+    else:
+        data["force_ready"] = True
+    with pytest.raises(ValidationError):
+        TerrainAssessment.model_validate(data)
+
+
+def test_assessment_decoder_accepts_utf8_bom_and_rejects_duplicate_keys(
+    import_context, hgt_bytes
+) -> None:
+    *_, request = import_context
+    review = completed_assessment(package_for(hgt_bytes, request))
+    encoded = assessment_bytes(review)
+    assert decode_assessment(b"\xef\xbb\xbf" + encoded) == review
+    with pytest.raises(ValueError, match="duplicate"):
+        decode_assessment(b'{"reviewed_by":"first",' + encoded[1:])
+
+
+def test_assessment_schema_does_not_require_a_database(monkeypatch, capsys) -> None:
+    monkeypatch.setattr("sys.argv", ["import_srtm", "--assessment-schema"])
+    import_srtm.main()
+    schema = json.loads(capsys.readouterr().out)
+    assert "reviewed_at" in schema["required"]
+    assert schema["additionalProperties"] is False

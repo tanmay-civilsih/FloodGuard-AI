@@ -15,6 +15,13 @@ from floodguard.harvester.contracts import (
 from floodguard.registry.contracts import SourceCategory, SourceRead
 from floodguard.spatial.object_store import SpatialObjectExistsError, SpatialObjectStore
 from floodguard.spatial.reference import validate_metric_working_crs
+from floodguard.terrain.assessment import (
+    ASSESSMENT_FILENAME,
+    MAX_ASSESSMENT_BYTES,
+    TerrainAssessment,
+    apply_assessment,
+    decode_assessment,
+)
 from floodguard.terrain.conditioning import condition_package
 from floodguard.terrain.contracts import (
     AssessmentStatus,
@@ -41,11 +48,12 @@ from floodguard.terrain.srtm import (
     decode_hgt,
     native_post_spacing_m,
     sample_hgt_grid,
+    unassessed_srtm_package,
 )
 from floodguard.terrain.validation import VerticalEvaluation, evaluate_vertical_controls
 
 TERRAIN_NAMESPACE = UUID("8bb3b744-5f90-4a2b-a2a5-e1a11e8c2c1a")
-TERRAIN_PIPELINE_VERSION = "sequence-6-terrain-v5"
+TERRAIN_PIPELINE_VERSION = "sequence-6-terrain-v6"
 
 
 class TerrainConditioningError(RuntimeError):
@@ -151,10 +159,10 @@ class TerrainService:
 
     def _original_elevation(
         self, package: TerrainPackage, version: DatasetVersionRead, package_object: RawObjectRead
-    ) -> RawObjectRead:
+    ) -> tuple[RawObjectRead, TerrainAssessment | None]:
         derivation = package.derivation
         if derivation is None:
-            return package_object
+            return package_object, None
         candidates = [
             item
             for item in version.objects
@@ -204,7 +212,40 @@ class TerrainService:
             raise TerrainConditioningError(
                 "derived SRTM metadata overstates or changes source information"
             )
-        return original
+        base = unassessed_srtm_package(
+            tile,
+            grid=reproduced,
+            filename=original.filename,
+            source_sha256=original.sha256,
+            pilot_area_id=package.pilot_area_id,
+            boundary_reference=derivation.boundary_reference,
+        )
+        assessment_objects = [
+            item for item in version.objects if item.filename == ASSESSMENT_FILENAME
+        ]
+        if len(assessment_objects) > 1:
+            raise TerrainConditioningError("terrain assessment must have one manifest entry")
+        assessment = None
+        expected = base
+        if assessment_objects:
+            evidence = assessment_objects[0]
+            if evidence.dataset_version_id != version.dataset_version_id:
+                raise TerrainConditioningError("assessment belongs to another dataset version")
+            if evidence.byte_size > min(MAX_ASSESSMENT_BYTES, self.max_object_bytes):
+                raise TerrainConditioningError("terrain assessment exceeds its input limit")
+            review_bytes = self.object_store.read_raw(evidence.object_key)
+            if len(review_bytes) != evidence.byte_size or sha256(review_bytes) != evidence.sha256:
+                raise TerrainConditioningError("terrain assessment does not match its manifest")
+            try:
+                assessment = decode_assessment(review_bytes)
+                expected = apply_assessment(base, assessment)
+            except ValueError as exc:
+                raise TerrainConditioningError(str(exc)) from exc
+        if package != expected:
+            raise TerrainConditioningError(
+                "SRTM package changes require a matching immutable terrain assessment"
+            )
+        return original, assessment
 
     def build_from_raw(
         self,
@@ -242,7 +283,9 @@ class TerrainService:
                 "terrain package must be in the configured metric working CRS; "
                 "run the raster reference-system adapter before conditioning"
             )
-        original_elevation = self._original_elevation(package, dataset_version, raw_object)
+        original_elevation, assessment = self._original_elevation(
+            package, dataset_version, raw_object
+        )
 
         fingerprint = _fingerprint(
             source=source,
@@ -348,6 +391,10 @@ class TerrainService:
                 "object_key": original_elevation.object_key,
                 "sha256": original_elevation.sha256,
             },
+            "terrain_assessment": assessment.model_dump(mode="json") if assessment else None,
+            "assessment_evidence_verification": (
+                "OPERATOR_ASSERTED_NOT_INDEPENDENTLY_VERIFIED" if assessment else None
+            ),
             "vertical_validation": {
                 "method": validation.method,
                 "rmse_m": evaluation.rmse_m,

@@ -24,10 +24,19 @@ from floodguard.harvester.service import (
 from floodguard.harvester.vault import RawVault
 from floodguard.registry.contracts import AccessClass, SourceCategory, SourceRead, SourceStatus
 from floodguard.registry.seed import seed_id
+from floodguard.terrain.assessment import (
+    ASSESSMENT_FILENAME,
+    MAX_ASSESSMENT_BYTES,
+    TerrainAssessment,
+    apply_assessment,
+    assessment_bytes,
+)
+from floodguard.terrain.conditioning import condition_package
 from floodguard.terrain.contracts import TerrainBuildResult, TerrainInput
 from floodguard.terrain.grid import package_bytes, sha256
 from floodguard.terrain.service import TerrainService
 from floodguard.terrain.srtm import SrtmTarget, convert_srtm
+from floodguard.terrain.validation import evaluate_vertical_controls
 
 IMPORT_VERSION = "sequence-6-local-srtm-import-v1"
 
@@ -44,6 +53,7 @@ class SrtmImportRequest(TerrainInput):
 class SrtmImportResult(BaseModel):
     dry_run: bool
     raw_sha256: str
+    base_package_sha256: str
     package_sha256: str
     width: int
     height: int
@@ -86,6 +96,7 @@ class TerrainInputImporter:
         request: SrtmImportRequest,
         *,
         dry_run: bool = False,
+        assessment: TerrainAssessment | None = None,
     ) -> SrtmImportResult:
         if (
             source.source_id != seed_id("nasa-srtmgl1")
@@ -111,6 +122,16 @@ class TerrainInputImporter:
             pilot_area_id=request.pilot_area_id,
             boundary_reference=request.boundary_reference,
         )
+        base_package_sha256 = sha256(package_bytes(package))
+        encoded_assessment = None
+        if assessment is not None:
+            encoded_assessment = assessment_bytes(assessment)
+            if len(encoded_assessment) > MAX_ASSESSMENT_BYTES:
+                raise ValueError("terrain assessment exceeds the 1 MB input limit")
+            package = apply_assessment(package, assessment)
+        # Validate interventions and observations before reserving any version, also in dry runs.
+        conditioned = condition_package(package)
+        evaluate_vertical_controls(package, conditioned.hydraulic)
         encoded_package = package_bytes(package)
         receipt = {
             "import_version": IMPORT_VERSION,
@@ -124,6 +145,9 @@ class TerrainInputImporter:
             "access_evidence_verification": "OPERATOR_ASSERTED_NOT_INDEPENDENTLY_VERIFIED",
             "network_acquisition_performed": False,
         }
+        if encoded_assessment is not None:
+            receipt["assessment_sha256"] = sha256(encoded_assessment)
+            receipt["base_package_sha256"] = base_package_sha256
         encoded_receipt = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
         derived_url = f"urn:floodguard:derived:srtmgl1:{sha256(payload)}"
         objects = [
@@ -131,6 +155,12 @@ class TerrainInputImporter:
             ImportObject("pilot.terrain.json", encoded_package, "application/json", derived_url),
             ImportObject("import-receipt.json", encoded_receipt, "application/json", derived_url),
         ]
+        if encoded_assessment is not None:
+            objects.append(
+                ImportObject(
+                    ASSESSMENT_FILENAME, encoded_assessment, "application/json", derived_url
+                )
+            )
         total_bytes = sum(len(item.payload) for item in objects)
         if total_bytes > self.max_total_bytes or any(
             len(item.payload) > self.max_object_bytes for item in objects
@@ -139,6 +169,7 @@ class TerrainInputImporter:
         result = SrtmImportResult(
             dry_run=dry_run,
             raw_sha256=sha256(payload),
+            base_package_sha256=base_package_sha256,
             package_sha256=sha256(encoded_package),
             width=package.grid.width,
             height=package.grid.height,

@@ -223,6 +223,79 @@ Initial readiness is `VISUAL_READY`. The real terrain gate intentionally remains
 local vertical-reference compatibility, depression decisions and multi-level assessments are
 documented. No controls, elevations, classifications or approvals are invented by this workflow.
 
+### Atomic increment 6.6 — versioned terrain assessments
+
+The local importer accepts `--assessment` with a typed JSON review. Each assessment names its
+reviewer and timezone-aware review time, references the exact unassessed package SHA-256, and
+documents vertical-reference compatibility, intended DSM use, depressions, multi-level structures,
+observations where available, and remaining limitations. The base hash covers the original HGT,
+pilot/boundary reference, grid and conversion metadata. A review cannot be reused against a changed
+tile, extent, cell size or pilot without another review of that input.
+
+This adapter supports an unchanged EGM96 surface. `COMPATIBLE` requires an explicitly documented
+local EGM96 reference; it does not perform datum transformations. Evidence fields must cite the
+actual sources and method used, including the absence of evidence when an assessment remains
+`NOT_ASSESSED`. Source documentation alone does not establish local vertical compatibility, and a
+coarse raster alone cannot justify `CONFIRMED_NONE` for street depressions or overlapping levels.
+The review records these statements as operator assertions, not independently verified findings.
+
+Completed reviews may add only the existing bounded interventions, structure catalog and validation
+observations. They cannot change the original source grid, DSM classification, source quality or
+resolution metadata. Reported control statistics require actual observations. The dry run evaluates
+interventions and recomputes residuals before creating any database version or vault objects.
+
+The new version retains `terrain-assessment.json` alongside the original HGT, terrain package and
+receipt. Every worker build/reuse checks the assessment's manifest entry, byte size, SHA-256 and
+base-package binding, and reproduces the entire assessed package. The audit includes the review.
+Missing, corrupted or contradictory review evidence cannot promote a derived SRTM package.
+Policy version is `sequence-6-terrain-v6`; rebuild older products before evaluating readiness.
+
+After the original HGT has been copied into the API container as above, export a form:
+
+```powershell
+docker compose exec -T api python -m floodguard.terrain.import_srtm --file /tmp/N22E088.hgt --imported-by "$env:USERNAME" --access-reference "$accessReference" --assessment-template /tmp/kolkata-terrain-assessment.json
+docker compose cp api:/tmp/kolkata-terrain-assessment.json "D:\Terrain\kolkata-terrain-assessment.json"
+```
+
+This validates the file and writes an intentionally incomplete form; it creates no raw-vault or
+terrain version. Existing template paths are not overwritten. Fill the form using actual inspection
+and reference records. Use `reviewed_at` with an explicit UTC offset. Leave uncertain statuses as
+`UNRESOLVED`/`NOT_ASSESSED` and document why; do not invent elevations or observations. The complete
+field schema is available without a database connection:
+
+```powershell
+docker compose exec -T api python -m floodguard.terrain.import_srtm --assessment-schema
+```
+
+Then copy the completed form and validate it:
+
+```powershell
+docker compose cp "D:\Terrain\kolkata-terrain-assessment.json" api:/tmp/kolkata-terrain-reviewed.json
+docker compose exec -T api python -m floodguard.terrain.import_srtm --file /tmp/N22E088.hgt --imported-by "$env:USERNAME" --access-reference "$accessReference" --assessment /tmp/kolkata-terrain-reviewed.json --dry-run
+```
+
+After a successful dry run, import and run the completion gate:
+
+```powershell
+docker compose exec -T api python -m floodguard.terrain.import_srtm --file /tmp/N22E088.hgt --imported-by "$env:USERNAME" --access-reference "$accessReference" --assessment /tmp/kolkata-terrain-reviewed.json
+python scripts\verify.py --terrain-bootstrap
+Invoke-RestMethod "http://localhost:8000/terrain/readiness?city_id=kolkata" | ConvertTo-Json -Depth 10
+Start-Process "http://localhost:8000/terrain/qa?city_id=kolkata"
+```
+
+Schema checks do not verify the truth of review statements or approve an engineering model.
+The real pilot must satisfy the authoritative completion gate before a release tag/freeze: source
+bytes and provenance, visual/hydraulic products, preserved genuine depressions, correctly classified
+important multi-level structures, explicit limitations, conservative readiness and local service/QA
+validation. This increment grants no automatic freeze. Without adequate vertical observations,
+readiness remains scenario-ready or lower.
+
+Tests use an explicitly synthetic 42 m raster, a protected cell, a separate bridge catalog, and a
+40 m reference control: the unchanged protected cell has a computed 2 m residual. They verify
+immutable review versions, stale-source rejection, corruption failures, dry-run behavior and that
+a newer failed review removes an older product's eligibility. These are software benchmarks,
+not real Kolkata terrain evidence.
+
 ## Scientific boundary
 
 This checkpoint demonstrates defensible preparation and auditable conditioning logic. It is not a

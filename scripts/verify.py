@@ -329,7 +329,7 @@ def main() -> None:
     parser.add_argument(
         "--services",
         action="store_true",
-        help="also verify the running Docker Compose platform and Sequence 4 APIs",
+        help="also verify the running Docker Compose platform and APIs through Sequence 6",
     )
     parser.add_argument(
         "--bootstrap",
@@ -353,7 +353,7 @@ def main() -> None:
         "--terrain-bootstrap",
         action="store_true",
         help=(
-            "run the Sequence 6 terrain completion gate; requires an approved metric "
+            "run the Sequence 6 terrain completion gate; requires an assessed metric "
             "*.terrain.json package and implies --services"
         ),
     )
@@ -378,7 +378,11 @@ def main() -> None:
         run_reconstruction_bootstrap_gate()
     if args.terrain_bootstrap:
         run_terrain_bootstrap_gate()
-    print("Sequence 6 verification PASSED")
+    print("Sequence 6 software verification PASSED")
+    if args.terrain_bootstrap:
+        print("Sequence 6 terrain completion gate PASSED")
+    else:
+        print("Terrain completion was not checked; run --terrain-bootstrap before freezing.")
 
 
 if __name__ == "__main__":

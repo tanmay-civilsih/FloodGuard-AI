@@ -158,14 +158,35 @@ def convert_srtm(
         cell_size_m=step,
         crs=target.working_crs,
     )
+    return unassessed_srtm_package(
+        tile,
+        grid=grid,
+        filename=filename,
+        source_sha256=sha256(payload),
+        pilot_area_id=pilot_area_id,
+        boundary_reference=boundary_reference,
+    )
+
+
+def unassessed_srtm_package(
+    tile: HgtTile,
+    *,
+    grid: TerrainGrid,
+    filename: str,
+    source_sha256: str,
+    pilot_area_id: str,
+    boundary_reference: str,
+) -> TerrainPackage:
+    """Source metadata for a grid already sampled from this original HGT tile."""
     native_m = native_post_spacing_m(tile)
+    step = grid.cell_size_m
     return TerrainPackage(
         pilot_area_id=pilot_area_id,
         grid=grid,
         derivation=TerrainDerivation(
             adapter_version=SRTM_ADAPTER_VERSION,
             source_filename=filename,
-            source_sha256=sha256(payload),
+            source_sha256=source_sha256,
             boundary_reference=boundary_reference,
             vertical_metadata_reference=SRTM_METADATA,
         ),

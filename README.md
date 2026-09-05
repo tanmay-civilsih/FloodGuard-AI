@@ -26,6 +26,13 @@ file using the latest approved reconstruction's extent. It does not fabricate a 
 claim hydraulic validation where vertical observations are unavailable. Sequence 5's real Ward 7
 reconstruction remains available through its human-reviewed QA record.
 
+The SRTM importer also accepts a documented terrain assessment bound to the exact source and pilot
+grid. It can export an incomplete assessment form, validate the completed review without writing,
+and store it with the original raster in a new immutable version. See the
+[assessment and freeze workflow](docs/architecture/sequence-06-terrain-conditioning.md#atomic-increment-66--versioned-terrain-assessments).
+`verify.py --services` checks software and services; `--terrain-bootstrap` separately checks terrain
+completion. A successful software run alone does not freeze Sequence 6.
+
 ## Requirements
 
 - Python **3.12.x**
