@@ -38,7 +38,7 @@ def validate_base_url(value: str) -> str:
 
 def read_bytes(base: str, path: str) -> bytes:
     with urllib.request.urlopen(base + path, timeout=8) as response:
-        data = response.read(MAX_RESPONSE_BYTES + 1)
+        data = bytes(response.read(MAX_RESPONSE_BYTES + 1))
     if len(data) > MAX_RESPONSE_BYTES:
         raise ValueError("API response exceeds the bounded preflight limit")
     return data
