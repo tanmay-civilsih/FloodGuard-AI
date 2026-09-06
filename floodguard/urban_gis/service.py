@@ -12,13 +12,13 @@ from floodguard.urban_gis.contracts import (
     HydraulicDomain,
     HydraulicFeature,
     HydraulicSurfaceClass,
+    URBAN_GIS_PIPELINE_VERSION,
     UrbanGisBuildResult,
     UrbanGisEvidenceScope,
     UrbanGisPackage,
     UrbanGisProductRead,
     UrbanGisReadiness,
     UrbanGisReadinessStatus,
-    URBAN_GIS_PIPELINE_VERSION,
     VisualFeature,
 )
 from floodguard.urban_gis.models import UrbanGisRecord
@@ -343,7 +343,10 @@ class UrbanGisService:
         technical_passed = ready_count > 0
         final_passed = counts[UrbanGisReadinessStatus.REAL_PILOT_REVIEWED] > 0
         if final_passed:
-            reason = "A reviewed real-pilot package satisfies the final Sequence 7 representation gate."
+            reason = (
+                "A reviewed real-pilot package satisfies the final Sequence 7 "
+                "representation gate."
+            )
         elif technical_passed:
             reason = (
                 "Automated Sequence 7 contracts are exercised; final real-pilot human "

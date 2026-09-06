@@ -54,14 +54,21 @@ def _artifact_response(
     try:
         payload = service.read_artifact(urban_gis_id, kind)
     except UrbanGisError as exc:
-        raise HTTPException(status_code=409, detail="urban GIS artifact integrity check failed") from exc
+        raise HTTPException(
+            status_code=409,
+            detail="urban GIS artifact integrity check failed",
+        ) from exc
     except FileNotFoundError as exc:
         raise HTTPException(status_code=503, detail="urban GIS artifact unavailable") from exc
     except LookupError as exc:
         raise HTTPException(status_code=404, detail="urban GIS product not found") from exc
     except ValueError as exc:
         raise HTTPException(status_code=404, detail="urban GIS artifact not found") from exc
-    media_type = "application/geo+json" if kind in {"visual", "hydraulic", "qa"} else "application/json"
+    media_type = (
+        "application/geo+json"
+        if kind in {"visual", "hydraulic", "qa"}
+        else "application/json"
+    )
     return Response(content=payload, media_type=media_type)
 
 
