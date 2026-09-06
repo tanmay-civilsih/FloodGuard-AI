@@ -60,6 +60,9 @@ def verify_files() -> None:
         ROOT / "floodguard" / "terrain" / "service.py",
         ROOT / "floodguard" / "terrain" / "bootstrap.py",
         ROOT / "floodguard" / "terrain" / "qa_viewer.py",
+        ROOT / "floodguard" / "terrain" / "acquisition.py",
+        ROOT / "floodguard" / "terrain" / "acquire_srtm.py",
+        ROOT / "floodguard" / "terrain" / "jobs.py",
         ROOT
         / "floodguard"
         / "reconstruction"
@@ -191,8 +194,11 @@ def verify_services() -> None:
         raise SystemExit("Sequence 6 terrain readiness contract is incomplete")
     if terrain.get("qa_viewer_path") != "/terrain/qa":
         raise SystemExit("Sequence 6 terrain QA path is unexpected")
-    if "Terrain QA" not in get_text("http://localhost:8000/terrain/qa"):
+    terrain_qa = get_text("http://localhost:8000/terrain/qa")
+    if "Terrain QA" not in terrain_qa:
         raise SystemExit("Sequence 6 terrain QA viewer is not reachable")
+    if "Acquire pilot terrain" not in terrain_qa:
+        raise SystemExit("Sequence 6 automatic terrain acquisition is missing; rebuild the API")
     print("OK API /terrain/readiness and /terrain/qa")
 
 

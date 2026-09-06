@@ -1,18 +1,32 @@
-"""Read-only Sequence 6 terrain products and engineering QA endpoints."""
+"""Sequence 6 terrain products, acquisition jobs and engineering QA endpoints."""
 
+from typing import cast
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
+from floodguard.common.config import get_settings
+from floodguard.harvester.service import HarvestAccessError
 from floodguard.registry.database import get_db_session
+from floodguard.terrain.acquisition import (
+    TerrainAcquisitionPlan,
+    TerrainAcquisitionRequest,
+    plan_acquisition,
+)
 from floodguard.terrain.contracts import (
     TerrainProductKind,
     TerrainProductRead,
     TerrainReadiness,
 )
 from floodguard.terrain.factory import build_terrain_service
+from floodguard.terrain.jobs import (
+    AcquisitionBusyError,
+    TerrainAcquisitionJob,
+    TerrainJobStore,
+    run_acquisition,
+)
 from floodguard.terrain.qa_viewer import QA_VIEWER_HTML
 from floodguard.terrain.service import TerrainConditioningError, TerrainService
 
@@ -21,6 +35,60 @@ router = APIRouter(prefix="/terrain", tags=["terrain"])
 
 def get_terrain_service(session: Session = Depends(get_db_session)) -> TerrainService:
     return build_terrain_service(session)
+
+
+def get_terrain_jobs(request: Request) -> TerrainJobStore:
+    return cast(TerrainJobStore, request.app.state.terrain_jobs)
+
+
+def _plan(session: Session, request: TerrainAcquisitionRequest) -> TerrainAcquisitionPlan:
+    try:
+        return plan_acquisition(session, request, working_crs=get_settings().working_crs)
+    except HarvestAccessError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.get("/acquisition/plan", response_model=TerrainAcquisitionPlan)
+def acquisition_plan(
+    city_id: str = Query(default="kolkata", min_length=1, max_length=100),
+    ward_id: str = Query(default="7", min_length=1, max_length=100),
+    cell_size_m: float = Query(default=30.0, gt=0, allow_inf_nan=False),
+    session: Session = Depends(get_db_session),
+) -> TerrainAcquisitionPlan:
+    return _plan(session, TerrainAcquisitionRequest(
+        city_id=city_id, ward_id=ward_id, cell_size_m=cell_size_m,
+    ))
+
+
+@router.post("/acquisitions", response_model=TerrainAcquisitionJob, status_code=202)
+def acquire_terrain(
+    request: TerrainAcquisitionRequest,
+    background_tasks: BackgroundTasks,
+    session: Session = Depends(get_db_session),
+    jobs: TerrainJobStore = Depends(get_terrain_jobs),
+) -> TerrainAcquisitionJob:
+    plan = _plan(session, request)
+    try:
+        job, created = jobs.reserve(plan)
+    except AcquisitionBusyError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    if created:
+        background_tasks.add_task(run_acquisition, job.job_id, jobs)
+    return job
+
+
+@router.get("/acquisitions/{job_id}", response_model=TerrainAcquisitionJob)
+def acquisition_status(
+    job_id: UUID, jobs: TerrainJobStore = Depends(get_terrain_jobs),
+) -> TerrainAcquisitionJob:
+    try:
+        return jobs.get(job_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @router.get("/readiness", response_model=TerrainReadiness)

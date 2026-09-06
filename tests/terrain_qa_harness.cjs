@@ -13,7 +13,7 @@ class Element {
   replaceChildren() { this.children = []; this.text = ''; }
   addEventListener(name, callback) { this.events[name] = callback; }
 }
-const nodes = Object.fromEntries(['status', 'details', 'sampling', 'product'].map(id => [id, new Element(id)]));
+const nodes = Object.fromEntries(['status', 'details', 'sampling', 'product', 'acquire', 'acquisition-status'].map(id => [id, new Element(id)]));
 let map;
 class MapDouble {
   constructor() { map = this; this.sources = {}; this.handlers = {}; this.layers = []; }
@@ -40,15 +40,32 @@ const data = {
 };
 const requests = [];
 let delayNextA = false, finishDelayed;
-async function fetchDouble(path) {
+const automatic = scenario.startsWith('acquire_');
+let acquired = false, polls = 0, submissions = 0;
+async function fetchDouble(path, options) {
   requests.push(path);
   if (scenario === 'http_error') return {ok: false, status: 503};
   let body;
-  if (path.startsWith('/terrain/readiness?')) body = {
+  if (path === '/terrain/acquisitions') {
+    submissions++;
+    assert.equal(options.method, 'POST');
+    assert.deepEqual(JSON.parse(options.body), {city_id: 'new city&x=1', ward_id: '7', cell_size_m: 30});
+    if (scenario === 'acquire_rejected') return {ok: false, status: 409, json: async () => ({detail: 'Pilot requires approval'})};
+    body = {job_id: 'job-1', status: 'QUEUED', stage: 'Waiting for terrain acquisition'};
+  } else if (path === '/terrain/acquisitions/job-1') {
+    polls++;
+    if (scenario === 'acquire_expired') return {ok: false, status: 404, json: async () => ({detail: 'API restarted; retry acquisition'})};
+    if (polls === 1) body = {job_id: 'job-1', status: 'RUNNING', stage: 'Downloading N22E088 from ESA STEP'};
+    else if (scenario === 'acquire_failed') body = {job_id: 'job-1', status: 'FAILED', stage: malicious};
+    else {
+      acquired = true;
+      body = {job_id: 'job-1', status: 'SUCCEEDED', result: {downloaded: scenario !== 'acquire_cached', result: {terrain: {terrain_id: 'b'}}}};
+    }
+  } else if (path.startsWith('/terrain/readiness?')) body = {
     current_pipeline_version: 'v4', best_readiness_status: 'HYDRAULIC_VALIDATED',
     completion_gate_passed: true, completion_gate_reason: 'Other pilot is ready',
   };
-  else if (path.startsWith('/terrain/products?')) body = scenario === 'empty' ? [] : records;
+  else if (path.startsWith('/terrain/products?')) body = scenario === 'empty' || (automatic && !acquired) ? [] : records;
   else {
     body = {...data, selected: path};
     if (scenario === 'historical') { delete body.bbox; delete body.sampling; }
@@ -63,11 +80,36 @@ const context = vm.createContext({
   document: {getElementById: id => nodes[id], createElement: tag => new Element(tag)},
   window: {location: {search: '?city_id=new%20city%26x%3D1'}}, URLSearchParams,
   maplibregl: {Map: MapDouble, NavigationControl: class {}}, fetch: fetchDouble,
+  setTimeout: callback => setImmediate(callback),
 });
 vm.runInContext(script, context, {timeout: 2000});
 (async () => {
   await map.handlers.load();
-  if (scenario === 'http_error') {
+  assert.equal(nodes.acquire.disabled, false);
+  assert.equal(submissions, 0, 'opening QA must not start a download');
+  if (automatic) {
+    assert.equal(nodes.product.disabled, true);
+    const active = nodes.acquire.events.click();
+    assert.equal(nodes.acquire.disabled, true);
+    await nodes.acquire.events.click(); // Suppress a duplicate click during the request.
+    await active;
+    assert.equal(submissions, 1);
+    assert.equal(nodes.acquire.disabled, false);
+    if (scenario === 'acquire_failed') {
+      assert.ok(nodes['acquisition-status'].textContent.includes(malicious));
+      assert.equal(nodes['acquisition-status'].className, 'visual');
+      assert.equal(nodes.product.disabled, true);
+    } else if (scenario === 'acquire_rejected' || scenario === 'acquire_expired') {
+      assert.match(nodes['acquisition-status'].textContent, /requires approval|restarted/);
+      assert.match(nodes['acquisition-status'].textContent, /retry/);
+    } else {
+      assert.match(nodes['acquisition-status'].textContent, scenario === 'acquire_cached' ? /Reused stored elevation/ : /Downloaded public elevation/);
+      assert.equal(nodes.product.value, 'b');
+      assert.equal(nodes.product.disabled, false);
+      assert.equal(map.getSource('terrain').data.selected, '/terrain/products/b/qa');
+      assert.equal(map.layers.length, 2);
+    }
+  } else if (scenario === 'http_error') {
     assert.match(nodes.status.textContent, /HTTP 503/);
     assert.equal(map.getSource('terrain'), undefined);
   } else if (scenario === 'empty') {

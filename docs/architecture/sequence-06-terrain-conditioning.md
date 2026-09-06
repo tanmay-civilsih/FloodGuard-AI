@@ -358,6 +358,46 @@ the same version without downloading. Readiness was `VISUAL_READY` and the compl
 false. This checks the real public file and code path; it is not a Docker deployment test or a
 review of the user's approved pilot boundary.
 
+### Atomic increment 6.8 — acquire terrain from the QA page
+
+The Terrain QA page offers **Acquire pilot terrain**, displays the download/build stages, and
+refreshes readiness and products after success. It selects the product returned by the worker.
+Empty cities have an actionable starting state. Duplicate clicks are suppressed and failures
+leave the button available for retry. Server messages use text nodes so source metadata cannot
+inject page markup. Existing product selection, sampling explanations and historical status remain
+available. A successful acquisition message does not grant a terrain assessment or freeze.
+
+The API accepts only city, ward and metric cell size; clients cannot provide arbitrary URLs:
+
+| Endpoint | Behavior |
+| --- | --- |
+| `GET /terrain/acquisition/plan` | Checks source policy and latest pilot approval, then returns the tile plan; no network retrieval |
+| `POST /terrain/acquisitions` | Returns HTTP 202 with a queued job; matching active submissions reuse that job |
+| `GET /terrain/acquisitions/{job_id}` | Returns queued/running/succeeded/failed state and the completed terrain result |
+
+The HTTP handler does metadata preflight and reserves the job. A background task opens a separate
+database session and invokes the same tested acquisition worker as the CLI. It rechecks approval
+before download and before persistence. Governance failures return 403, missing source records
+return 404, and unavailable pilot approval or a different active acquisition returns 409.
+
+This is a bounded local-pilot implementation for the **single API process** in Compose. An
+app-owned, lock-protected store permits one active acquisition and retains at most 32 job records;
+it is not a durable/distributed queue. Do not add API workers/replicas without replacing this
+coordinator with a shared job service. Progress disappears on API restart or eviction; the page
+reports that condition and permits retry. Original data and completed products are durable in
+Postgres/MinIO, and retry reuses verified immutable inputs. Use the CLI for manual recovery and
+the existing assessment workflow. Do not run simultaneous CLI and API acquisitions for the same
+pilot; the in-process coordinator only serializes API jobs.
+
+Backend tests exercise deferred execution, duplicate concurrent submissions, bounded retention,
+approval changes during download, error reporting, input validation, and an API-to-worker build
+with SQLite and an in-memory vault. Ten tests execute the actual page JavaScript with DOM/MapLibre
+doubles, covering successful acquisition, cache reuse, failures and restart recovery alongside
+existing viewer behavior. These tests do not validate WebGL, CDN availability or Docker services;
+run `python scripts/verify.py --services` and inspect the QA page in the local deployment.
+Full software verification on 2026-09-06 passed Ruff, strict mypy (80 source files), and all 223
+tests, including all ten JavaScript cases. Docker was unavailable in the development workspace.
+
 ## Scientific boundary
 
 This checkpoint demonstrates defensible preparation and auditable conditioning logic. It is not a

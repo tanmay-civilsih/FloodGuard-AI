@@ -38,7 +38,7 @@ completion. A successful software run alone does not freeze Sequence 6.
 
 - Python **3.12.x**
 - Docker Engine + Docker Compose v2
-- Node.js (optional: enables the five terrain-viewer JavaScript behavior tests)
+- Node.js (optional: enables terrain-viewer JavaScript behavior tests)
 
 ## Local setup
 
@@ -108,7 +108,13 @@ python scripts/verify.py --reconstruction-bootstrap
 The gate requires the recorded human QA approval for the real reconstruction; it remains a separate
 gate from Sequence 6 terrain readiness.
 
-If no terrain product exists, inspect the automatic acquisition plan, then acquire the pilot tile:
+If no terrain product exists, open `http://localhost:8000/terrain/qa?city_id=kolkata` and click
+**Acquire pilot terrain**. The page shows progress and loads the resulting product automatically.
+It uses the latest recorded approval for Ward 7; `ward_id` in the page URL selects another ward.
+Opening the page alone does not download data. The current Compose deployment uses one API process;
+acquisition progress is temporary, while completed terrain remains stored across restarts.
+
+The equivalent CLI workflow can show the plan before acquiring the pilot tile:
 
 ```bash
 docker compose exec -T api python -m floodguard.terrain.acquire_srtm --plan
@@ -319,6 +325,9 @@ and georeference error. Both basemaps are visual context only, not hydraulic inp
 | `POST /reconstruction/maps/{reconstruction_id}/reviews` | record human approval/rejection |
 | `GET /reconstruction/qa` | MapLibre drainage reconstruction QA page |
 | `GET /terrain/readiness` | Sequence 6 terrain readiness and completion gate |
+| `GET /terrain/acquisition/plan` | Trace the approved ward to its public SRTM tile without downloading |
+| `POST /terrain/acquisitions` | Queue a bounded background acquisition and return its progress ID |
+| `GET /terrain/acquisitions/{job_id}` | Read acquisition progress, result or retryable failure |
 | `GET /terrain/products` | List immutable terrain products and lineage |
 | `GET /terrain/products/{terrain_id}` | Inspect one terrain product and validation metadata |
 | `GET /terrain/products/{terrain_id}/raw` | Read the immutable raw terrain package |
@@ -328,9 +337,9 @@ and georeference error. Both basemaps are visual context only, not hydraulic inp
 | `GET /terrain/products/{terrain_id}/qa` | Read WGS 84 terrain QA GeoJSON |
 | `GET /terrain/qa` | MapLibre terrain engineering QA page |
 
-There is intentionally no HTTP endpoint that performs heavy normalization or PDF extraction. The
-CLI/worker path owns computation; FastAPI exposes metadata, QA artifacts, and the explicit review
-record endpoint.
+CLI and background workers own computation. FastAPI exposes metadata, QA artifacts, explicit review
+records and acquisition submission/progress. Terrain downloading and building run after the HTTP
+response in a background task with its own database session.
 
 ## Scientific scope boundary
 

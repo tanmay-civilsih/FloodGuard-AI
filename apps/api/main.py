@@ -19,6 +19,7 @@ from floodguard import __version__
 from floodguard.common.config import get_settings
 from floodguard.common.logging import configure_logging
 from floodguard.contracts.time import UtcDateTime, utc_now
+from floodguard.terrain.jobs import TerrainJobStore
 
 settings = get_settings()
 configure_logging(settings.log_level)
@@ -29,6 +30,7 @@ app = FastAPI(
     version=__version__,
     description="Urban flood digital twin platform API",
 )
+app.state.terrain_jobs = TerrainJobStore()
 app.include_router(registry_router)
 app.include_router(harvester_router)
 app.include_router(spatial_router)

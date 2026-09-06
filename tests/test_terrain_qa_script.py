@@ -12,7 +12,10 @@ from floodguard.terrain.qa_viewer import QA_VIEWER_HTML
 
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="Node.js is needed for QA script tests")
-@pytest.mark.parametrize("scenario", ["normal", "empty", "http_error", "historical", "race"])
+@pytest.mark.parametrize("scenario", [
+    "normal", "empty", "http_error", "historical", "race", "acquire_success", "acquire_cached",
+    "acquire_failed", "acquire_rejected", "acquire_expired",
+])
 def test_qa_javascript_behavior(scenario: str) -> None:
     script = re.findall(r"<script>(.*?)</script>", QA_VIEWER_HTML, flags=re.DOTALL)[0]
     node = shutil.which("node")

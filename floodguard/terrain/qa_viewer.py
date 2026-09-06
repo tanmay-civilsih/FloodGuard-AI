@@ -18,12 +18,17 @@ QA_VIEWER_HTML = """<!doctype html>
     code { font-size: 11px; overflow-wrap: anywhere; }
     select { width: 100%; margin: 6px 0; } li { font-size: 12px; margin: 5px 0; }
     #details { overflow-wrap: anywhere; } #sampling { font-weight: 600; }
+    button { width: 100%; padding: 9px; margin: 5px 0; cursor: pointer; }
+    button:disabled { cursor: wait; } #acquisition-status { overflow-wrap: anywhere; }
   </style>
 </head>
 <body>
 <div id="map"></div>
 <section id="panel">
   <h1>FloodGuard-AI · Terrain QA</h1>
+  <button id="acquire" type="button" disabled>Acquire pilot terrain</button>
+  <p>Uses the approved ward boundary and public SRTM elevation. No login or manual file download is needed.</p>
+  <p id="acquisition-status" role="status" aria-live="polite"></p>
   <label for="product">Terrain product</label>
   <select id="product" disabled><option>Loading…</option></select>
   <p id="status" role="status" aria-live="polite">Loading terrain products…</p>
@@ -36,12 +41,16 @@ QA_VIEWER_HTML = """<!doctype html>
 <script>
 const map = new maplibregl.Map({container: 'map', style: 'https://demotiles.maplibre.org/style.json', center: [88.369, 22.605], zoom: 14});
 map.addControl(new maplibregl.NavigationControl(), 'top-right');
-const state = {records: [], readiness: null, request: 0};
+const state = {records: [], readiness: null, request: 0, acquiring: false};
 const element = id => document.getElementById(id);
 const emptyLayer = {type: 'FeatureCollection', features: []};
-async function fetchJson(path) {
-  const response = await fetch(path);
-  if (!response.ok) throw new Error(`HTTP ${response.status} while loading terrain data`);
+async function fetchJson(path, options) {
+  const response = await fetch(path, options);
+  if (!response.ok) {
+    let detail;
+    try { detail = (await response.json()).detail; } catch { /* Keep the HTTP fallback. */ }
+    throw new Error(typeof detail === 'string' ? detail : `HTTP ${response.status} while loading terrain data`);
+  }
   return response.json();
 }
 function showError(error) {
@@ -122,7 +131,8 @@ async function selectProduct(id) {
     if (request === state.request) showError(error);
   }
 }
-async function loadQa() {
+async function loadQa(preferredId) {
+  ++state.request;
   const city = new URLSearchParams(window.location.search).get('city_id') || 'kolkata';
   const query = `city_id=${encodeURIComponent(city)}`;
   [state.readiness, state.records] = await Promise.all([
@@ -134,20 +144,58 @@ async function loadQa() {
     addText(selector, 'option', 'No terrain products');
     selector.disabled = true;
     element('status').className = 'visual';
-    element('status').textContent = 'No terrain product exists yet. Import an elevation dataset to populate this map.';
+    element('status').textContent = 'No terrain product exists yet. Use Acquire pilot terrain to build it from the approved ward boundary.';
+    element('details').replaceChildren();
+    element('sampling').textContent = '';
+    map.getSource('terrain')?.setData(emptyLayer);
     return;
   }
   state.records.forEach(record => {
     const option = addText(selector, 'option', `${record.pilot_area_id} · ${record.readiness_status} · ${record.terrain_id}`);
     option.value = record.terrain_id;
   });
-  const selected = state.records.find(record => record.pipeline_version === state.readiness.current_pipeline_version) || state.records[0];
+  const selected = state.records.find(record => record.terrain_id === preferredId)
+    || state.records.find(record => record.pipeline_version === state.readiness.current_pipeline_version) || state.records[0];
   selector.value = selected.terrain_id;
   selector.disabled = false;
-  selector.addEventListener('change', () => selectProduct(selector.value));
   await selectProduct(selected.terrain_id);
 }
-map.on('load', () => loadQa().catch(showError));
+async function acquireTerrain() {
+  if (state.acquiring) return;
+  state.acquiring = true;
+  const button = element('acquire');
+  const status = element('acquisition-status');
+  button.disabled = true;
+  status.className = '';
+  status.textContent = 'Checking the approved pilot…';
+  try {
+    const query = new URLSearchParams(window.location.search);
+    let job = await fetchJson('/terrain/acquisitions', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({city_id: query.get('city_id') || 'kolkata', ward_id: query.get('ward_id') || '7', cell_size_m: 30})
+    });
+    while (['QUEUED', 'RUNNING'].includes(job.status)) {
+      status.textContent = job.stage;
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      job = await fetchJson(`/terrain/acquisitions/${encodeURIComponent(job.job_id)}`);
+    }
+    if (job.status !== 'SUCCEEDED') throw new Error(job.stage || 'Terrain acquisition failed');
+    const terrain = job.result?.result?.terrain;
+    if (!terrain) throw new Error('Acquisition finished without a terrain product');
+    status.className = 'ready';
+    status.textContent = `${job.result.downloaded ? 'Downloaded public elevation' : 'Reused stored elevation'}. Terrain is available for QA.`;
+    await loadQa(terrain.terrain_id);
+  } catch (error) {
+    status.className = 'visual';
+    status.textContent = `Acquisition could not finish: ${error.message || error}. You can retry; stored terrain is preserved.`;
+  } finally {
+    state.acquiring = false;
+    button.disabled = false;
+  }
+}
+element('product').addEventListener('change', () => selectProduct(element('product').value));
+element('acquire').addEventListener('click', acquireTerrain);
+map.on('load', () => loadQa().catch(showError).finally(() => { element('acquire').disabled = false; }));
 </script>
 </body>
 </html>"""
