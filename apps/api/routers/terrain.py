@@ -7,6 +7,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, R
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
+from floodguard.common.auth_viewer import with_operator_credentials
 from floodguard.common.config import get_settings
 from floodguard.harvester.service import HarvestAccessError
 from floodguard.registry.database import get_db_session
@@ -187,7 +188,7 @@ def get_qa_geojson(
 
 @router.get("/qa", response_class=HTMLResponse)
 def qa_viewer() -> HTMLResponse:
-    return HTMLResponse(QA_VIEWER_HTML)
+    return HTMLResponse(with_operator_credentials(QA_VIEWER_HTML))
 
 
 @router.get("/products/{terrain_id}/audit")

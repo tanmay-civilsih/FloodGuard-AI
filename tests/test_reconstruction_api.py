@@ -5,6 +5,7 @@ from sqlalchemy.pool import StaticPool
 
 from apps.api.main import app
 from apps.api.routers.reconstruction import get_reconstruction_service
+from floodguard.common.auth import require_write_access
 from floodguard.reconstruction.repository import ReconstructionRepository
 from floodguard.reconstruction.service import ReconstructionService
 from floodguard.registry.models import Base
@@ -30,6 +31,8 @@ def test_reconstruction_readiness_geojson_qa_and_review_api() -> None:
         max_object_bytes=1024 * 1024,
     )
     result = service.reconstruct(source, version, raw_object, calibration)
+    # Authorization is tested independently; these assertions exercise domain review rules.
+    app.dependency_overrides[require_write_access] = lambda: None
     app.dependency_overrides[get_reconstruction_service] = lambda: service
     try:
         client = TestClient(app)

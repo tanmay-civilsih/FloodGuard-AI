@@ -5,7 +5,7 @@ from collections.abc import Awaitable, Callable
 from typing import Literal
 from uuid import UUID, uuid4
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.responses import Response
@@ -16,8 +16,10 @@ from apps.api.routers.registry import router as registry_router
 from apps.api.routers.spatial import router as spatial_router
 from apps.api.routers.terrain import router as terrain_router
 from floodguard import __version__
+from floodguard.common.auth import require_write_access
 from floodguard.common.config import get_settings
 from floodguard.common.logging import configure_logging
+from floodguard.common.readiness import platform_readiness
 from floodguard.contracts.time import UtcDateTime, utc_now
 from floodguard.terrain.jobs import TerrainJobStore
 
@@ -29,6 +31,7 @@ app = FastAPI(
     title="FloodGuard-AI API",
     version=__version__,
     description="Urban flood digital twin platform API",
+    dependencies=[Depends(require_write_access)],
 )
 app.state.terrain_jobs = TerrainJobStore()
 app.include_router(registry_router)
@@ -46,6 +49,7 @@ class HealthResponse(BaseModel):
 class ReadyResponse(BaseModel):
     status: Literal["ready"] = "ready"
     environment: str
+    dependencies: dict[str, bool]
     timestamp: UtcDateTime
 
 
@@ -90,8 +94,13 @@ def health() -> HealthResponse:
 
 
 @app.get("/ready", response_model=ReadyResponse, tags=["platform"])
-def ready() -> ReadyResponse:
-    return ReadyResponse(environment=settings.environment, timestamp=utc_now())
+def ready() -> ReadyResponse | JSONResponse:
+    checks = platform_readiness()
+    if not checks or not all(checks.values()):
+        return JSONResponse(
+            status_code=503, content={"status": "not_ready", "dependencies": checks}
+        )
+    return ReadyResponse(environment=settings.environment, dependencies=checks, timestamp=utc_now())
 
 
 @app.get("/version", response_model=VersionResponse, tags=["platform"])

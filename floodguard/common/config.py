@@ -11,6 +11,7 @@ class Settings(BaseSettings):
 
     environment: str = "development"
     log_level: str = "INFO"
+    operators_json: str = ""
     api_host: str = "0.0.0.0"
     api_port: int = Field(default=8000, ge=1, le=65535)
     database_url: str = "sqlite:///./floodguard.db"

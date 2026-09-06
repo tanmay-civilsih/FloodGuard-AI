@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 
 from apps.api.main import app
 from apps.api.routers import terrain as terrain_api
+from floodguard.common.auth import require_write_access
 from floodguard.harvester.service import HarvestAccessError
 from floodguard.registry.database import get_db_session
 from floodguard.terrain import jobs as job_worker
@@ -40,6 +41,8 @@ def job_context(acquisition_context, monkeypatch):
         get_source=lambda _: ctx.source,
     ))
     monkeypatch.setattr(terrain_api, "plan_acquisition", lambda *args, **kwargs: ctx.plan)
+    # Authorization is tested independently; this fixture exercises worker behavior.
+    app.dependency_overrides[require_write_access] = lambda: None
     app.dependency_overrides[get_db_session] = lambda: None
     app.dependency_overrides[terrain_api.get_terrain_jobs] = lambda: ctx.jobs
     app.dependency_overrides[terrain_api.get_terrain_service] = lambda: ctx.terrain

@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
+from floodguard.common.auth_viewer import with_operator_credentials
 from floodguard.reconstruction.contracts import (
     DrainageReconstructionRead,
     ReconstructionReadiness,
@@ -99,4 +100,4 @@ def list_reviews(
 
 @router.get("/qa", response_class=HTMLResponse)
 def qa_viewer() -> HTMLResponse:
-    return HTMLResponse(QA_VIEWER_HTML)
+    return HTMLResponse(with_operator_credentials(QA_VIEWER_HTML))
