@@ -412,6 +412,14 @@ limit around pytest's environment updates. After the fix, the full verifier pass
 mypy and all 223 tests with that limit enforced; the longest collected test ID was 134 characters.
 This was a Linux run with the Windows length restriction emulated, not a native Windows run.
 
+The operator subsequently pulled checkpoint `1d389f0` and reported a successful native Windows
+run of `python scripts\verify.py --services` using Python 3.12.10. Ruff passed, strict mypy checked
+80 source files without issues, and all 223 tests passed in 12.42 s. Docker Compose configuration,
+all six services (API, MinIO, NATS, Postgres, Redis and Traefik), and the API health/version and
+registry, harvester, spatial, reconstruction and terrain readiness/QA checks passed. This confirms
+the Windows portability correction in the local deployment. The command explicitly did not check
+terrain completion; `python scripts\verify.py --terrain-bootstrap` remains a separate gate.
+
 The operator's QA screenshot also shows the Ward 7 terrain on pipeline v7: 42 × 32 cells, all
 1,344 valid cells displayed, and `VISUAL_READY`. Vertical controls and the depression/multi-level
 assessments remain absent, so the terrain completion gate remains pending. This checkpoint fixes
