@@ -42,7 +42,10 @@ def main() -> None:
         if readiness.final_completion_gate_passed:
             print("Final real-pilot acceptance is already recorded.")
         else:
-            print("Reference validation passed; final human acceptance remains deferred to Sequence 20.")
+            print(
+                "Reference validation passed; final human acceptance remains deferred "
+                "to Sequence 20."
+            )
 
 
 if __name__ == "__main__":
