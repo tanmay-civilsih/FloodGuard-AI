@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import math
 from importlib import import_module
-from typing import cast
+from typing import Any, cast
 
 TOPOLOGY_REPAIR_PROPERTY = "_floodguard_topology_repair"
 TOPOLOGY_REPAIR_METHOD = "GEOS_MAKE_VALID_LINEWORK_SELF_INTERSECTION_V1"
@@ -79,7 +79,7 @@ def _validate_geometry_structure(value: object, *, geographic: bool) -> dict[str
     return geometry
 
 
-def _shape(value: dict[str, object]) -> object:
+def _shape(value: dict[str, object]) -> Any:
     geometry_api = import_module("shapely.geometry")
     try:
         return geometry_api.shape(value)
