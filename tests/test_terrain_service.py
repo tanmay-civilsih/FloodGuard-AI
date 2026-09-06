@@ -136,6 +136,25 @@ def test_unknown_vertical_reference_stays_visual_ready() -> None:
         session.close()
 
 
+def test_unresolved_local_datum_can_be_scenario_ready_when_disclosed() -> None:
+    data = synthetic_package().model_dump()
+    data["datum_transform_status"] = "UNRESOLVED"
+    data["limitations"].append(
+        "Vertical datum compatibility with future drain, stage and survey references is unresolved."
+    )
+    assert _readiness_status(TerrainPackage.model_validate(data)) is (
+        TerrainReadinessStatus.HYDRAULIC_SCENARIO_READY
+    )
+
+
+def test_unresolved_local_datum_without_disclosure_stays_visual_ready() -> None:
+    data = synthetic_package().model_dump()
+    data["datum_transform_status"] = "UNRESOLVED"
+    assert _readiness_status(TerrainPackage.model_validate(data)) is (
+        TerrainReadinessStatus.VISUAL_READY
+    )
+
+
 def test_summary_metrics_cannot_claim_hydraulic_validation() -> None:
     data = synthetic_package().model_dump()
     data["vertical_validation"].update(

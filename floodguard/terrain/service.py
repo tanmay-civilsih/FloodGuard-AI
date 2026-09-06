@@ -106,13 +106,30 @@ def _fingerprint(
 def _readiness_status(
     package: TerrainPackage, evaluation: VerticalEvaluation | None = None
 ) -> TerrainReadinessStatus:
-    vertical_is_usable = (
+    source_vertical_is_known = (
         package.source_surface_type.value in {"DSM", "DTM"}
         and package.vertical_quality is not VerticalQuality.UNKNOWN
         and package.vertical_datum is not None
         and package.vertical_unit is not None
-        # A TRANSFORMED label alone does not establish transformation provenance.
-        and package.datum_transform_status.value == "COMPATIBLE"
+    )
+    datum_status = package.datum_transform_status.value
+    unresolved_is_disclosed = (
+        datum_status != "UNRESOLVED"
+        or any(
+            "unresolved" in limitation.lower()
+            and ("vertical" in limitation.lower() or "datum" in limitation.lower())
+            for limitation in package.limitations
+        )
+    )
+    # Sequence 6 may be scenario-ready using one known source datum without claiming
+    # compatibility with future drain/stage/survey references. Those cross-datum
+    # comparisons remain prohibited until a later contract establishes compatibility.
+    # A TRANSFORMED label alone is still insufficient because TerrainPackage has no
+    # transformation-provenance field that could justify that claim.
+    vertical_is_usable = (
+        source_vertical_is_known
+        and datum_status in {"COMPATIBLE", "UNRESOLVED"}
+        and unresolved_is_disclosed
     )
     assessments_complete = package.depression_assessment in {
         AssessmentStatus.CATALOGUED,
