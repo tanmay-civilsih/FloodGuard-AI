@@ -123,9 +123,16 @@ def test_bad_hgt_names_fail(hgt_bytes: bytes, name: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "payload", [b"", b"PK\x03\x04", bytes(1201 * 1201 * 2), b"x" * (SRTM_BYTES + 1)]
+    "payload",
+    [
+        pytest.param(b"", id="empty"),
+        pytest.param(b"PK\x03\x04", id="zip-header"),
+        pytest.param(bytes(1201 * 1201 * 2), id="srtm3-resolution"),
+        pytest.param(b"x" * (SRTM_BYTES + 1), id="oversized"),
+    ],
 )
 def test_wrong_hgt_size_fails(payload: bytes) -> None:
+    # Short case IDs keep pytest's PYTEST_CURRENT_TEST within Windows environment limits.
     with pytest.raises(ValueError, match="exactly"):
         decode_hgt(payload, "N22E088.hgt")
 
