@@ -10,6 +10,9 @@ from pathlib import Path
 from typing import cast
 
 from pyproj import CRS, Transformer
+from pyproj.exceptions import ProjError
+
+from floodguard.spatial.geometry_validation import validate_geometry
 
 
 class VectorNormalizationError(ValueError):
@@ -39,8 +42,8 @@ def _parse_coordinate_text(text: str | None) -> list[list[float]]:
     positions: list[list[float]] = []
     for token in text.replace("\n", " ").replace("\t", " ").split():
         parts = token.split(",")
-        if len(parts) < 2:
-            continue
+        if len(parts) not in {2, 3}:
+            raise VectorNormalizationError(f"invalid KML coordinate token: {token}")
         try:
             position = [float(parts[0]), float(parts[1])]
             if len(parts) >= 3 and parts[2] != "":
@@ -67,8 +70,8 @@ def _parse_kml_geometry(element: ET.Element) -> dict[str, object]:
     if geometry_type == "Point":
         coordinates = _first_descendant(element, "coordinates")
         positions = _parse_coordinate_text(coordinates.text if coordinates is not None else None)
-        if not positions:
-            raise VectorNormalizationError("KML Point has no coordinates")
+        if len(positions) != 1:
+            raise VectorNormalizationError("KML Point requires exactly one position")
         return {"type": "Point", "coordinates": positions[0]}
 
     if geometry_type == "LineString":
@@ -94,8 +97,9 @@ def _parse_kml_geometry(element: ET.Element) -> dict[str, object]:
             inner_positions = _parse_coordinate_text(
                 inner_coords.text if inner_coords is not None else None
             )
-            if len(inner_positions) >= 4:
-                rings.append(inner_positions)
+            if len(inner_positions) < 4:
+                raise VectorNormalizationError("KML Polygon inner ring is malformed")
+            rings.append(inner_positions)
         return {"type": "Polygon", "coordinates": rings}
 
     if geometry_type == "MultiGeometry":
@@ -203,9 +207,22 @@ def _legacy_geojson_crs(payload: dict[str, object]) -> str:
 
 
 def parse_geojson(payload: bytes) -> tuple[dict[str, object], str]:
+    def reject_constant(value: str) -> object:
+        raise VectorNormalizationError(f"non-finite JSON constant: {value}")
+
+    def unique_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+        result: dict[str, object] = {}
+        for key, value in pairs:
+            if key in result:
+                raise VectorNormalizationError(f"duplicate GeoJSON key: {key}")
+            result[key] = value
+        return result
+
     try:
-        loaded = json.loads(payload)
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        loaded = json.loads(payload, parse_constant=reject_constant, object_pairs_hook=unique_keys)
+        # Also rejects finite-lexeme overflow such as 1e999, including in properties.
+        json.dumps(loaded, allow_nan=False)
+    except ValueError as exc:
         raise VectorNormalizationError(f"invalid GeoJSON: {exc}") from exc
     if not isinstance(loaded, dict):
         raise VectorNormalizationError("GeoJSON root must be an object")
@@ -241,10 +258,17 @@ def _transform_position(
     if not isinstance(x_value, int | float) or not isinstance(y_value, int | float):
         raise VectorNormalizationError("geometry x/y coordinates must be numeric")
     x, y = float(x_value), float(y_value)
-    target_x, target_y = forward.transform(x, y)
-    source_x, source_y = inverse.transform(target_x, target_y)
-    check_x, check_y = forward.transform(source_x, source_y)
+    try:
+        target_x, target_y = forward.transform(x, y, errcheck=True)
+        source_x, source_y = inverse.transform(target_x, target_y, errcheck=True)
+        check_x, check_y = forward.transform(source_x, source_y, errcheck=True)
+    except ProjError as exc:
+        raise VectorNormalizationError("coordinate transformation failed") from exc
+    if not all(math.isfinite(v) for v in (target_x, target_y, check_x, check_y)):
+        raise VectorNormalizationError("coordinate transformation produced non-finite values")
     error_m = math.hypot(check_x - target_x, check_y - target_y)
+    if not math.isfinite(error_m):
+        raise VectorNormalizationError("round-trip residual must be finite")
     transformed = [float(target_x), float(target_y)]
     for extra in position_value[2:]:
         if isinstance(extra, int | float):
@@ -355,10 +379,18 @@ def _transform_feature_collection(
     source_crs: str,
     target_crs: str,
 ) -> tuple[dict[str, object], float, list[str]]:
-    source = CRS.from_user_input(source_crs)
-    target = CRS.from_user_input(target_crs)
-    forward = Transformer.from_crs(source, target, always_xy=True)
-    inverse = Transformer.from_crs(target, source, always_xy=True)
+    try:
+        source = CRS.from_user_input(source_crs)
+        target = CRS.from_user_input(target_crs)
+        forward = Transformer.from_crs(source, target, always_xy=True)
+        inverse = Transformer.from_crs(target, source, always_xy=True)
+    except ProjError as exc:
+        raise VectorNormalizationError(
+            "invalid or unsupported coordinate reference system"
+        ) from exc
+    for crs in (source, target):
+        if crs.is_geographic and any(axis.unit_name != "degree" for axis in crs.axis_info[:2]):
+            raise VectorNormalizationError("geographic coordinates must use degrees")
     features_value = feature_collection.get("features")
     if not isinstance(features_value, list):
         raise VectorNormalizationError("FeatureCollection requires a feature list")
@@ -366,18 +398,26 @@ def _transform_feature_collection(
     geometry_types: set[str] = set()
     max_error = 0.0
     for feature_value in features_value:
-        if not isinstance(feature_value, dict):
-            continue
+        if not isinstance(feature_value, dict) or feature_value.get("type") != "Feature":
+            raise VectorNormalizationError("every entry must be a GeoJSON Feature")
         feature = cast(dict[str, object], feature_value)
-        geometry, error = _transform_geometry(feature.get("geometry"), forward, inverse)
+        try:
+            validate_geometry(feature.get("geometry"), geographic=source.is_geographic)
+            geometry, error = _transform_geometry(feature.get("geometry"), forward, inverse)
+            validate_geometry(geometry, geographic=target.is_geographic)
+        except (ValueError, OverflowError) as exc:
+            raise VectorNormalizationError(str(exc)) from exc
         max_error = max(max_error, error)
         if geometry is not None and isinstance(geometry.get("type"), str):
             geometry_types.add(cast(str, geometry["type"]))
         properties_value = feature.get("properties")
         properties = properties_value if isinstance(properties_value, dict) else {}
-        transformed_features.append(
-            {"type": "Feature", "properties": properties, "geometry": geometry}
-        )
+        transformed_feature: dict[str, object] = {
+            "type": "Feature", "properties": properties, "geometry": geometry,
+        }
+        if "id" in feature:
+            transformed_feature["id"] = feature["id"]
+        transformed_features.append(transformed_feature)
     if not transformed_features:
         raise VectorNormalizationError("FeatureCollection contains no valid features")
     return (
