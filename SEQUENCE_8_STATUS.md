@@ -1,79 +1,35 @@
-# Sequence 8 — DEVELOPMENT IN PROGRESS
+# Sequence 8 - Implementation complete; deployed gate pending
 
 Date: 6 September 2026
-
 Branch: `sequence-8-drain-model`
+Release: `0.8.0`
+Predecessor technical freeze: `11ed8fc`; Sequence 7 validated source `318ec92`.
 
-Predecessor technical freeze: `11ed8fc` (Sequence 7 status/evidence), validated source `318ec92`.
+The full Sequence 8 implementation is ready for its clean-commit deployed development gate.
+It is not yet technically frozen at this checkpoint.
 
-## Current scope
+Implemented: typed graph/direction/parameter/exchange contracts; exact stored-source import and
+explicit geometry bindings; polygon-based cross-ward checks; pump/storage/outfall definitions;
+conservative readiness; immutable product/audit storage; additive migration; operator CLI and
+reference bootstrap; read-only API and QA viewer; full development gate with HTTP hash readback.
+See `docs/architecture/sequence-08-drain-model.md` for the interface and scientific limitations.
 
-Increment **8.1 — typed drainage graph and deterministic topology inspection** is implemented and
-locally verified. Sequence 8 as a whole is **not frozen**.
+Initial full software verification: Python 3.12.10, Ruff passed, strict mypy 122 source files,
+563 passed and one Windows symlink-permission skip. Additional gate tests will be included in the
+final pinned run. The local API runs Sequence 8 / v0.8.0 with the additive migration applied.
+The existing-source bootstrap passed and repeated products reused their exact immutable identity.
 
-Implemented files:
+| Product | ID | State |
+|---|---|---|
+| Real Ward 7 import | 30c05f00-2ab5-5aea-a640-5275711ce127 | VISUAL_ONLY; 104 drains, 84 structure candidates, 98 labels |
+| Controlled directed reference | 898df152-6437-55ba-9ff4-bcdb430a4a00 | HYDRAULIC_SCENARIO_READY; 6 nodes, 5 edges, 2 exchanges |
 
-- `floodguard/drainage/contracts.py`
-- `floodguard/drainage/topology.py`
-- `tests/drainage_fixtures.py`
-- `tests/test_drainage_contracts.py`
-- `tests/test_drainage_topology.py`
+Reference readiness is never counted as real hydraulic validation. Real source features intersect
+wards 7, 8, 10 and 12; three intersect no source ward. No nominal real connectivity/direction or
+engineering values are inferred from those intersections. There is no source-bound real directed
+graph and no verified real cross-ward path yet. Genuine adjacent-ward continuation to a defensible
+destination is mandatory before Sequence 9 closes. Final engineering/human acceptance remains
+pending Sequence 20 under the existing policy. No Sequence 9 implementation has begun.
 
-The architectural plan and remaining increments are in
-`docs/architecture/sequence-08-drain-model.md`.
-
-## Implemented behavior
-
-- Six node types, four edge types and explicit NETWORK_1D ownership.
-- Versioned engineering parameters with units, provenance, missing reasons and optional bounds.
-- Named geometry, roughness, slope, capacity, storage and pump/outfall/condition-reference fields.
-- Frozen-plan direction priority and rejection of contradictory strongest-priority evidence.
-- Metric geometry, endpoint alignment, source-identity and datum guards.
-- Physical POINT_INLET/MANHOLE_SURCHARGE contracts with geometry, x/y, rim, opening area,
-  coefficient, capacity, source and confidence; numerical cell bindings remain forbidden.
-- Deterministic minimum-hop paths to declared outfalls, dead-end/disconnected-node diagnostics,
-  missing exchange coverage and parameter-gap reports. Cycles are supported.
-- Ward transitions explicitly limited to DECLARED_WARD_IDS_ONLY; genuine cross-ward and hydraulic
-  validation claims remain false.
-
-## Validation
-
-Focused Sequence 8 tests: **48 passed**.
-
-Full local `python scripts/verify.py` on Python **3.12.10** passed:
-
-- Ruff: **passed**.
-- Strict mypy: **107 source files, no issues**.
-- Pytest: **457 passed, 1 skipped** in 30.49 seconds. The skip is unavailable Windows symlink
-  permission; no tests were deselected.
-
-Transcript: `artifacts/validation/sequence8-increment1/software-verification.log`.
-This is software verification of increment 8.1. It is not a deployed Sequence 8 development gate.
-
-All graph cases are labelled synthetic references. No real drain dimensions, inverts, network
-connections, outfall acceptance or ward-boundary evidence have been invented.
-
-## Runtime and release boundary
-
-The deployed Docker API remains **Sequence 7 / v0.7.0**, built from the validated `318ec92` source.
-The Sequence 8 branch adds local library code; it is not deployed and therefore has a different
-source fingerprint. A later Sequence 8 API integration must rebuild and verify its exact source.
-
-No Sequence 8 migration, persisted product, API, technical freeze or final acceptance is claimed.
-`main` remains at the Sequence 5 baseline. These are local development checkpoints, not a claim of
-remote publication or hosted acceptance.
-
-## Next continuation
-
-1. Build source-bound graph construction/import from reconstruction and normalized ward layers,
-   with explicit source hashes and preserved uncertainty; do not connect lines solely because
-   they overlap visually or invent flow direction from a DEM.
-2. Implement the hydraulic parameter/readiness assessment and auditable reasons for every missing
-   required value. Versioned pump/outfall references alone do not constitute executable definitions.
-3. Add immutable graph/parameter/exchange/QA/audit storage, migration, service and corruption guards.
-4. Add API/QA and reference bootstrap, then pass the complete pinned-runtime Sequence 8 gate.
-5. Establish genuine adjacent-ward continuation and downstream-destination evidence before closing
-   Sequence 9. Apply the existing human-review deferral policy without weakening automated checks.
-
-Continue from this branch after checking its live Git state and the predecessor freeze report.
-Do not begin the Sequence 9 twin builder while the Sequence 8 technical gate remains incomplete.
+Next: run the full clean-commit gate, retain its exact source/product evidence, then record the
+technical freeze. No remote publication or merge-to-main is implied by this local checkpoint.

@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.responses import Response
 
+from apps.api.routers.drainage import router as drainage_router
 from apps.api.routers.harvester import router as harvester_router
 from apps.api.routers.reconstruction import router as reconstruction_router
 from apps.api.routers.registry import router as registry_router
@@ -44,6 +45,7 @@ app.include_router(spatial_router)
 app.include_router(reconstruction_router)
 app.include_router(terrain_router)
 app.include_router(urban_gis_router)
+app.include_router(drainage_router)
 
 
 class HealthResponse(BaseModel):
@@ -61,7 +63,7 @@ class ReadyResponse(BaseModel):
 class VersionResponse(BaseModel):
     name: Literal["FloodGuard-AI"] = "FloodGuard-AI"
     version: str
-    sequence: Literal[7] = 7
+    sequence: Literal[8] = 8
     source_fingerprint: str | None
     runtime_python: str
     dependency_lock_mismatches: list[str]

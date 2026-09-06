@@ -58,3 +58,35 @@ The deterministic Sequence 7 reference fixture is deliberately synthetic and exi
 - exercised hydraulic classes: `ROAD`, `ROOF`, `BUILDING_BARRIER`, `OPEN_SOIL`, `PARK`, `WATER`, `RAILWAY`, `OTHER_IMPERVIOUS`
 
 This reference anchor is **not** a substitute for HR-07-01 through HR-07-04. Final review must target the then-current real-pilot immutable products, not this synthetic fixture.
+
+
+## Sequence 8 deferred acceptance and real-pilot constraints
+
+| ID | Sequence | Human/final acceptance item | Current state | Closure requirement |
+|---|---:|---|---|---|
+| HR-08-01 | 8 | Real structure/node classification, nominal connectivity and direction evidence | PENDING_SEQUENCE_20 | Accept exact source-feature bindings and highest-priority direction evidence; nearest-feature associations are insufficient |
+| HR-08-02 | 8 | Real dimensions, inverts, roughness, condition, capacity and vertical reference | PENDING_SEQUENCE_20 | Versioned evidence, explicit missing values and compatible elevation frame; no inferred survey or invented parameters |
+| HR-08-03 | 8 | Real pump/storage/outfall definitions and downstream destination | PENDING_SEQUENCE_20 | Accept exact static definitions, source lineage and receiving geometry; static references alone are insufficient |
+| HR-08-04 | 8 | Real physical inlet/manhole exchange coverage and overtopping need | PENDING_SEQUENCE_20 | Review source-bound geometry, rim, opening, coefficient, capacity and the need for distributed overtopping |
+| HR-08-05 | 8 | Exact drain/ward/source/QA visual comparison and out-of-ward diagnostics | PENDING_SEQUENCE_20 | Review exact immutable versions, including three candidates outside all ward polygons; live browser acceptance has not occurred |
+
+**DATA-08-01 - OPEN; must resolve before Sequence 9 closes.** No source-bound real directed graph or
+accepted real cross-ward drainage continuation has been established. The stored source geometries
+intersect wards 7, 8, 10 and 12, but intersection alone is not evidence of hydraulic connectivity,
+direction or a defensible downstream destination. This is a missing data/model requirement as well
+as a later acceptance dependency; it is not postponed to Sequence 20 by the human-review policy.
+The Sequence 9 builder must keep this real-pilot closure gate separate from reference development.
+
+Verified local bootstrap anchors (6 September 2026):
+
+- Real import product: `30c05f00-2ab5-5aea-a640-5275711ce127`, REAL_PILOT_PROVISIONAL / VISUAL_ONLY.
+- Reconstruction: `4fea299c-e2ea-5a11-ae98-eaff9649c6da`, working SHA-256
+  `5cda954e5d61d2f2191b63c80e19efdb99848c4ecaafa6fcffa90ee0d5e351b6`.
+- Ward normalization: `acff42f4-d7a0-5bed-bcdc-28d5ed740b63`, working SHA-256
+  `da962cba8ec62bdf45e86a70d403880532f880f205e437aa5dc678dabc74d65a`.
+- Imported features: 104 drains, 84 structure candidates, 98 labels, with unchanged source bytes.
+- Controlled reference product: `898df152-6437-55ba-9ff4-bcdb430a4a00`, REFERENCE_FIXTURE /
+  HYDRAULIC_SCENARIO_READY. It contains six nodes, five edges and both mandatory point exchanges.
+
+The reference is not real drainage evidence and cannot close any HR-08 item or DATA-08-01.
+The final clean-commit development report will retain every product artifact hash and HTTP readback.

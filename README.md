@@ -10,16 +10,16 @@ Development is governed by:
 
 ## Current milestone
 
-**Sequence 7 — Urban GIS Reconstruction, Hydraulic Surface Classes and Roof Runoff Policy (v0.7)**
+**Sequence 8 - Drain Graph, Hydraulic Parameters, Exchange Geometry and Readiness (v0.8)**
 
-Sequence 7 is technically frozen after the full local deployed gate passed on
-`318ec92086daef14d816df16b2786a8482b452c0`; see `SEQUENCE_7_STATUS.md` and its versioned validation
-report. Final real-pilot acceptance remains pending Sequence 20.
+Sequence 8 implementation is complete and locally deployed, with the final clean-commit development
+gate pending. See `SEQUENCE_8_STATUS.md` and `docs/architecture/sequence-08-drain-model.md`.
+The API includes immutable real-source import drafts, directed reference models, explicit source
+bindings, conservative static readiness and a read-only geometry viewer at `/drainage/qa`.
+Final real-pilot acceptance remains pending Sequence 20. A genuine source-bound adjacent-ward path
+to a defensible destination is still required before Sequence 9 can close.
 
-Active development is **Sequence 8, increment 8.1: typed drainage graphs and topology inspection**
-on `sequence-8-drain-model`. See `SEQUENCE_8_STATUS.md` and
-`docs/architecture/sequence-08-drain-model.md`. This increment does not publish a Sequence 8 API or
-claim a real cross-ward drainage continuation; the deployed API remains the validated v0.7 baseline.
+Sequence 7 is technically frozen on its validated source `318ec92`; see `SEQUENCE_7_STATUS.md`.
 
 Sequence 7 keeps the visual city representation separate from the simplified hydraulic surface representation. The hydraulic contract supports exactly:
 
@@ -92,19 +92,39 @@ docker compose up -d --build
 python scripts/verify.py --services
 ```
 
-Run the Sequence 7 deterministic automated-development bootstrap:
+Run the Sequence 8 reference model and existing real-source import bootstrap:
 
 ```bash
-python scripts/verify.py --services --urban-gis-bootstrap
+python scripts/verify.py --services --drainage-bootstrap
 ```
 
-Run the complete Sequence 7 technical-development gate, including the real conditional-storage concurrency probe:
+Run the complete Sequence 8 technical-development gate, including the real conditional-storage concurrency probe:
 
 ```bash
-python scripts/sequence7_development_gate.py --run-checks
+python scripts/sequence8_development_gate.py --run-checks
 ```
 
-A passing Sequence 7 development gate means the interfaces and automatable scientific invariants are stable enough for Sequence 8. It does **not** mean real-pilot GIS/roof classification has received human engineering acceptance; those items remain in `docs/validation/final-human-review-register.md` for Sequence 20.
+A passing Sequence 8 development gate freezes the software/interface baseline for continued
+development under the owner-approved policy. It does not grant real-pilot engineering acceptance,
+`HYDRAULIC_VALIDATED`, or closure of the Sequence 9 genuine cross-ward requirement.
+Exact remaining evidence is tracked in `docs/validation/final-human-review-register.md`.
+Historical sequence gate scripts remain tied to their historical releases.
+
+## Sequence 8 products
+
+Drain products retain immutable source/input/ward/QA/audit artifacts. Directed models additionally
+retain graph, hydraulic parameters/static definitions, physical exchange geometry and readiness
+assessment. Source-bound models retain a binding-coverage report. Artifact byte counts and SHA-256
+are checked before reuse and HTTP delivery. Inspect them using:
+
+- `/drainage/readiness?city_id=kolkata`
+- `/drainage/products?city_id=kolkata`
+- `/drainage/products/{product_id}/{kind}`
+- `/drainage/qa`
+
+The real Ward 7 draft is VISUAL_ONLY. The scenario-ready cross-ward reference is synthetic and
+separately labelled. The API offers read-only inspection; explicit operator CLI commands perform
+source import and apply complete binding plans. See the Sequence 8 architecture for commands.
 
 ## Sequence 7 immutable products
 

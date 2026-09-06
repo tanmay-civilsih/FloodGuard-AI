@@ -48,7 +48,7 @@ def test_wrong_pipeline_blocks_even_if_reference_exists() -> None:
     assert urban_readiness_blockers(payload)
 
 
-@pytest.mark.parametrize("sequence", [6, 7])
+@pytest.mark.parametrize("sequence", [6, 7, 8])
 def test_file_entrypoint_can_import_repo_package(tmp_path: Path, sequence: int) -> None:
     output = tmp_path / "development-gate.json"
     result = subprocess.run(

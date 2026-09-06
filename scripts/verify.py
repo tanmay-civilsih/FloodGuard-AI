@@ -1,4 +1,4 @@
-"""Local verification entry point through Sequence 7."""
+"""Local verification entry point through Sequence 8."""
 
 from __future__ import annotations
 
@@ -21,9 +21,7 @@ def run(command: list[str]) -> None:
 
 def verify_python() -> None:
     if sys.version_info[:2] != (3, 12):
-        raise SystemExit(
-            f"FloodGuard-AI requires Python 3.12.x; found {sys.version.split()[0]}"
-        )
+        raise SystemExit(f"FloodGuard-AI requires Python 3.12.x; found {sys.version.split()[0]}")
     print(f"OK Python {sys.version.split()[0]}")
 
 
@@ -41,6 +39,9 @@ def verify_files() -> None:
         ROOT / "migrations" / "versions" / "0004_sequence_5_reconstruction.py",
         ROOT / "migrations" / "versions" / "0005_sequence_6_terrain.py",
         ROOT / "migrations" / "versions" / "0006_sequence_7_urban_gis.py",
+        ROOT / "migrations" / "versions" / "0007_sequence_8_drain_model.py",
+        ROOT / "floodguard" / "drainage" / "service.py",
+        ROOT / "floodguard" / "drainage" / "qa_viewer.py",
         ROOT / "floodguard" / "registry" / "contracts.py",
         ROOT / "floodguard" / "registry" / "seed.py",
         ROOT / "floodguard" / "harvester" / "contracts.py",
@@ -69,11 +70,7 @@ def verify_files() -> None:
         ROOT / "floodguard" / "urban_gis" / "service.py",
         ROOT / "floodguard" / "urban_gis" / "bootstrap.py",
         ROOT / "floodguard" / "urban_gis" / "qa_viewer.py",
-        ROOT
-        / "floodguard"
-        / "reconstruction"
-        / "calibrations"
-        / "kmc-opencity-ward-7-v1.json",
+        ROOT / "floodguard" / "reconstruction" / "calibrations" / "kmc-opencity-ward-7-v1.json",
         ROOT / "docs" / "architecture" / "sequence-05-drainage-reconstruction.md",
         ROOT / "docs" / "architecture" / "sequence-06-terrain-conditioning.md",
         ROOT / "docs" / "architecture" / "sequence-07-urban-gis.md",
@@ -153,8 +150,8 @@ def verify_services() -> None:
     print("OK API /health")
 
     version = get_json("http://localhost:8000/version")
-    if version.get("sequence") != 7 or version.get("version") != "0.7.0":
-        raise SystemExit("API is not serving FloodGuard-AI Sequence 7 / v0.7.0")
+    if version.get("sequence") != 8 or version.get("version") != "0.8.0":
+        raise SystemExit("API is not serving FloodGuard-AI Sequence 8 / v0.8.0")
     print("OK API /version")
 
     registry = get_json("http://localhost:8000/registry/readiness")
@@ -190,9 +187,7 @@ def verify_services() -> None:
     reconstruction = get_json("http://localhost:8000/reconstruction/readiness")
     if "completion_gate_passed" not in reconstruction:
         raise SystemExit("Sequence 5 reconstruction readiness contract is incomplete")
-    if "Drainage Reconstruction QA" not in get_text(
-        "http://localhost:8000/reconstruction/qa"
-    ):
+    if "Drainage Reconstruction QA" not in get_text("http://localhost:8000/reconstruction/qa"):
         raise SystemExit("Sequence 5 reconstruction QA viewer is not reachable")
     print("OK API /reconstruction/readiness and /reconstruction/qa")
 
@@ -218,6 +213,36 @@ def verify_services() -> None:
     if "Urban GIS QA" not in get_text("http://localhost:8000/urban-gis/qa"):
         raise SystemExit("Sequence 7 urban GIS QA viewer is not reachable")
     print("OK API /urban-gis/readiness and /urban-gis/qa")
+
+
+def verify_drainage() -> None:
+    readiness = get_json("http://localhost:8000/drainage/readiness?city_id=kolkata")
+    if readiness.get("current_pipeline_version") != "sequence-8-drain-model-v1":
+        raise SystemExit("Sequence 8 drain pipeline identity mismatch")
+    if "Drain Model QA" not in get_text("http://localhost:8000/drainage/qa"):
+        raise SystemExit("Sequence 8 drain QA viewer unavailable")
+    print("OK API /drainage/readiness and /drainage/qa")
+
+
+def run_drainage_bootstrap_gate() -> None:
+    run(
+        [
+            "docker",
+            "compose",
+            "exec",
+            "-T",
+            "api",
+            "python",
+            "-m",
+            "floodguard.drainage.bootstrap",
+            "--city-id",
+            "kolkata",
+        ]
+    )
+    readiness = get_json("http://localhost:8000/drainage/readiness?city_id=kolkata")
+    if readiness.get("technical_development_gate_passed") is not True:
+        raise SystemExit("Sequence 8 automated drain development gate failed")
+    print("OK Sequence 8 reference model and existing real-source import gate")
 
 
 def run_harvester_bootstrap_gate() -> None:
@@ -312,9 +337,7 @@ def run_reconstruction_bootstrap_gate() -> None:
     if readiness.get("completion_gate_passed") is not True:
         reason = readiness.get("completion_gate_reason")
         raise SystemExit(f"Sequence 5 human-review completion gate is not passed: {reason}")
-    if "Drainage Reconstruction QA" not in get_text(
-        "http://localhost:8000/reconstruction/qa"
-    ):
+    if "Drainage Reconstruction QA" not in get_text("http://localhost:8000/reconstruction/qa"):
         raise SystemExit("Sequence 5 MapLibre reconstruction QA viewer gate failed")
     print("OK real KMC drainage reconstruction and human-review completion gate")
 
@@ -384,7 +407,7 @@ def main() -> None:
     parser.add_argument(
         "--services",
         action="store_true",
-        help="also verify the running Docker Compose platform and APIs through Sequence 7",
+        help="also verify the running Docker Compose platform and APIs through Sequence 8",
     )
     parser.add_argument(
         "--bootstrap",
@@ -420,6 +443,11 @@ def main() -> None:
             "human acceptance remains deferred to Sequence 20"
         ),
     )
+    parser.add_argument(
+        "--drainage-bootstrap",
+        action="store_true",
+        help="build drain reference and import existing real pilot; no acquisition",
+    )
     args = parser.parse_args()
 
     verify_python()
@@ -432,8 +460,10 @@ def main() -> None:
         or args.reconstruction_bootstrap
         or args.terrain_bootstrap
         or args.urban_gis_bootstrap
+        or args.drainage_bootstrap
     ):
         verify_services()
+        verify_drainage()
     if args.bootstrap:
         run_harvester_bootstrap_gate()
     if args.spatial_bootstrap:
@@ -445,15 +475,18 @@ def main() -> None:
     if args.urban_gis_bootstrap:
         run_urban_gis_bootstrap_gate()
 
-    print("Sequence 7 software verification PASSED")
-    if args.urban_gis_bootstrap:
+    if args.drainage_bootstrap:
+        run_drainage_bootstrap_gate()
+
+    print("Software verification through Sequence 8 PASSED")
+    if args.drainage_bootstrap:
+        print("Sequence 8 automated development gate PASSED")
+        print("Real cross-ward evidence and final human acceptance remain explicit constraints.")
+    elif args.urban_gis_bootstrap:
         print("Sequence 7 automated development gate PASSED")
         print("Final real-pilot human acceptance remains deferred to Sequence 20.")
     else:
-        print(
-            "Urban GIS bootstrap was not checked; run --urban-gis-bootstrap "
-            "for technical freeze."
-        )
+        print("Drain bootstrap was not checked; run --drainage-bootstrap for technical freeze.")
 
 
 if __name__ == "__main__":

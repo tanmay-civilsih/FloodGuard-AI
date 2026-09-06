@@ -6,6 +6,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from floodguard.common.config import get_settings
+from floodguard.drainage import models as drainage_models  # noqa: F401
 from floodguard.harvester import models as harvester_models  # noqa: F401
 from floodguard.reconstruction import models as reconstruction_models  # noqa: F401
 from floodguard.registry.models import Base
