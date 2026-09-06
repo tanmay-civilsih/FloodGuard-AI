@@ -450,7 +450,10 @@ def main() -> None:
         print("Sequence 7 automated development gate PASSED")
         print("Final real-pilot human acceptance remains deferred to Sequence 20.")
     else:
-        print("Urban GIS bootstrap was not checked; run --urban-gis-bootstrap for technical freeze.")
+        print(
+            "Urban GIS bootstrap was not checked; run --urban-gis-bootstrap "
+            "for technical freeze."
+        )
 
 
 if __name__ == "__main__":
