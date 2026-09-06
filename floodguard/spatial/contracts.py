@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -131,6 +132,16 @@ class SpatialReadiness(BaseModel):
     city_id: str
     working_crs: str
     normalized_layers: int
+    eligible_layers: int = 0
+    historical_or_unverified_layers: int = 0
+    current_pipeline_version: str = ""
+    numerical_roundtrip_check_passed: bool = False
+    alignment_check_scope: Literal["NUMERICAL_ROUNDTRIP_ONLY"] = "NUMERICAL_ROUNDTRIP_ONLY"
+    cross_layer_alignment_status: Literal["NOT_ASSESSED"] = "NOT_ASSESSED"
+    elevation_metadata_status: Literal[
+        "NOT_APPLICABLE_NO_ELEVATION", "PASSED", "FAILED"
+    ] = "NOT_APPLICABLE_NO_ELEVATION"
+    rainfall_conservation_scope: Literal["SYNTHETIC_SELF_TEST"] = "SYNTHETIC_SELF_TEST"
     normalized_source_versions: int
     normalized_categories: list[str]
     required_core_categories: list[str]

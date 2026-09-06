@@ -4,10 +4,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
 from pathlib import Path
 from uuid import UUID, uuid5
 
+from floodguard.common.integrity import (
+    PayloadIntegrityError,
+    verified_payload,
+    verified_spatial_pair,
+)
 from floodguard.contracts.time import utc_now
 from floodguard.harvester.contracts import DatasetVersionRead, DatasetVersionStatus, RawObjectRead
 from floodguard.registry.contracts import SourceCategory, SourceRead
@@ -31,7 +37,7 @@ from floodguard.spatial.resampling import reference_rainfall_conservation_check
 from floodguard.spatial.vector import VectorNormalizationError, normalize_vector
 
 SPATIAL_NAMESPACE = UUID("2ea3b742-7747-4ca8-b627-e89b3dc2c454")
-SPATIAL_PIPELINE_VERSION = "sequence-4-v1"
+SPATIAL_PIPELINE_VERSION = "sequence-4-v2"
 _VECTOR_SUFFIXES = {".kml", ".geojson", ".json"}
 _LAYER_SEGMENT = re.compile(r"[^A-Za-z0-9._-]+")
 CORE_KOLKATA_CATEGORIES = {
@@ -117,9 +123,12 @@ class SpatialService:
         max_object_bytes: int,
     ) -> None:
         validate_metric_working_crs(working_crs)
-        if alignment_tolerance_m < 0:
+        if not math.isfinite(alignment_tolerance_m) or alignment_tolerance_m < 0:
             raise ValueError("alignment_tolerance_m must be non-negative")
-        if rainfall_conservation_tolerance < 0:
+        if (
+            not math.isfinite(rainfall_conservation_tolerance)
+            or rainfall_conservation_tolerance < 0
+        ):
             raise ValueError("rainfall_conservation_tolerance must be non-negative")
         if max_object_bytes < 1:
             raise ValueError("max_object_bytes must be positive")
@@ -167,6 +176,16 @@ class SpatialService:
                 raise SpatialNormalizationError(
                     f"raw object exceeds spatial normalization limit: {raw_object.filename}"
                 )
+            if raw_object.dataset_version_id != dataset_version.dataset_version_id:
+                raise SpatialNormalizationError("raw object belongs to another dataset version")
+            payload = self.object_store.read_raw(raw_object.object_key)
+            try:
+                verified_payload(
+                    payload, expected_sha256=raw_object.sha256,
+                    expected_size=raw_object.byte_size, max_bytes=self.max_object_bytes,
+                )
+            except PayloadIntegrityError as exc:
+                raise SpatialNormalizationError(str(exc)) from exc
             fingerprint = _fingerprint(
                 source=source,
                 dataset_version=dataset_version,
@@ -175,11 +194,11 @@ class SpatialService:
             )
             existing = self.repository.find_by_fingerprint(fingerprint)
             if existing is not None:
+                self.qa_geojson(existing.normalization_id)
                 reused_layers += 1
                 layer_ids.append(existing.normalization_id)
                 continue
 
-            payload = self.object_store.read_raw(raw_object.object_key)
             try:
                 normalized = normalize_vector(
                     payload,
@@ -198,18 +217,23 @@ class SpatialService:
             )
             internal_key = f"{prefix}/working.json"
             qa_key = f"{prefix}/qa.geojson"
-            internal_bytes = json.dumps(
-                normalized.internal_feature_collection,
-                sort_keys=True,
-                separators=(",", ":"),
-                ensure_ascii=False,
-            ).encode("utf-8")
             qa_bytes = json.dumps(
                 normalized.qa_feature_collection,
-                sort_keys=True,
-                separators=(",", ":"),
-                ensure_ascii=False,
+                sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False,
             ).encode("utf-8")
+            normalized.internal_feature_collection["floodguard_integrity"] = {
+                "pipeline_version": SPATIAL_PIPELINE_VERSION,
+                "source_sha256": raw_object.sha256,
+                "source_byte_size": raw_object.byte_size,
+                "qa_sha256": hashlib.sha256(qa_bytes).hexdigest(),
+                "qa_byte_size": len(qa_bytes),
+            }
+            internal_bytes = json.dumps(
+                normalized.internal_feature_collection,
+                sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False,
+            ).encode("utf-8")
+            if max(len(internal_bytes), len(qa_bytes)) > self.max_object_bytes:
+                raise SpatialNormalizationError("normalized artifacts exceed configured size limit")
             normalized_sha256 = hashlib.sha256(internal_bytes).hexdigest()
             _put_idempotent(
                 self.object_store,
@@ -288,10 +312,28 @@ class SpatialService:
 
     def qa_geojson(self, normalization_id: UUID) -> bytes:
         layer = self.get_layer(normalization_id)
-        return self.object_store.read_spatial(layer.qa_object_key)
+        working = self.object_store.read_spatial(layer.normalized_object_key)
+        qa = self.object_store.read_spatial(layer.qa_object_key)
+        try:
+            verified_spatial_pair(
+                working, qa, working_sha256=layer.normalized_sha256,
+                pipeline_version=SPATIAL_PIPELINE_VERSION, max_bytes=self.max_object_bytes,
+            )
+        except PayloadIntegrityError as exc:
+            raise SpatialNormalizationError(str(exc)) from exc
+        return qa
 
     def readiness(self, *, city_id: str) -> SpatialReadiness:
-        records = self.repository.list_layers(city_id=city_id)
+        all_records = self.repository.list_layers(city_id=city_id)
+        records = []
+        for record in all_records:
+            if record.working_crs != self.working_crs:
+                continue
+            try:
+                self.qa_geojson(record.normalization_id)
+            except (SpatialNormalizationError, FileNotFoundError):
+                continue
+            records.append(record)
         categories = sorted({record.source_category for record in records})
         required = sorted(category.value for category in CORE_KOLKATA_CATEGORIES)
         missing = sorted(set(required) - set(categories))
@@ -303,6 +345,8 @@ class SpatialService:
             bool(records)
             and not missing
             and max_error is not None
+            and math.isfinite(max_error)
+            and all(math.isfinite(record.max_roundtrip_error_m) for record in records)
             and max_error <= self.alignment_tolerance_m
         )
         elevation_records = [
@@ -323,16 +367,26 @@ class SpatialService:
         return SpatialReadiness(
             city_id=city_id,
             working_crs=self.working_crs,
-            normalized_layers=len(records),
+            normalized_layers=len(all_records),
+            eligible_layers=len(records),
+            historical_or_unverified_layers=len(all_records) - len(records),
+            current_pipeline_version=SPATIAL_PIPELINE_VERSION,
             normalized_source_versions=self.repository.count_source_versions(city_id=city_id),
             normalized_categories=categories,
             required_core_categories=required,
             missing_core_categories=missing,
+            # Legacy field is a numerical self-check, NOT an alignment acceptance.
             alignment_check_passed=alignment_passed,
+            numerical_roundtrip_check_passed=alignment_passed,
+            cross_layer_alignment_status="NOT_ASSESSED",
             max_roundtrip_error_m=max_error,
             alignment_tolerance_m=self.alignment_tolerance_m,
             elevation_layer_count=len(elevation_records),
             vertical_metadata_valid=vertical_valid,
+            elevation_metadata_status=(
+                "NOT_APPLICABLE_NO_ELEVATION" if not elevation_records
+                else "PASSED" if vertical_valid else "FAILED"
+            ),
             rainfall_conservation=rainfall,
             spatial_bucket=self.object_store.spatial_bucket,
         )

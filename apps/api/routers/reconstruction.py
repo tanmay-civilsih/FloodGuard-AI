@@ -7,6 +7,8 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 from floodguard.common.auth_viewer import with_operator_credentials
+from floodguard.common.config import get_settings
+from floodguard.common.integrity import PayloadIntegrityError, verified_payload
 from floodguard.reconstruction.contracts import (
     DrainageReconstructionRead,
     ReconstructionReadiness,
@@ -61,8 +63,18 @@ def get_map_geojson(
 ) -> Response:
     try:
         payload = service.qa_geojson(reconstruction_id)
+        verified_payload(
+            payload, expected_sha256=service.get(reconstruction_id).qa_sha256,
+            max_bytes=get_settings().spatial_max_object_bytes,
+        )
     except LookupError as exc:
         raise HTTPException(status_code=404, detail="reconstruction not found") from exc
+    except PayloadIntegrityError as exc:
+        raise HTTPException(
+            status_code=409, detail="reconstruction QA integrity check failed"
+        ) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail="reconstruction QA unavailable") from exc
     return Response(content=payload, media_type="application/geo+json")
 
 

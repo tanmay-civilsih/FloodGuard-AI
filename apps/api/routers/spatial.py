@@ -10,7 +10,7 @@ from floodguard.registry.database import get_db_session
 from floodguard.spatial.contracts import SpatialLayerRead, SpatialReadiness
 from floodguard.spatial.factory import build_spatial_service
 from floodguard.spatial.qa_viewer import QA_VIEWER_HTML
-from floodguard.spatial.service import SpatialService
+from floodguard.spatial.service import SpatialNormalizationError, SpatialService
 
 router = APIRouter(prefix="/spatial", tags=["spatial"])
 
@@ -56,6 +56,10 @@ def get_layer_geojson(
         payload = service.qa_geojson(normalization_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail="normalized spatial layer not found") from exc
+    except SpatialNormalizationError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail="spatial artifact unavailable") from exc
     return Response(content=payload, media_type="application/geo+json")
 
 
