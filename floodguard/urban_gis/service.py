@@ -9,10 +9,10 @@ from uuid import UUID, uuid5
 
 from floodguard.spatial.object_store import SpatialObjectExistsError, SpatialObjectStore
 from floodguard.urban_gis.contracts import (
+    URBAN_GIS_PIPELINE_VERSION,
     HydraulicDomain,
     HydraulicFeature,
     HydraulicSurfaceClass,
-    URBAN_GIS_PIPELINE_VERSION,
     UrbanGisBuildResult,
     UrbanGisEvidenceScope,
     UrbanGisPackage,
