@@ -12,7 +12,11 @@ from typing import cast
 from pyproj import CRS, Transformer
 from pyproj.exceptions import ProjError
 
-from floodguard.spatial.geometry_validation import validate_geometry
+from floodguard.spatial.geometry_validation import (
+    TOPOLOGY_REPAIR_PROPERTY,
+    repair_linework_preserving_self_intersection,
+    validate_geometry,
+)
 
 
 class VectorNormalizationError(ValueError):
@@ -220,7 +224,6 @@ def parse_geojson(payload: bytes) -> tuple[dict[str, object], str]:
 
     try:
         loaded = json.loads(payload, parse_constant=reject_constant, object_pairs_hook=unique_keys)
-        # Also rejects finite-lexeme overflow such as 1e999, including in properties.
         json.dumps(loaded, allow_nan=False)
     except ValueError as exc:
         raise VectorNormalizationError(f"invalid GeoJSON: {exc}") from exc
@@ -378,6 +381,7 @@ def _transform_feature_collection(
     *,
     source_crs: str,
     target_crs: str,
+    repair_self_intersections: bool = False,
 ) -> tuple[dict[str, object], float, list[str]]:
     try:
         source = CRS.from_user_input(source_crs)
@@ -401,9 +405,16 @@ def _transform_feature_collection(
         if not isinstance(feature_value, dict) or feature_value.get("type") != "Feature":
             raise VectorNormalizationError("every entry must be a GeoJSON Feature")
         feature = cast(dict[str, object], feature_value)
+        source_geometry = feature.get("geometry")
+        repair_metadata: dict[str, object] | None = None
         try:
-            validate_geometry(feature.get("geometry"), geographic=source.is_geographic)
-            geometry, error = _transform_geometry(feature.get("geometry"), forward, inverse)
+            if repair_self_intersections:
+                source_geometry, repair_metadata = repair_linework_preserving_self_intersection(
+                    source_geometry, geographic=source.is_geographic
+                )
+            else:
+                validate_geometry(source_geometry, geographic=source.is_geographic)
+            geometry, error = _transform_geometry(source_geometry, forward, inverse)
             validate_geometry(geometry, geographic=target.is_geographic)
         except (ValueError, OverflowError) as exc:
             raise VectorNormalizationError(str(exc)) from exc
@@ -411,7 +422,13 @@ def _transform_feature_collection(
         if geometry is not None and isinstance(geometry.get("type"), str):
             geometry_types.add(cast(str, geometry["type"]))
         properties_value = feature.get("properties")
-        properties = properties_value if isinstance(properties_value, dict) else {}
+        properties = dict(properties_value) if isinstance(properties_value, dict) else {}
+        if repair_metadata is not None:
+            if TOPOLOGY_REPAIR_PROPERTY in properties:
+                raise VectorNormalizationError(
+                    f"source property {TOPOLOGY_REPAIR_PROPERTY} is reserved for provenance"
+                )
+            properties[TOPOLOGY_REPAIR_PROPERTY] = repair_metadata
         transformed_feature: dict[str, object] = {
             "type": "Feature", "properties": properties, "geometry": geometry,
         }
@@ -432,12 +449,14 @@ def normalize_vector(
     filename: str,
     *,
     working_crs: str,
+    repair_self_intersections: bool = False,
 ) -> NormalizedVector:
     source_collection, source_crs = parse_vector(payload, filename)
     internal, max_error, geometry_types = _transform_feature_collection(
         source_collection,
         source_crs=source_crs,
         target_crs=working_crs,
+        repair_self_intersections=repair_self_intersections,
     )
     qa, _, _ = _transform_feature_collection(
         internal,

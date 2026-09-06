@@ -37,7 +37,7 @@ from floodguard.spatial.resampling import reference_rainfall_conservation_check
 from floodguard.spatial.vector import VectorNormalizationError, normalize_vector
 
 SPATIAL_NAMESPACE = UUID("2ea3b742-7747-4ca8-b627-e89b3dc2c454")
-SPATIAL_PIPELINE_VERSION = "sequence-4-v2"
+SPATIAL_PIPELINE_VERSION = "sequence-4-v3"
 _VECTOR_SUFFIXES = {".kml", ".geojson", ".json"}
 _LAYER_SEGMENT = re.compile(r"[^A-Za-z0-9._-]+")
 CORE_KOLKATA_CATEGORIES = {
@@ -199,11 +199,13 @@ class SpatialService:
                 layer_ids.append(existing.normalization_id)
                 continue
 
+            repair_self_intersections = source.category is SourceCategory.WARD_BOUNDARY
             try:
                 normalized = normalize_vector(
                     payload,
                     raw_object.filename,
                     working_crs=self.working_crs,
+                    repair_self_intersections=repair_self_intersections,
                 )
             except VectorNormalizationError as exc:
                 raise SpatialNormalizationError(
@@ -227,6 +229,10 @@ class SpatialService:
                 "source_byte_size": raw_object.byte_size,
                 "qa_sha256": hashlib.sha256(qa_bytes).hexdigest(),
                 "qa_byte_size": len(qa_bytes),
+                "topology_repair_policy": (
+                    "LINEWORK_SELF_INTERSECTION_ONLY_V1"
+                    if repair_self_intersections else "DISABLED"
+                ),
             }
             internal_bytes = json.dumps(
                 normalized.internal_feature_collection,
@@ -375,7 +381,6 @@ class SpatialService:
             normalized_categories=categories,
             required_core_categories=required,
             missing_core_categories=missing,
-            # Legacy field is a numerical self-check, NOT an alignment acceptance.
             alignment_check_passed=alignment_passed,
             numerical_roundtrip_check_passed=alignment_passed,
             cross_layer_alignment_status="NOT_ASSESSED",
