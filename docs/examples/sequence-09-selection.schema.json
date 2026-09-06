@@ -1,0 +1,129 @@
+{
+  "$defs": {
+    "PilotArea": {
+      "additionalProperties": false,
+      "properties": {
+        "pilot_area_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Pilot Area Id",
+          "type": "string"
+        },
+        "geometry": {
+          "additionalProperties": true,
+          "title": "Geometry",
+          "type": "object"
+        },
+        "ward_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Ward Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "pilot_area_id",
+        "geometry",
+        "ward_ids"
+      ],
+      "title": "PilotArea",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "city_id": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "City Id",
+      "type": "string"
+    },
+    "pilot_area": {
+      "$ref": "#/$defs/PilotArea"
+    },
+    "horizontal_crs": {
+      "title": "Horizontal Crs",
+      "type": "string"
+    },
+    "terrain_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Terrain Id"
+    },
+    "urban_gis_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Urban Gis Id"
+    },
+    "drain_product_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Drain Product Id"
+    },
+    "ward_id": {
+      "format": "uuid",
+      "title": "Ward Id",
+      "type": "string"
+    },
+    "catchment_id": {
+      "format": "uuid",
+      "title": "Catchment Id",
+      "type": "string"
+    },
+    "waterbody_id": {
+      "format": "uuid",
+      "title": "Waterbody Id",
+      "type": "string"
+    },
+    "missing_reasons": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "propertyNames": {
+        "enum": [
+          "terrain",
+          "urban_gis",
+          "drainage"
+        ]
+      },
+      "title": "Missing Reasons",
+      "type": "object"
+    }
+  },
+  "required": [
+    "city_id",
+    "pilot_area",
+    "horizontal_crs",
+    "terrain_id",
+    "urban_gis_id",
+    "drain_product_id",
+    "ward_id",
+    "catchment_id",
+    "waterbody_id"
+  ],
+  "title": "TwinBuildRequest",
+  "type": "object"
+}

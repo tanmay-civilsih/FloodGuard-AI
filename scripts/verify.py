@@ -1,4 +1,4 @@
-"""Local verification entry point through Sequence 8."""
+"""Local verification entry point through Sequence 9."""
 
 from __future__ import annotations
 
@@ -40,6 +40,8 @@ def verify_files() -> None:
         ROOT / "migrations" / "versions" / "0005_sequence_6_terrain.py",
         ROOT / "migrations" / "versions" / "0006_sequence_7_urban_gis.py",
         ROOT / "migrations" / "versions" / "0007_sequence_8_drain_model.py",
+        ROOT / "migrations" / "versions" / "0008_sequence_9_twin.py",
+        ROOT / "floodguard" / "twin" / "service.py",
         ROOT / "floodguard" / "drainage" / "service.py",
         ROOT / "floodguard" / "drainage" / "qa_viewer.py",
         ROOT / "floodguard" / "registry" / "contracts.py",
@@ -150,8 +152,8 @@ def verify_services() -> None:
     print("OK API /health")
 
     version = get_json("http://localhost:8000/version")
-    if version.get("sequence") != 8 or version.get("version") != "0.8.0":
-        raise SystemExit("API is not serving FloodGuard-AI Sequence 8 / v0.8.0")
+    if version.get("sequence") != 9 or version.get("version") != "0.9.0":
+        raise SystemExit("API is not serving FloodGuard-AI Sequence 9 / v0.9.0")
     print("OK API /version")
 
     registry = get_json("http://localhost:8000/registry/readiness")
@@ -222,6 +224,23 @@ def verify_drainage() -> None:
     if "Drain Model QA" not in get_text("http://localhost:8000/drainage/qa"):
         raise SystemExit("Sequence 8 drain QA viewer unavailable")
     print("OK API /drainage/readiness and /drainage/qa")
+
+
+def verify_twins() -> None:
+    readiness = get_json("http://localhost:8000/twins/readiness?city_id=kolkata")
+    if readiness.get("current_pipeline_version") != "sequence-9-twin-v1":
+        raise SystemExit("Sequence 9 twin pipeline identity mismatch")
+    if "Twin Manifest QA" not in get_text("http://localhost:8000/twins/qa"):
+        raise SystemExit("Sequence 9 twin QA viewer unavailable")
+    print("OK API /twins/readiness and /twins/qa")
+
+
+def run_twin_bootstrap_gate() -> None:
+    run(["docker", "compose", "exec", "-T", "api", "python", "-m", "floodguard.twin.bootstrap"])
+    readiness = get_json("http://localhost:8000/twins/readiness?city_id=kolkata")
+    if readiness.get("assembly_development_gate_passed") is not True:
+        raise SystemExit("Sequence 9 twin assembly/recreation gate failed")
+    print("OK Sequence 9 assembly/recreation; real cross-ward freeze gate remains separate")
 
 
 def run_drainage_bootstrap_gate() -> None:
@@ -407,7 +426,7 @@ def main() -> None:
     parser.add_argument(
         "--services",
         action="store_true",
-        help="also verify the running Docker Compose platform and APIs through Sequence 8",
+        help="also verify the running Docker Compose platform and APIs through Sequence 9",
     )
     parser.add_argument(
         "--bootstrap",
@@ -448,6 +467,11 @@ def main() -> None:
         action="store_true",
         help="build drain reference and import existing real pilot; no acquisition",
     )
+    parser.add_argument(
+        "--twin-bootstrap",
+        action="store_true",
+        help="build and recreate reference and exact provisional pilot twins",
+    )
     args = parser.parse_args()
 
     verify_python()
@@ -461,9 +485,11 @@ def main() -> None:
         or args.terrain_bootstrap
         or args.urban_gis_bootstrap
         or args.drainage_bootstrap
+        or args.twin_bootstrap
     ):
         verify_services()
         verify_drainage()
+        verify_twins()
     if args.bootstrap:
         run_harvester_bootstrap_gate()
     if args.spatial_bootstrap:
@@ -478,15 +504,21 @@ def main() -> None:
     if args.drainage_bootstrap:
         run_drainage_bootstrap_gate()
 
-    print("Software verification through Sequence 8 PASSED")
-    if args.drainage_bootstrap:
+    if args.twin_bootstrap:
+        run_twin_bootstrap_gate()
+
+    print("Software verification through Sequence 9 PASSED")
+    if args.twin_bootstrap:
+        print("Sequence 9 twin assembly software gate PASSED")
+        print("Sequence freeze also requires the genuine real cross-ward gate.")
+    elif args.drainage_bootstrap:
         print("Sequence 8 automated development gate PASSED")
         print("Real cross-ward evidence and final human acceptance remain explicit constraints.")
     elif args.urban_gis_bootstrap:
         print("Sequence 7 automated development gate PASSED")
         print("Final real-pilot human acceptance remains deferred to Sequence 20.")
     else:
-        print("Drain bootstrap was not checked; run --drainage-bootstrap for technical freeze.")
+        print("Twin bootstrap was not checked; run --twin-bootstrap for assembly verification.")
 
 
 if __name__ == "__main__":

@@ -18,6 +18,7 @@ from apps.api.routers.reconstruction import router as reconstruction_router
 from apps.api.routers.registry import router as registry_router
 from apps.api.routers.spatial import router as spatial_router
 from apps.api.routers.terrain import router as terrain_router
+from apps.api.routers.twin import router as twin_router
 from apps.api.routers.urban_gis import router as urban_gis_router
 from floodguard import __version__
 from floodguard.common.auth import require_write_access
@@ -46,6 +47,7 @@ app.include_router(reconstruction_router)
 app.include_router(terrain_router)
 app.include_router(urban_gis_router)
 app.include_router(drainage_router)
+app.include_router(twin_router)
 
 
 class HealthResponse(BaseModel):
@@ -63,7 +65,7 @@ class ReadyResponse(BaseModel):
 class VersionResponse(BaseModel):
     name: Literal["FloodGuard-AI"] = "FloodGuard-AI"
     version: str
-    sequence: Literal[8] = 8
+    sequence: Literal[9] = 9
     source_fingerprint: str | None
     runtime_python: str
     dependency_lock_mismatches: list[str]

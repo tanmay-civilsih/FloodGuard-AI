@@ -93,3 +93,18 @@ The passing clean-commit report `docs/validation/sequence-08-development-gate-de
 retains every product artifact hash and successful HTTP readback. Source commit `de6cce9`
 passed 568 tests, strict mypy for 122 source files, all six service checks and deployed
 conditional-storage concurrency. This closes the Sequence 8 technical development gate only.
+
+
+## Sequence 9 twin acceptance
+
+| ID | Sequence | Human/final acceptance item | Current state | Closure requirement |
+|---|---:|---|---|---|
+| HR-09-01 | 9 | Exact real-pilot static component selections, geographic coverage and missing-data disclosures | PENDING_SEQUENCE_20 | Accept immutable twin manifest and retained source versions, without substituting reference data |
+| HR-09-02 | 9 | Cross-component vertical-reference and source-resolution engineering acceptance | PENDING_SEQUENCE_20 | Evidence tied to selected terrain, drain and boundary frames and their actual source limitations |
+| HR-09-03 | 9 | Visual review of exact manifest, source components and recreation result | PENDING_SEQUENCE_20 | Inspect the exact twin_id, component hashes, missing states and readiness; no fabricated browser approval |
+
+DATA-08-01 remains a **Sequence 9 freeze blocker**, independent of HR-09-01 through HR-09-03.
+The builder's reference recreation is objective software evidence only. The real Ward 7 snapshot
+retains actual terrain and normalized GIS plus the source drain draft; missing urban GIS, graph,
+exchanges, complete parameter set and pump assets remain MISSING. A successful VISUAL_ONLY snapshot
+does not demonstrate genuine source-bound cross-ward drainage or final Checkpoint A acceptance.

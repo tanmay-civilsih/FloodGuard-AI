@@ -1,0 +1,1014 @@
+{
+  "$defs": {
+    "ConfidenceBand": {
+      "enum": [
+        "HIGH",
+        "MEDIUM",
+        "LOW"
+      ],
+      "title": "ConfidenceBand",
+      "type": "string"
+    },
+    "CrossSectionShape": {
+      "enum": [
+        "UNKNOWN",
+        "CIRCULAR",
+        "RECTANGULAR",
+        "TRAPEZOIDAL"
+      ],
+      "title": "CrossSectionShape",
+      "type": "string"
+    },
+    "DatumTransformStatus": {
+      "enum": [
+        "NOT_APPLICABLE",
+        "COMPATIBLE",
+        "TRANSFORMED",
+        "UNRESOLVED"
+      ],
+      "title": "DatumTransformStatus",
+      "type": "string"
+    },
+    "DefinitionEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/VersionedSourceReference"
+        },
+        "status": {
+          "$ref": "#/$defs/EngineeringValueStatus"
+        },
+        "method": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Method",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "status",
+        "method"
+      ],
+      "title": "DefinitionEvidence",
+      "type": "object"
+    },
+    "DrainEdge": {
+      "additionalProperties": false,
+      "properties": {
+        "drain_edge_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Drain Edge Id",
+          "type": "string"
+        },
+        "edge_type": {
+          "$ref": "#/$defs/DrainEdgeType"
+        },
+        "hydraulic_domain": {
+          "const": "NETWORK_1D",
+          "default": "NETWORK_1D",
+          "title": "Hydraulic Domain",
+          "type": "string"
+        },
+        "from_node_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "From Node Id",
+          "type": "string"
+        },
+        "to_node_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "To Node Id",
+          "type": "string"
+        },
+        "geometry": {
+          "additionalProperties": true,
+          "title": "Geometry",
+          "type": "object"
+        },
+        "source_reference": {
+          "maxLength": 1000,
+          "minLength": 2,
+          "title": "Source Reference",
+          "type": "string"
+        },
+        "direction_candidates": {
+          "items": {
+            "$ref": "#/$defs/FlowDirectionCandidate"
+          },
+          "minItems": 1,
+          "title": "Direction Candidates",
+          "type": "array"
+        },
+        "parameters": {
+          "$ref": "#/$defs/EdgeParameters"
+        }
+      },
+      "required": [
+        "drain_edge_id",
+        "edge_type",
+        "from_node_id",
+        "to_node_id",
+        "geometry",
+        "source_reference",
+        "direction_candidates"
+      ],
+      "title": "DrainEdge",
+      "type": "object"
+    },
+    "DrainEdgeType": {
+      "enum": [
+        "PIPE",
+        "OPEN_DRAIN",
+        "CULVERT",
+        "CANAL"
+      ],
+      "title": "DrainEdgeType",
+      "type": "string"
+    },
+    "DrainEvidenceScope": {
+      "enum": [
+        "REFERENCE_FIXTURE",
+        "REAL_PILOT_PROVISIONAL"
+      ],
+      "title": "DrainEvidenceScope",
+      "type": "string"
+    },
+    "DrainGraphPackage": {
+      "additionalProperties": false,
+      "properties": {
+        "package_version": {
+          "const": "sequence-8-drain-graph-v1",
+          "default": "sequence-8-drain-graph-v1",
+          "title": "Package Version",
+          "type": "string"
+        },
+        "city_id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "City Id",
+          "type": "string"
+        },
+        "pilot_area_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Pilot Area Id",
+          "type": "string"
+        },
+        "working_crs": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Working Crs",
+          "type": "string"
+        },
+        "evidence_scope": {
+          "$ref": "#/$defs/DrainEvidenceScope"
+        },
+        "source_references": {
+          "items": {
+            "$ref": "#/$defs/VersionedSourceReference"
+          },
+          "minItems": 1,
+          "title": "Source References",
+          "type": "array"
+        },
+        "vertical_reference": {
+          "$ref": "#/$defs/VerticalReference"
+        },
+        "endpoint_tolerance_m": {
+          "default": 0.01,
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "title": "Endpoint Tolerance M",
+          "type": "number"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/DrainNode"
+          },
+          "minItems": 2,
+          "title": "Nodes",
+          "type": "array"
+        },
+        "edges": {
+          "items": {
+            "$ref": "#/$defs/DrainEdge"
+          },
+          "minItems": 1,
+          "title": "Edges",
+          "type": "array"
+        },
+        "exchanges": {
+          "items": {
+            "$ref": "#/$defs/ExchangeGeometry"
+          },
+          "title": "Exchanges",
+          "type": "array"
+        },
+        "limitations": {
+          "items": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Limitations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "city_id",
+        "pilot_area_id",
+        "working_crs",
+        "evidence_scope",
+        "source_references",
+        "vertical_reference",
+        "nodes",
+        "edges",
+        "limitations"
+      ],
+      "title": "DrainGraphPackage",
+      "type": "object"
+    },
+    "DrainNode": {
+      "additionalProperties": false,
+      "properties": {
+        "drain_node_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Drain Node Id",
+          "type": "string"
+        },
+        "node_type": {
+          "$ref": "#/$defs/DrainNodeType"
+        },
+        "ward_id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Ward Id",
+          "type": "string"
+        },
+        "geometry": {
+          "additionalProperties": true,
+          "title": "Geometry",
+          "type": "object"
+        },
+        "source_reference": {
+          "maxLength": 1000,
+          "minLength": 2,
+          "title": "Source Reference",
+          "type": "string"
+        },
+        "invert_elevation": {
+          "$ref": "#/$defs/EngineeringParameter"
+        },
+        "storage_volume": {
+          "$ref": "#/$defs/EngineeringParameter"
+        },
+        "pump_definition": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VersionedSourceReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "outfall_definition": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VersionedSourceReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "drain_node_id",
+        "node_type",
+        "ward_id",
+        "geometry",
+        "source_reference"
+      ],
+      "title": "DrainNode",
+      "type": "object"
+    },
+    "DrainNodeType": {
+      "enum": [
+        "INLET",
+        "MANHOLE",
+        "JUNCTION",
+        "STORAGE",
+        "PUMP",
+        "OUTFALL"
+      ],
+      "title": "DrainNodeType",
+      "type": "string"
+    },
+    "EdgeParameters": {
+      "additionalProperties": false,
+      "properties": {
+        "cross_section": {
+          "$ref": "#/$defs/CrossSectionShape",
+          "default": "UNKNOWN"
+        },
+        "length": {
+          "$ref": "#/$defs/EngineeringParameter"
+        },
+        "diameter": {
+          "$ref": "#/$defs/EngineeringParameter"
+        },
+        "width": {
+          "$ref": "#/$defs/EngineeringParameter"
+        },
+        "height": {
+          "$ref": "#/$defs/EngineeringParameter"
+        },
+        "side_slope": {
+          "$ref": "#/$defs/EngineeringParameter"
+        },
+        "slope": {
+          "$ref": "#/$defs/EngineeringParameter"
+        },
+        "roughness": {
+          "$ref": "#/$defs/EngineeringParameter"
+        },
+        "effective_capacity": {
+          "$ref": "#/$defs/EngineeringParameter"
+        },
+        "condition": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VersionedSourceReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "EdgeParameters",
+      "type": "object"
+    },
+    "EdgeSourceBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "drain_edge_id": {
+          "title": "Drain Edge Id",
+          "type": "string"
+        },
+        "source_feature_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Source Feature Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "drain_edge_id",
+        "source_feature_ids"
+      ],
+      "title": "EdgeSourceBinding",
+      "type": "object"
+    },
+    "EngineeringParameter": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        },
+        "unit": {
+          "$ref": "#/$defs/ParameterUnit"
+        },
+        "status": {
+          "$ref": "#/$defs/EngineeringValueStatus"
+        },
+        "version": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        },
+        "source_reference": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "minLength": 2,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Reference"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "minLength": 2,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Method"
+        },
+        "missing_reason": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "minLength": 2,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Missing Reason"
+        },
+        "lower_bound": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lower Bound"
+        },
+        "upper_bound": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Upper Bound"
+        }
+      },
+      "required": [
+        "unit",
+        "status",
+        "version"
+      ],
+      "title": "EngineeringParameter",
+      "type": "object"
+    },
+    "EngineeringValueStatus": {
+      "enum": [
+        "MUNICIPAL",
+        "MEASURED",
+        "GIS_DERIVED",
+        "LITERATURE",
+        "INFERRED",
+        "ASSUMED",
+        "CALIBRATED",
+        "MISSING"
+      ],
+      "title": "EngineeringValueStatus",
+      "type": "string"
+    },
+    "ExchangeGeometry": {
+      "additionalProperties": false,
+      "properties": {
+        "exchange_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Exchange Id",
+          "type": "string"
+        },
+        "exchange_type": {
+          "$ref": "#/$defs/ExchangeType"
+        },
+        "drain_node_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Drain Node Id",
+          "type": "string"
+        },
+        "geometry": {
+          "additionalProperties": true,
+          "title": "Geometry",
+          "type": "object"
+        },
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        },
+        "rim_elevation": {
+          "$ref": "#/$defs/EngineeringParameter"
+        },
+        "opening_area": {
+          "$ref": "#/$defs/EngineeringParameter"
+        },
+        "inlet_type": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Inlet Type",
+          "type": "string"
+        },
+        "discharge_coefficient": {
+          "$ref": "#/$defs/EngineeringParameter"
+        },
+        "maximum_inlet_capacity": {
+          "$ref": "#/$defs/EngineeringParameter"
+        },
+        "source_reference": {
+          "maxLength": 1000,
+          "minLength": 2,
+          "title": "Source Reference",
+          "type": "string"
+        },
+        "confidence": {
+          "$ref": "#/$defs/ConfidenceBand"
+        }
+      },
+      "required": [
+        "exchange_id",
+        "exchange_type",
+        "drain_node_id",
+        "geometry",
+        "x",
+        "y",
+        "rim_elevation",
+        "opening_area",
+        "inlet_type",
+        "discharge_coefficient",
+        "maximum_inlet_capacity",
+        "source_reference",
+        "confidence"
+      ],
+      "title": "ExchangeGeometry",
+      "type": "object"
+    },
+    "ExchangeType": {
+      "enum": [
+        "POINT_INLET",
+        "MANHOLE_SURCHARGE"
+      ],
+      "title": "ExchangeType",
+      "type": "string"
+    },
+    "FlowDirectionCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "from_node_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "From Node Id",
+          "type": "string"
+        },
+        "to_node_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "To Node Id",
+          "type": "string"
+        },
+        "method": {
+          "$ref": "#/$defs/FlowDirectionMethod"
+        },
+        "source_reference": {
+          "maxLength": 1000,
+          "minLength": 2,
+          "title": "Source Reference",
+          "type": "string"
+        },
+        "confidence": {
+          "$ref": "#/$defs/ConfidenceBand"
+        }
+      },
+      "required": [
+        "from_node_id",
+        "to_node_id",
+        "method",
+        "source_reference",
+        "confidence"
+      ],
+      "title": "FlowDirectionCandidate",
+      "type": "object"
+    },
+    "FlowDirectionMethod": {
+      "enum": [
+        "MUNICIPAL_ARROWS_LABELS",
+        "INVERT_ELEVATIONS",
+        "PUMP_OUTFALL_TOPOLOGY",
+        "HYDRAULIC_TOPOLOGICAL_INFERENCE",
+        "SURFACE_TERRAIN_FALLBACK"
+      ],
+      "title": "FlowDirectionMethod",
+      "type": "string"
+    },
+    "HydraulicDefinitions": {
+      "additionalProperties": false,
+      "properties": {
+        "pumps": {
+          "items": {
+            "$ref": "#/$defs/PumpDefinition"
+          },
+          "title": "Pumps",
+          "type": "array"
+        },
+        "storages": {
+          "items": {
+            "$ref": "#/$defs/StorageDefinition"
+          },
+          "title": "Storages",
+          "type": "array"
+        },
+        "outfalls": {
+          "items": {
+            "$ref": "#/$defs/OutfallDefinition"
+          },
+          "title": "Outfalls",
+          "type": "array"
+        }
+      },
+      "title": "HydraulicDefinitions",
+      "type": "object"
+    },
+    "NodeSourceBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "drain_node_id": {
+          "title": "Drain Node Id",
+          "type": "string"
+        },
+        "source_feature_id": {
+          "title": "Source Feature Id",
+          "type": "string"
+        },
+        "location": {
+          "enum": [
+            "POINT",
+            "START",
+            "END",
+            "ON_LINE"
+          ],
+          "title": "Location",
+          "type": "string"
+        }
+      },
+      "required": [
+        "drain_node_id",
+        "source_feature_id",
+        "location"
+      ],
+      "title": "NodeSourceBinding",
+      "type": "object"
+    },
+    "OutfallDefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "drain_node_id": {
+          "minLength": 1,
+          "title": "Drain Node Id",
+          "type": "string"
+        },
+        "evidence": {
+          "$ref": "#/$defs/DefinitionEvidence"
+        },
+        "destination_id": {
+          "minLength": 1,
+          "title": "Destination Id",
+          "type": "string"
+        },
+        "destination_kind": {
+          "enum": [
+            "RIVER",
+            "CANAL",
+            "DRAIN_NETWORK",
+            "BOUNDARY",
+            "REFERENCE_RECEIVER"
+          ],
+          "title": "Destination Kind",
+          "type": "string"
+        },
+        "receiving_geometry": {
+          "additionalProperties": true,
+          "title": "Receiving Geometry",
+          "type": "object"
+        },
+        "boundary_type": {
+          "enum": [
+            "FREE",
+            "FIXED_STAGE"
+          ],
+          "title": "Boundary Type",
+          "type": "string"
+        },
+        "stage_elevation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EngineeringParameter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "drain_node_id",
+        "evidence",
+        "destination_id",
+        "destination_kind",
+        "receiving_geometry",
+        "boundary_type"
+      ],
+      "title": "OutfallDefinition",
+      "type": "object"
+    },
+    "ParameterUnit": {
+      "enum": [
+        "m",
+        "m2",
+        "m3",
+        "m3/s",
+        "1",
+        "s/m^(1/3)"
+      ],
+      "title": "ParameterUnit",
+      "type": "string"
+    },
+    "PumpCurvePoint": {
+      "additionalProperties": false,
+      "properties": {
+        "head_m": {
+          "minimum": 0,
+          "title": "Head M",
+          "type": "number"
+        },
+        "discharge_m3_s": {
+          "minimum": 0,
+          "title": "Discharge M3 S",
+          "type": "number"
+        }
+      },
+      "required": [
+        "head_m",
+        "discharge_m3_s"
+      ],
+      "title": "PumpCurvePoint",
+      "type": "object"
+    },
+    "PumpDefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "drain_node_id": {
+          "minLength": 1,
+          "title": "Drain Node Id",
+          "type": "string"
+        },
+        "evidence": {
+          "$ref": "#/$defs/DefinitionEvidence"
+        },
+        "curve": {
+          "items": {
+            "$ref": "#/$defs/PumpCurvePoint"
+          },
+          "minItems": 2,
+          "title": "Curve",
+          "type": "array"
+        },
+        "initially_enabled": {
+          "title": "Initially Enabled",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "drain_node_id",
+        "evidence",
+        "curve",
+        "initially_enabled"
+      ],
+      "title": "PumpDefinition",
+      "type": "object"
+    },
+    "StorageCurvePoint": {
+      "additionalProperties": false,
+      "properties": {
+        "depth_m": {
+          "minimum": 0,
+          "title": "Depth M",
+          "type": "number"
+        },
+        "area_m2": {
+          "exclusiveMinimum": 0,
+          "title": "Area M2",
+          "type": "number"
+        }
+      },
+      "required": [
+        "depth_m",
+        "area_m2"
+      ],
+      "title": "StorageCurvePoint",
+      "type": "object"
+    },
+    "StorageDefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "drain_node_id": {
+          "minLength": 1,
+          "title": "Drain Node Id",
+          "type": "string"
+        },
+        "evidence": {
+          "$ref": "#/$defs/DefinitionEvidence"
+        },
+        "curve": {
+          "items": {
+            "$ref": "#/$defs/StorageCurvePoint"
+          },
+          "minItems": 2,
+          "title": "Curve",
+          "type": "array"
+        }
+      },
+      "required": [
+        "drain_node_id",
+        "evidence",
+        "curve"
+      ],
+      "title": "StorageDefinition",
+      "type": "object"
+    },
+    "VersionedSourceReference": {
+      "additionalProperties": false,
+      "properties": {
+        "source_reference": {
+          "maxLength": 1000,
+          "minLength": 2,
+          "title": "Source Reference",
+          "type": "string"
+        },
+        "version": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_reference",
+        "version",
+        "sha256"
+      ],
+      "title": "VersionedSourceReference",
+      "type": "object"
+    },
+    "VerticalReference": {
+      "properties": {
+        "vertical_datum": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Vertical Datum"
+        },
+        "vertical_unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Vertical Unit"
+        },
+        "vertical_offset_m": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Vertical Offset M"
+        },
+        "datum_transform_status": {
+          "$ref": "#/$defs/DatumTransformStatus",
+          "default": "NOT_APPLICABLE"
+        },
+        "vertical_reference_confidence": {
+          "$ref": "#/$defs/VerticalReferenceConfidence",
+          "default": "UNKNOWN"
+        },
+        "transform_method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Transform Method"
+        }
+      },
+      "title": "VerticalReference",
+      "type": "object"
+    },
+    "VerticalReferenceConfidence": {
+      "enum": [
+        "HIGH",
+        "MEDIUM",
+        "LOW",
+        "UNKNOWN"
+      ],
+      "title": "VerticalReferenceConfidence",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "draft_id": {
+      "format": "uuid",
+      "title": "Draft Id",
+      "type": "string"
+    },
+    "draft_fingerprint": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Draft Fingerprint",
+      "type": "string"
+    },
+    "graph": {
+      "$ref": "#/$defs/DrainGraphPackage"
+    },
+    "definitions": {
+      "$ref": "#/$defs/HydraulicDefinitions"
+    },
+    "node_bindings": {
+      "items": {
+        "$ref": "#/$defs/NodeSourceBinding"
+      },
+      "title": "Node Bindings",
+      "type": "array"
+    },
+    "edge_bindings": {
+      "items": {
+        "$ref": "#/$defs/EdgeSourceBinding"
+      },
+      "title": "Edge Bindings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "draft_id",
+    "draft_fingerprint",
+    "graph",
+    "node_bindings",
+    "edge_bindings"
+  ],
+  "title": "ImportBindingPlan",
+  "type": "object"
+}

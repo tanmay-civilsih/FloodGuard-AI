@@ -10,16 +10,16 @@ Development is governed by:
 
 ## Current milestone
 
-**Sequence 8 - Drain Graph, Hydraulic Parameters, Exchange Geometry and Readiness (v0.8)**
+**Sequence 9 - Versioned Urban Digital Twin Builder (v0.9)**
 
-Sequence 8 is **technically frozen** after the complete deployed gate passed on `de6cce9`
-(568 tests passed, 122 source files type-checked, 15 immutable artifacts verified over HTTP). See `SEQUENCE_8_STATUS.md` and `docs/architecture/sequence-08-drain-model.md`.
-The API includes immutable real-source import drafts, directed reference models, explicit source
-bindings, conservative static readiness and a read-only geometry viewer at `/drainage/qa`.
-Final real-pilot acceptance remains pending Sequence 20. A genuine source-bound adjacent-ward path
-to a defensible destination is still required before Sequence 9 can close.
+Sequence 9 implementation is complete; final deployed validation is pending. The twin builder fixes
+exact component versions in an immutable manifest and can recreate a twin without upstream latest
+lookups. The aligned reference is scenario-ready and the actual Ward 7 snapshot is VISUAL_ONLY.
+**Sequence 9 is not frozen:** the genuine real adjacent-ward drainage requirement DATA-08-01 remains
+open. See `SEQUENCE_9_STATUS.md` and `docs/architecture/sequence-09-twin-builder.md`.
 
-Sequence 7 is technically frozen on its validated source `318ec92`; see `SEQUENCE_7_STATUS.md`.
+Sequence 8 is technically frozen on validated source `de6cce9`; see `SEQUENCE_8_STATUS.md`.
+Final human engineering acceptance remains pending Sequence 20.
 
 Sequence 7 keeps the visual city representation separate from the simplified hydraulic surface representation. The hydraulic contract supports exactly:
 
@@ -92,23 +92,28 @@ docker compose up -d --build
 python scripts/verify.py --services
 ```
 
-Run the Sequence 8 reference model and existing real-source import bootstrap:
+Run the Sequence 9 twin assembly and independent recreation bootstrap:
 
 ```bash
-python scripts/verify.py --services --drainage-bootstrap
+python scripts/verify.py --services --twin-bootstrap
 ```
 
-Run the complete Sequence 8 technical-development gate, including the real conditional-storage concurrency probe:
+Run the complete Sequence 9 technical-development gate, including the real conditional-storage concurrency probe:
 
 ```bash
-python scripts/sequence8_development_gate.py --run-checks
+python scripts/sequence9_development_gate.py --run-checks
 ```
 
-A passing Sequence 8 development gate freezes the software/interface baseline for continued
-development under the owner-approved policy. It does not grant real-pilot engineering acceptance,
-`HYDRAULIC_VALIDATED`, or closure of the Sequence 9 genuine cross-ward requirement.
-Exact remaining evidence is tracked in `docs/validation/final-human-review-register.md`.
-Historical sequence gate scripts remain tied to their historical releases.
+The Sequence 9 gate records assembly validation separately from technical freeze. A missing genuine
+real cross-ward path blocks freeze even when reference assembly and all software checks pass.
+The approved human-review policy remains in force, without waiving the real two-ward requirement.
+
+## Sequence 9 twin versions
+
+Inspect `/twins/qa`, `/twins/readiness?city_id=kolkata` and `/twins/products?city_id=kolkata`.
+A twin manifest names all twelve static component versions with hashes, software identity, readiness,
+vertical-reference status and explicit missing reasons. The API is read-only. Operator build/recreate
+commands and exact pilot selections are documented in the Sequence 9 architecture and `docs/examples/`.
 
 ## Sequence 8 products
 
