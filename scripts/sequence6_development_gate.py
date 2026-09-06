@@ -34,7 +34,9 @@ def classify_for_development(preflight: dict[str, Any]) -> dict[str, Any]:
     remains a development blocker because an automated validation failure may be responsible.
     """
     raw_blockers = preflight.get("technical_blockers")
-    if not isinstance(raw_blockers, list) or any(not isinstance(item, str) for item in raw_blockers):
+    if not isinstance(raw_blockers, list) or any(
+        not isinstance(item, str) for item in raw_blockers
+    ):
         raise ValueError("preflight technical_blockers must be a list of strings")
     manual = preflight.get("engineering_acceptance_remaining", [])
     if not isinstance(manual, list) or any(not isinstance(item, str) for item in manual):
@@ -45,9 +47,9 @@ def classify_for_development(preflight: dict[str, Any]) -> dict[str, Any]:
     deferred: list[str] = []
     development_blockers: list[str] = []
     for message in raw_blockers:
-        if _direct_human_blocker(message):
-            deferred.append(message)
-        elif message == SCENARIO_READINESS_MESSAGE and human_context:
+        if _direct_human_blocker(message) or (
+            message == SCENARIO_READINESS_MESSAGE and human_context
+        ):
             deferred.append(message)
         else:
             development_blockers.append(message)
