@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-09-06T16:13:22.124013+00:00",
+  "sequence": 8,
+  "release": "0.8.0",
+  "scope": "AUTOMATED_DEVELOPMENT_GATE_ONLY",
+  "human_review_deferred_to_sequence": 20,
+  "deferred_human_review": [
+    "Real node classification, connectivity and direction evidence acceptance.",
+    "Real dimensions, inverts, roughness, condition, capacity and vertical datum acceptance.",
+    "Real pump/storage/outfall and physical exchange engineering acceptance.",
+    "Exact immutable source/model/browser comparison and limitations acceptance."
+  ],
+  "final_human_acceptance_status": "PENDING_SEQUENCE_20",
+  "real_pilot_constraint": "Real adjacent-ward continuation to a defensible downstream destination must be established before Sequence 9 is complete; a reference fixture does not satisfy it.",
+  "repository_commit": "de6cce9cafc732be93ecb4af6505877d721631c1",
+  "source_fingerprint": "f30279ca8c98d4ab79ffc607580b2cb5f4a0ce0f9a4481b73980b90d9edb895a",
+  "dependency_lock_mismatches": [],
+  "software_and_services_passed": true,
+  "deployed_conditional_storage_passed": true,
+  "drainage_readiness": {
+    "city_id": "kolkata",
+    "current_pipeline_version": "sequence-8-drain-model-v1",
+    "total_products": 2,
+    "eligible_products": 2,
+    "real_pilot_imports": 1,
+    "reference_ready": 1,
+    "provisional_real_graphs": 0,
+    "real_cross_ward_path_available": false,
+    "technical_development_gate_passed": true,
+    "final_human_acceptance_pending": true,
+    "final_completion_gate_passed": false,
+    "sequence9_real_cross_ward_gate_passed": false,
+    "completion_reason": "Reference and real-source import verified; final acceptance remains pending.",
+    "qa_viewer_path": "/drainage/qa"
+  },
+  "drainage_products": [
+    {
+      "product_id": "898df152-6437-55ba-9ff4-bcdb430a4a00",
+      "city_id": "kolkata",
+      "pilot_area_id": "kolkata-sequence8-reference",
+      "fingerprint": "323f145cc5ed0ccd16ba9a9eaa37bf2b4b07bbef5ad6274771acf21220007c84",
+      "pipeline_version": "sequence-8-drain-model-v1",
+      "product_kind": "DIRECTED_GRAPH",
+      "evidence_scope": "REFERENCE_FIXTURE",
+      "working_crs": "EPSG:32645",
+      "artifacts": {
+        "graph": {
+          "object_key": "drainage/898df152-6437-55ba-9ff4-bcdb430a4a00/graph.json",
+          "sha256": "4ab93f2c9a065ebde117584686f23ad58402c76ac462b6b6244d74949ebc30f9",
+          "byte_size": 21288,
+          "media_type": "application/json"
+        },
+        "parameters": {
+          "object_key": "drainage/898df152-6437-55ba-9ff4-bcdb430a4a00/parameters.json",
+          "sha256": "91b5777fd4c27156815518288ef9abfeb9d8996190aab289fb3b91806ba901ed",
+          "byte_size": 15301,
+          "media_type": "application/json"
+        },
+        "exchanges": {
+          "object_key": "drainage/898df152-6437-55ba-9ff4-bcdb430a4a00/exchanges.json",
+          "sha256": "148a3cd1362ba694f6025906e8b0791a2a07264a40c810ea57470114e2bfb1a9",
+          "byte_size": 2670,
+          "media_type": "application/json"
+        },
+        "assessment": {
+          "object_key": "drainage/898df152-6437-55ba-9ff4-bcdb430a4a00/assessment.json",
+          "sha256": "88e353a555b259c858bcb5e371bee23fc6dffaecdae9c9c8d387c4e80e95d966",
+          "byte_size": 1757,
+          "media_type": "application/json"
+        },
+        "wards": {
+          "object_key": "drainage/898df152-6437-55ba-9ff4-bcdb430a4a00/wards.json",
+          "sha256": "68c6ab754042955e7f7a7b896ba506a050a71646858509b79622706340495f24",
+          "byte_size": 597,
+          "media_type": "application/json"
+        },
+        "qa": {
+          "object_key": "drainage/898df152-6437-55ba-9ff4-bcdb430a4a00/qa.json",
+          "sha256": "a0aa12c1695df03e98e3dadf7d48bd0f068f7a76cc2fb0ff20f8cf894eca80a8",
+          "byte_size": 2296,
+          "media_type": "application/json"
+        },
+        "input": {
+          "object_key": "drainage/898df152-6437-55ba-9ff4-bcdb430a4a00/input.json",
+          "sha256": "c001932057c2922648dd6563ff29f12b80535c9c12c2f4926073a7e4891f413e",
+          "byte_size": 23290,
+          "media_type": "application/json"
+        },
+        "audit": {
+          "object_key": "drainage/898df152-6437-55ba-9ff4-bcdb430a4a00/audit.json",
+          "sha256": "2ba7546750008c7415be29ba209eddaceeee2d32d357b5c8c3f7bdef36059800",
+          "byte_size": 974,
+          "media_type": "application/json"
+        }
+      },
+      "created_at": "2026-09-06T16:07:09.749364Z",
+      "http_readback_verified": true
+    },
+    {
+      "product_id": "30c05f00-2ab5-5aea-a640-5275711ce127",
+      "city_id": "kolkata",
+      "pilot_area_id": "kolkata-ward-7",
+      "fingerprint": "598a6f96644bd7c00489bdfc949528f2174d63bedbc2ef0b4c0366f9a8585c85",
+      "pipeline_version": "sequence-8-drain-model-v1",
+      "product_kind": "IMPORT_DRAFT",
+      "evidence_scope": "REAL_PILOT_PROVISIONAL",
+      "working_crs": "EPSG:32645",
+      "artifacts": {
+        "draft": {
+          "object_key": "drainage/30c05f00-2ab5-5aea-a640-5275711ce127/draft.json",
+          "sha256": "5fe47bb2b03976d0963ac50a5a948321142236b7d5f437a50072fafec2005144",
+          "byte_size": 260872,
+          "media_type": "application/json"
+        },
+        "wards": {
+          "object_key": "drainage/30c05f00-2ab5-5aea-a640-5275711ce127/wards.json",
+          "sha256": "e299256e315620e9f2dcc4d99e3cdf1e4a8af902de3f044a55da325955c51269",
+          "byte_size": 2704669,
+          "media_type": "application/json"
+        },
+        "source-reconstruction": {
+          "object_key": "drainage/30c05f00-2ab5-5aea-a640-5275711ce127/source-reconstruction.json",
+          "sha256": "5cda954e5d61d2f2191b63c80e19efdb99848c4ecaafa6fcffa90ee0d5e351b6",
+          "byte_size": 242623,
+          "media_type": "application/json"
+        },
+        "source-wards": {
+          "object_key": "drainage/30c05f00-2ab5-5aea-a640-5275711ce127/source-wards.json",
+          "sha256": "da962cba8ec62bdf45e86a70d403880532f880f205e437aa5dc678dabc74d65a",
+          "byte_size": 2710890,
+          "media_type": "application/json"
+        },
+        "qa": {
+          "object_key": "drainage/30c05f00-2ab5-5aea-a640-5275711ce127/qa.json",
+          "sha256": "dd38807453b78cbba2a5b2044a67d0e1585eb8f2f50d3fab0788a330ec548f55",
+          "byte_size": 65930,
+          "media_type": "application/json"
+        },
+        "input": {
+          "object_key": "drainage/30c05f00-2ab5-5aea-a640-5275711ce127/input.json",
+          "sha256": "59139fa45e2b1ebc4ed36f82a81158e306e9ff16f2e96340302eb7145408ccf8",
+          "byte_size": 2954431,
+          "media_type": "application/json"
+        },
+        "audit": {
+          "object_key": "drainage/30c05f00-2ab5-5aea-a640-5275711ce127/audit.json",
+          "sha256": "c2dce3d8088f50325a23b46c98be9b7c6d0187df971bd57504f23550185f43ac",
+          "byte_size": 898,
+          "media_type": "application/json"
+        }
+      },
+      "created_at": "2026-09-06T16:07:09.610837Z",
+      "http_readback_verified": true
+    }
+  ],
+  "technical_blockers": [],
+  "development_status": "PASSED",
+  "technical_development_freeze_status": "ELIGIBLE",
+  "freeze_status": "TECHNICAL_DEVELOPMENT_FREEZE_ELIGIBLE"
+}

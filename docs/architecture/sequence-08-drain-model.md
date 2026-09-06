@@ -1,6 +1,6 @@
 # Sequence 8 - Directed drain model, parameters, exchange geometry and readiness
 
-Status: implementation complete; full clean-commit deployed development gate pending.
+Status: TECHNICAL_DEVELOPMENT_FROZEN; full clean-commit deployed gate passed on `de6cce9`.
 See `SEQUENCE_8_STATUS.md` for the current evidence and freeze state.
 The authoritative scientific specification is unchanged.
 

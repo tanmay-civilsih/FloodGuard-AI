@@ -89,4 +89,7 @@ Verified local bootstrap anchors (6 September 2026):
   HYDRAULIC_SCENARIO_READY. It contains six nodes, five edges and both mandatory point exchanges.
 
 The reference is not real drainage evidence and cannot close any HR-08 item or DATA-08-01.
-The final clean-commit development report will retain every product artifact hash and HTTP readback.
+The passing clean-commit report `docs/validation/sequence-08-development-gate-de6cce9.json`
+retains every product artifact hash and successful HTTP readback. Source commit `de6cce9`
+passed 568 tests, strict mypy for 122 source files, all six service checks and deployed
+conditional-storage concurrency. This closes the Sequence 8 technical development gate only.

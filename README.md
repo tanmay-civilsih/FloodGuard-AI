@@ -12,8 +12,8 @@ Development is governed by:
 
 **Sequence 8 - Drain Graph, Hydraulic Parameters, Exchange Geometry and Readiness (v0.8)**
 
-Sequence 8 implementation is complete and locally deployed, with the final clean-commit development
-gate pending. See `SEQUENCE_8_STATUS.md` and `docs/architecture/sequence-08-drain-model.md`.
+Sequence 8 is **technically frozen** after the complete deployed gate passed on `de6cce9`
+(568 tests passed, 122 source files type-checked, 15 immutable artifacts verified over HTTP). See `SEQUENCE_8_STATUS.md` and `docs/architecture/sequence-08-drain-model.md`.
 The API includes immutable real-source import drafts, directed reference models, explicit source
 bindings, conservative static readiness and a read-only geometry viewer at `/drainage/qa`.
 Final real-pilot acceptance remains pending Sequence 20. A genuine source-bound adjacent-ward path
