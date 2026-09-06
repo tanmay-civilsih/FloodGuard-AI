@@ -17,6 +17,7 @@ from apps.api.routers.reconstruction import router as reconstruction_router
 from apps.api.routers.registry import router as registry_router
 from apps.api.routers.spatial import router as spatial_router
 from apps.api.routers.terrain import router as terrain_router
+from apps.api.routers.urban_gis import router as urban_gis_router
 from floodguard import __version__
 from floodguard.common.auth import require_write_access
 from floodguard.common.config import get_settings
@@ -42,6 +43,7 @@ app.include_router(harvester_router)
 app.include_router(spatial_router)
 app.include_router(reconstruction_router)
 app.include_router(terrain_router)
+app.include_router(urban_gis_router)
 
 
 class HealthResponse(BaseModel):
@@ -59,7 +61,7 @@ class ReadyResponse(BaseModel):
 class VersionResponse(BaseModel):
     name: Literal["FloodGuard-AI"] = "FloodGuard-AI"
     version: str
-    sequence: Literal[6] = 6
+    sequence: Literal[7] = 7
     source_fingerprint: str | None
     runtime_python: str
     dependency_lock_mismatches: list[str]
@@ -118,6 +120,9 @@ def version() -> VersionResponse:
     except (OSError, ValueError, ImportError):
         fingerprint = None
         mismatches = ["Release source/lockfile evidence unavailable"]
-    return VersionResponse(version=__version__, source_fingerprint=fingerprint,
-                           runtime_python=sys.version.split()[0],
-                           dependency_lock_mismatches=mismatches)
+    return VersionResponse(
+        version=__version__,
+        source_fingerprint=fingerprint,
+        runtime_python=sys.version.split()[0],
+        dependency_lock_mismatches=mismatches,
+    )
