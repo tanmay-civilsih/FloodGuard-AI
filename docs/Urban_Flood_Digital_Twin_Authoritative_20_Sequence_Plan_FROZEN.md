@@ -1,12 +1,13 @@
 # Urban Flood Digital Twin & 0–3 Hour Nowcasting Platform
-## Authoritative 20-Sequence Development Specification — Scientifically Revised
+## Authoritative 20-Sequence Development Specification — Roadmap Revision R2
 
-**Primary demonstrator:** Kolkata, West Bengal, India  
-**Target:** Smart India Hackathon (SIH) 2026 — Urban Flood Nowcasting  
-**Primary language:** Python 3.12.x  
-**Architecture:** API-oriented modular platform with explicit domain boundaries and one in-process coupled hydraulics worker  
-**Development rule:** Build, validate, freeze, then proceed to the next sequence.  
-**Revision status:** Scientific audit incorporated; this file is the authoritative implementation specification.
+**Primary demonstrator:** Kolkata, West Bengal, India
+**Target:** Smart India Hackathon (SIH) 2026 — Urban Flood Nowcasting
+**Primary language:** Python 3.12.x
+**Architecture:** API-oriented modular platform with explicit domain boundaries and one in-process coupled hydraulics worker
+**Development rule:** Build, validate, freeze, then proceed to the next sequence.
+**Revision:** ROADMAP-R2-2026-09-07
+**Revision status:** Frozen planning baseline, revised at the owner's explicit request on 7 September 2026. This is the sole active implementation specification; planning approval does not claim implementation or validation.
 
 ---
 
@@ -24,6 +25,97 @@ This revision preserves the original 20-sequence architecture while making the f
 8. **Flood-aware routing must be genuinely time dependent.** The baseline SIH implementation should use a time-expanded or otherwise FIFO-safe formulation and evaluate exposure over edge traversal, not at one instant only.
 9. **The target service architecture remains modular, but SIH deployment may consolidate logical services** to reduce operational complexity while preserving contracts and ownership boundaries.
 10. **Scientific claims are limited to validated spatial and temporal scope.** Numerical grid spacing must never be presented as measurement/data resolution.
+
+## 0.1 R2 authority, current state and wording
+
+The owner explicitly requested redesign of the next ten sequences and modification of this
+frozen plan on 7 September 2026. R2 replaces the earlier Sequence 11-20 order and the old rule
+that all ML work must wait until after Sequence 19. Sequences 1-10 retain their scientific
+requirements and implementation evidence; required extensions are assigned to the new sequences.
+Earlier proposals in docs/planning are background only. The exact former plan is archived in
+docs/planning/archive/AUTHORITATIVE_PLAN_BEFORE_R2_2026-09-07.txt, never an alternative roadmap.
+
+At revision time the branch is sequence-10-forcing. Sequence 10 implementation/assembly was
+verified on 2c39b70; Sequence 9/10 remain NOT_FROZEN because DATA-08-01 lacks the required real
+source-bound cross-ward drainage path. Historical checks are evidence for their recorded source,
+not a fresh runtime verification by this revision. Human-only reviews remain at Sequence 20.
+
+This request authorizes the planning revision and aligned guidance updates. It does not itself
+start sequence implementation, train models, acquire restricted data, purchase compute, deploy
+software or declare earlier blockers closed. The next implementation target is revised Sequence 11.
+
+Terms used throughout:
+
+| Term | Exact meaning |
+|---|---|
+| Implemented | The specified code/artifacts exist; this alone does not mean tested or scientifically accepted |
+| Engineering verified | Declared contract, numerical and integration checks passed on identified source |
+| Independently evaluated | A frozen configuration was assessed on excluded events; improvement is not implied |
+| Supported for declared scope | Evidence supports the stated quantity, geography, horizon and use |
+| Frozen plan | The agreed specification; not a completed software release |
+| Sequence freeze | Mandatory outputs/tests and applicable prerequisites passed with recorded evidence |
+| Recorded replay | Playback of archived data or genuine saved runs; it is not live computation |
+| Hydraulic reconstruction | Simulation driven by known event forcing; it is not an issue-time weather forecast |
+| Reanalysis hindcast | A historical prediction initialized from retrospective atmospheric reconstruction |
+| Issue-time backtest | A historical prediction using only inputs evidenced as available by its issue time |
+
+## 0.2 Revised Sequence 11-20 map
+
+| New sequence | Deliverable | Former work retained |
+|---|---|---|
+| 11 | Compatibility, historical events, observation data and rainfall preview | New extensions to implemented Sequences 2-10 |
+| 12 | 2D local-inertial surface solver and numerical bindings | Former 11 |
+| 13 | SWMM drainage engine and operational boundaries | Former 12 |
+| 14 | Conservative coupling, initialization and historical reconstruction | Former 13 |
+| 15 | Deterministic forecasts and development baseline evaluation | Former 14 plus development portion of 19 |
+| 16 | Actual GraphCast inference, rainfall fusion and XGBoost training/evaluation | New required model integration |
+| 17 | Risk/scenarios and time-dependent routing | Former 15 and 16, with separate subgates |
+| 18 | Full 2D/3D historical replay and forecast-comparison dashboard | Former 17, expanded |
+| 19 | Independent validation, connected-catchment scaling and performance | Former 19 audit plus former 18 |
+| 20 | Resilience, reproducible demo and final acceptance | Former 20, expanded |
+
+Release targets remain v1.1 through v2.0 for the new sequence numbers; these are planned versions,
+not existing deployments. Original hydraulic equations, conservation, routing and validation
+requirements remain mandatory in their new homes. Checkpoint B moves to 15 and C moves to 18.
+
+## 0.3 Gate and dependency policy
+
+Every new sequence has entry dependencies, existing-code changes, deliverables, verification,
+a visible result and a completion/freeze gate. Inherited component acceptance paragraphs are
+necessary tests inside the containing sequence, not independent shortcuts to freeze.
+
+Track engineering_result, data_readiness, scientific_claim_status, inherited_blockers and
+freeze_status separately. Mandatory missing data/access/compute is BLOCKED with a concrete
+remedy; it is not a passed gate. Conditional feeds may be unavailable only where the sequence
+explicitly permits that status. Do not claim their capability from mocks.
+
+Sequence 11 may perform rainfall-only/data preparation while DATA-08-01 remains. Reference
+benchmark development after explicit implementation authorization may use labelled fixtures;
+real-pilot hydraulic acceptance and dependent sequence freeze cannot waive the inherited gate.
+The prior authorization to implement Sequence 10 is not blanket authorization for later work.
+
+Sequence 11's independent data/compatibility gate may freeze when its own mandatory outputs pass,
+while the project still records the inherited real-twin blocker. Later numerical component checks
+may pass on reference fixtures, but they cannot be used to claim a completed real-pilot dependency.
+Report component acceptance and overall dependent readiness separately instead of changing the
+meaning of an earlier gate.
+
+Every compatibility change requires old-artifact read/recreation checks, additive migration
+or explicit version dispatch, retained source/model/data identity, and affected-scope verification.
+Never re-run a job under an old identity after changing its inputs or model. Never rewrite
+historical ledgers, hashes or validation receipts to make them appear current.
+
+## 0.4 Minimum deliverables and boundaries
+
+Historical rainfall acquisition, a genuine rainfall preview, conservative deterministic hydraulics,
+actual full-resolution pretrained GraphCast inference, actual XGBoost rainfall training/evaluation,
+risk/routing, 2D/3D replay and independent validation are planned deliverables. Their completion
+depends on the gates below; unavailable mandatory evidence is reported without relabelling it done.
+
+Gauge/radar and live operation are conditional on verified numerical feeds and latency. Coarse
+satellite/reanalysis data can support explicitly labelled experiments. Real flood skill requires
+independent flood evidence. Full GraphCast retraining/fine-tuning, transformer development and
+direct learned flood-depth replacement are not required by this revision.
 
 ---
 
@@ -286,13 +378,18 @@ Optional later for larger workloads:
 
 - Dask
 
-## 3.7 AI/ML — post-validation extension, not a baseline SIH dependency
+## 3.7 Weather models and local machine learning
 
-- PyTorch
-- PyTorch Geometric
-- scikit-learn
+- Sequence 16: a pinned pretrained GraphCast variant with its compatible isolated runtime
+  (model-specific JAX/Haiku dependencies verified against the selected code revision).
+- Sequence 16: XGBoost and supporting feature/evaluation tooling with separate model/data locks.
+- PyTorch/PyTorch Geometric remain optional future tools, not requirements for this integration.
 
-The baseline 20-sequence prototype does not require ML to produce a valid flood forecast. ML/GNN work begins only after Sequence 19 has produced a validated deterministic reference model and reproducible simulation dataset.
+Historical data/provenance begins in 11; a conservative engineering baseline and development
+evaluation protocol precede learned work in 15; actual GraphCast inference and XGBoost training
+occur in 16; final independent evaluation and promotion decisions occur in 19. Rainfall learning
+does not replace hydraulic ownership, and no transformer is required. This explicitly supersedes
+the former post-Sequence-19-only ML ordering.
 
 ## 3.8 Messaging, cache, and storage
 
@@ -303,7 +400,7 @@ Target architecture:
 - MinIO
 - PostgreSQL/PostGIS
 
-These are not all required on day one. Scientific correctness takes precedence over service decomposition.
+Preserve the existing deployment and add processes only for demonstrated requirements. Scientific correctness takes precedence over service decomposition.
 
 ## 3.9 API gateway
 
@@ -362,6 +459,8 @@ The target platform contains the following logical domain components.
 | `routing-service` | road exposure consumption and time-dependent routing |
 | `geospatial-service` | COG/vector/raster/3D publication products |
 | `web` | user interface |
+| `event/evaluation records` | historical evidence, availability, dataset splits and evaluation |
+| `weather-model worker` | isolated GraphCast inference and XGBoost training/inference |
 
 ### SIH deployment profile
 
@@ -429,7 +528,7 @@ Secrets are supplied through environment secrets, Docker secrets, or a future de
 
 # 7. Common Identifiers
 
-The following identifiers are defined from Sequence 1 and must remain stable:
+The original common identifier names below remain stable where implemented; this list does not assert that every later product already exists:
 
 ```text
 city_id
@@ -456,6 +555,8 @@ job_id
 ```
 
 ---
+
+R2 adds historical_event_id, observation_id, availability_record_id, evaluation_dataset_id, model_artifact_id, training_run_id, weather_run_id, evaluation_report_id and replay_manifest_id in their owning sequences. They reference existing identities rather than replacing them.
 
 # 8. Common Asynchronous Job Contract
 
@@ -1325,10 +1426,138 @@ A 90-minute rainfall forecast must never be silently extended to 180 minutes.
 
 ---
 
-# Sequence 11 — Baseline 2D Surface Hydraulic Solver and Numerical Grid
+# Sequence 11 — Compatibility, Historical Events and Observation Data
 
-**Release target:** v1.1  
-**Logical component inside:** `hydraulics-worker`
+**Release target:** v1.1
+**Owners:** registry, harvester, spatial and forcing components; new event/evaluation records
+**Purpose:** make the existing platform accept traceable historical evidence without changing the meaning of its retained products.
+
+## Entry dependencies
+
+Read the Sequence 8-10 ledgers and reproduce their affected checks. The current Sequence 9/10
+DATA-08-01 blocker remains open until the existing source-bound drainage gate passes. It does
+not prevent rainfall-only processing. Real hydraulic use remains blocked where the twin is ineligible.
+This sequence is the next implementation target after this planning-only revision.
+
+## Existing implementation modifications
+
+| Existing area | Required work | Compatibility rule |
+|---|---|---|
+| Sequence 2 registry | Add concrete product/feed records for selected historical rainfall, atmospheric states, gauge/radar and flood observations; retain access evidence and actual authentication requirements | A catalogue entry is not a working feed; never change authorization from a guess |
+| Sequence 3 acquisition | Add product/time-window selection, paging/retries where supported, resumable downloads and immutable acquisition receipts | Reuse the raw vault, hashes and credential references |
+| Sequence 4 normalization | Decode provider time/units/QC and transform observation geometry | Preserve native support, missingness, CRS and datum |
+| Sequences 5-9 static products | Resolve evidence-backed corrections and the cross-ward blocker through their existing workflows | New source/parameter versions create new products and twins |
+| Sequence 10 forcing | Add adapters from prepared event windows into the current rainfall contract | Preserve v1 identities/readers; keep the three-hour forecast-window bound |
+| Cross-cutting contracts | Add typed event and availability manifests referencing existing products | No unversioned fields silently added to immutable manifests |
+
+First retain representative v1 manifests, requests and blobs with known identities. Prove that
+new readers can verify and recreate them. Prefer separate versioned manifests for new metadata.
+If a v2 forcing schema is necessary, specify its writer, v1 reader, explicit conversion and
+version dispatch. Even optional serialized fields can change hashes. Never rewrite old bytes,
+reinterpret an old policy identifier, or perform a destructive database reset.
+
+## Build order
+
+1. Inventory the pilot and candidate storm/dry events before selecting demonstration dates.
+2. Define HistoricalEventManifest, ObservationRecord and SourceAvailabilityRecord.
+3. Implement one actual historical precipitation adapter and ingest a permitted numerical event.
+4. Normalize station/interval data and gridded data through separate adapters.
+5. Inventory GraphCast-compatible global atmospheric archives; acquire a bounded initial-state
+   bundle if access and compute/storage allow. Execution belongs to Sequence 16.
+6. Bind event-date terrain/drainage/boundaries/operations and flood observations where available.
+7. Build consecutive Sequence 10 replay windows plus the declared antecedent window.
+8. Produce a lightweight rainfall preview and a coverage report from those real artifacts.
+
+## Event and observation contract
+
+HistoricalEventManifest contains a schema version, historical_event_id, catchment_id, event
+start/end, UTC timezone policy, exact source/dataset versions, observation references, available
+twin/forcing references, evidence gaps, event-date infrastructure assumptions and checksums.
+Use historical_event_id for the storm/event; the existing event_id remains the messaging-envelope
+identifier. Define any relationship to the existing rain_event_id explicitly.
+
+ObservationRecord contains quantity, value or array reference, units, station/geometry identity,
+interval_start, interval_end, observation uncertainty if supplied, QC/missing mask, source/version,
+native resolution and support. Flood extent, flood depth, water level and rainfall are distinct
+quantities. A water level requires its vertical reference; a depth requires its local reference.
+
+SourceAvailabilityRecord contains source issue time where applicable, observed/valid interval,
+provider_available_at where evidenced, availability_evidence, acquired_at, source revision,
+and availability_status = VERIFIED / ESTIMATED / UNKNOWN. Store an estimated latency policy
+separately. Today's acquisition time and HTTP Last-Modified do not prove historical availability.
+
+The evaluation dataset definition records whole-event TRAIN / TUNE / TEST assignments, geography
+and dates, label type/quality, feature/target support and a split hash. Freeze test assignments
+before calibration/model selection; do not claim that every acquired event is a training event.
+
+## Source acceptance rules
+
+- ERA5 is a reanalysis candidate. Pin product, variables, levels, grid, units and time convention.
+  Local single-level data alone cannot initialize the full GraphCast model.
+- IMERG is a coarse satellite-estimate source for replay. Preserve its run/version and latency;
+  Final data may be a retrospective target but never a historical real-time input by default.
+- IMD AWS/ARG and radar sources require actual numerical samples and provider access evidence.
+  Verify rainfall fields, accumulation periods, station coverage and QC. An image or daily total
+  does not satisfy a sub-hourly numerical radar/gauge requirement.
+- Numerical radar QC, gauge adjustment, storm-motion estimation and rainfall nowcasting belong
+  to Sequence 16; this sequence establishes the archived observation and access contracts.
+- Missing real gauge/radar archives are recorded as unavailable capabilities. They cannot be
+  replaced with synthetic samples labelled as observations. Approved numerical files may be
+  imported with the same provenance requirements when automated access is unavailable.
+- No universal provider cadence, free-access claim, account scheme or live availability is assumed.
+
+## Preparation and missing-data behavior
+
+Differentiate rates from accumulations, cumulative-counter resets, timezones and interval edges.
+Deduplicate by source/station/interval/version and retain corrections as new versions. Preserve
+missing data; never fill it with zero rain. Convert only defensible supported intervals into the
+finite nonnegative RainInput contract. Unsupported areas/intervals fail or use a separately declared
+fallback with changed lineage and coverage. Do not silently patch missing gauge values by radar.
+
+Bind a long historical event to multiple forecast-sized packages with explicit state continuity.
+Do not expand the 3-hour runtime forecast contract to hold a multi-year training archive or global
+atmospheric fields. Store large training/weather inputs separately as versioned file references.
+
+## Visible result
+
+A small read-only browser page or generated local report shows one actual rainfall event, a
+catchment map, interval/accumulation charts, source resolution and missing-data coverage. Simple
+play/pause and time selection may be included. It displays rainfall, not simulated flood depth.
+This is a bounded data-preview prerequisite; the full product dashboard remains Sequence 18.
+
+## Required verification
+
+Known v1 identities and artifact recreation; additive migration/read compatibility; unit/timezone
+and reset examples; duplicates/corrections; unknown availability; missing-data rejection;
+source permission failure; geographic/temporal overlap; conservation during remapping; correct
+event/package links; no look-ahead in eligible input selection; correctly labelled preview.
+Keep the earlier affected-scope checks and document any newly exposed defect in its owning module.
+
+## Completion and freeze gate
+
+Freeze event/observation/availability v1 and adapter interfaces after at least one real numerical
+rainfall event produces reproducible replay packages and a correctly labelled preview. Record
+the complete candidate-event inventory and blocked feeds. The historical data gate cannot pass
+using only synthetic fixtures. Missing flood observations do not prevent rainfall replay, but
+do prevent a measured flood-validation claim. Re-run inherited gates without suppressing DATA-08-01.
+
+## Outside this sequence
+
+No hydraulic flood map, GraphCast inference/training, XGBoost fit, live warning, probability or
+route recommendation is claimed. No service or model is started by browsing the preview.
+
+# Sequence 12 — Baseline 2D Surface Solver and Numerical Bindings
+
+**Release target:** v1.2
+**Owner:** hydraulics-worker
+**Entry:** Sequence 11 contracts, exact Sequence 9 twin, Sequence 10 forcing and declared solver configuration.
+
+## Existing implementation modifications
+
+Extend the static-twin consumption layer with separately versioned numerical-grid bindings.
+Sequence 7/8 physical geometry remains grid independent. New numerical bindings refer to
+exact geometry, grid and twin versions; they do not overwrite earlier physical products.
+Resolve documented defects through their owning earlier modules and repeat affected checks.
 
 ## Objective
 
@@ -1431,16 +1660,47 @@ Bind each Sequence 7 Roof Runoff Receiving Geometry to receiving surface cells a
 - wetting/drying stability;
 - applicability-diagnostic tests.
 
-## Completion gate
+## Inherited component acceptance
 
 The baseline local-inertial surface solver passes declared benchmark and conservation tolerances, limitations are explicit, and every active surface-drain exchange geometry is bound to the numerical grid.
 
----
+## Additional build and output requirements
 
-# Sequence 12 — SWMM-Backed Drainage Hydraulic Engine
+Use one and only one selected Sequence 7 runoff/loss rule per surface. For roofs, route runoff
+once to the declared recipient using conservative weights, without adding the same rainfall
+again at the receiver. Direct-to-drain roof targets are retained as explicit pending transfers
+until Sequence 14 connects them to the 1D model; do not silently reroute them.
 
-**Release target:** v1.2  
-**Logical component inside:** `hydraulics-worker`
+Declare the solver treatment of boundaries, storage cells, masks, building barriers and road
+levels. An unsupported boundary or missing hydraulic terrain fails explicitly. Store initial
+conditions, grid_version, timestep diagnostics and the complete SurfaceRunResult provenance.
+
+Document equations in docs/mathematics/surface-solver.md, including SI units, friction,
+positivity/wetting-drying, source/sink splitting, stability, stopping rules and test tolerances.
+Derive rendering assets from depth/velocity arrays; no visual effect may modify scientific arrays.
+
+## Visible result
+
+Reproducible synthetic surface benchmarks with depth/storage plots and a water-balance report.
+Real terrain examples retain their readiness and applicability limitations.
+
+## Completion and freeze gate
+
+The inherited component acceptance plus roof-volume tests, binding uniqueness/conservation,
+deterministic recreation, boundary/missingness checks and versioned numerical contracts pass.
+This validates a surface component; it does not yet establish coupled or observed-flood accuracy.
+
+# Sequence 13 — SWMM Drainage Engine and Operational Boundaries
+
+**Release target:** v1.3
+**Owner:** hydraulics-worker
+**Entry:** Sequence 12 surface interface, versioned drain graph/parameters, static assets and forcing boundary/control series.
+
+## Existing implementation modifications
+
+Add an adapter from the accepted Sequence 8 graph and Sequence 9 twin to a reproducible SWMM
+model. Consume Sequence 10 stage/control series by exact asset identity. Unsupported gate/sluice
+assets remain rejected until an evidenced static contract is implemented and versioned.
 
 ## Objective
 
@@ -1479,7 +1739,7 @@ When `COUPLED_2D_1D` is active:
 1. SWMM hydrologic subcatchment runoff is disabled.
 2. SWMM receives surface-derived inflow only through defined exchange nodes.
 3. Above-ground ponding is owned by the 2D surface solver.
-4. Surface/drain transfer is controlled by the explicit exchange module in Sequence 13.
+4. Surface/drain transfer is controlled by the explicit exchange module in Sequence 14.
 5. Native SWMM flooding must not be used in a way that bypasses or double-counts the declared exchange formulation.
 
 ## Required outputs
@@ -1506,16 +1766,43 @@ pump_flow
 - reverse flow;
 - generated model vs trusted manually prepared SWMM case.
 
-## Completion gate
+## Inherited component acceptance
 
 The generated SWMM model reproduces trusted SWMM reference behavior and reports acceptable drainage mass balance.
 
----
+## Additional implementation requirements
 
-# Sequence 13 — Coupled Hydraulics, State Initialization, Time Synchronization and Volume Accounting
+Pin EPA SWMM/PySWMM and their execution environment. Compare generated input with a trusted
+manually prepared reference and retain .inp, settings, warnings, output and mass-balance receipts.
+Translate source heads/stages only through the accepted vertical transform. Respect discrete
+STEP_HOLD pump/control states and documented continuous-series interpolation.
 
-**Release target:** v1.3  
-**Deployable unit:** `hydraulics-worker`
+Define tested hooks for node inflow and surcharge extraction. Demonstrate how internal SWMM
+flooding and transfers will reconcile with the surface ledger; external ponding OFF alone is
+not proof of conservation. Every native loss, outfall discharge and transfer must be accounted.
+Provide hotstart serialization and checks for matching model/parameter versions.
+
+## Visible result
+
+Drain head/discharge/pump traces for a reference network, including backwater and reverse flow.
+
+## Completion and freeze gate
+
+The inherited component acceptance, control/tide interpolation, incompatible-datum rejection,
+hotstart recreation, native-flooding accounting and missing-parameter rejection all pass.
+Freeze the model generator and DrainHydraulicState interface, without claiming coupling is complete.
+
+# Sequence 14 — Conservative Coupling, Initialization and Historical Reconstruction
+
+**Release target:** v1.4
+**Owner:** one in-process hydraulics-worker
+**Entry:** accepted Sequence 12/13 component interfaces, physical/grid bindings and exact forcing/twin references.
+
+## Existing implementation modifications
+
+Connect the surface, roof and drainage bindings through a versioned HydraulicsRunRequest.
+Link historical runs to Sequence 11 event manifests. Keep state generation separate from
+Sequence 10 forcing assembly; an absent antecedent window never implies a dry state.
 
 ## Objective
 
@@ -1563,7 +1850,7 @@ Define the head difference:
 \Delta H = H_s - H_d
 \]
 
-### 13.1 Bidirectional exchange law
+### 14.1 Bidirectional exchange law
 
 The exchange module must implement a documented head-controlled weir/orifice-style formulation with explicit free/submerged behavior where applicable.
 
@@ -1604,7 +1891,7 @@ multiple_cell_weighting
 anti_oscillation_or_hysteresis_rule
 ```
 
-### 13.2 Exchange-volume constraint
+### 14.2 Exchange-volume constraint
 
 For every coupling interval:
 
@@ -1622,7 +1909,7 @@ Any inlet capacity cap must also be enforced consistently:
 
 when `maximum_inlet_capacity` is defined.
 
-### 13.3 Time coordination
+### 14.3 Time coordination
 
 Track separately:
 
@@ -1638,11 +1925,11 @@ SWMM may use its internal Dynamic Wave routing timestep.
 
 The two models synchronize at `dt_coupling` boundaries using transferred **volume**, not only instantaneous flow rate.
 
-### 13.4 Coupling sensitivity
+### 14.4 Coupling sensitivity
 
-In addition to surface-grid and surface-timestep testing, Sequence 13 must test sensitivity to `dt_coupling` and document the selected operational value.
+In addition to surface-grid and surface-timestep testing, Sequence 14 must test sensitivity to `dt_coupling` and document the selected operational value.
 
-### 13.5 Volume ledger
+### 14.5 Volume ledger
 
 Every run reports:
 
@@ -1662,9 +1949,9 @@ numerical_residual
 relative_mass_error
 ```
 
-### 13.6 State initialization
+### 14.6 State initialization
 
-Supported modes:
+Supported initialization modes:
 
 ```text
 COLD_START
@@ -1687,16 +1974,59 @@ Artificially reduce one drain's effective capacity and verify:
 - acceptable total mass error;
 - qualitatively correct response to a smaller coupling timestep.
 
-## Completion gate
+## Inherited component acceptance
 
 C1 lagged-head coupling is numerically stable, exchange physics are explicitly implemented, state initialization is reproducible, coupling-step sensitivity is documented, and the complete water-volume ledger closes within a declared tolerance.
 
----
+## Historical reconstruction and state contract
 
-# Sequence 14 — Deterministic 0–3 Hour Flood Forecast, Forecast Freshness and Road Exposure Projection
+Implement documented COLD_START, SPINUP_FROM_ANTECEDENT_FORCING and compatible HOTSTART paths.
+Implement OBSERVATION_ASSIMILATED through an explicit, bounded observation-to-state update
+specified in the initialization mathematics. Define its observation operator, weighting,
+uncertainty, freshness, datum checks and nonnegative-storage constraints. Keep an initialization
+ledger for added/removed storage and retain pre/post states; the forecast begins from the
+resulting accounted state. Do not conceal observation adjustments as rainfall or infiltration.
+Exercise the method with controlled observations before real use. Real assimilation is eligible
+only with suitable measured observations and remains unavailable otherwise; an enum is not
+implementation evidence. Store soil/loss memory, surface/drain/boundary state, valid_at and provenance.
 
-**Release target:** v1.4  
-**Logical unit:** `forecast-service`
+Coordinate consecutive event windows with an exact end-state/start-state handoff. Check
+continuity, version compatibility, gap handling, restart equivalence and state age. Observed
+event rainfall/boundaries may drive a reconstruction, which is labelled as such and not scored
+as an issue-time rainfall forecast.
+
+The exchange specification at docs/mathematics/surface-drain-exchange.md must explain joint
+capacity limits across all exchanges sharing a source, including repeated surface-cell/node
+bindings. Apply source-volume limits collectively, not independently per connection. Track
+internal transfers once on each side, reconcile SWMM external flooding and pumps, and explain
+how roof transfers enter the global balance without double-counting external rainfall.
+
+## Visible result
+
+A recorded coupled benchmark shows rising drain head, reduced inlet acceptance, surcharge,
+surface water and recovery together with an auditable volume ledger. A real event reconstruction
+is displayed only for an eligible twin and adequately sourced state/forcing conditions.
+
+## Completion and freeze gate
+
+The inherited component acceptance, restart/window continuity, aggregate source-volume caps,
+bidirectional/multiple-binding tests, observation-update accounting and missing/invalid-observation
+rejection pass. All four initialization methods have implementation evidence; real observation
+assimilation remains conditional on suitable source data.
+Freeze HydraulicsRunRequest, HydraulicState and coupled output contracts. Retain real-pilot
+data blockers and separate numerical benchmark evidence from measured flood agreement.
+
+# Sequence 15 — Deterministic Forecasts and Baseline Historical Evaluation
+
+**Release target:** v1.5
+**Owners:** forecast-service and evaluation records
+**Entry:** Sequence 14 coupled worker, Sequence 11 event/availability manifests and explicit state/forcing coverage.
+
+## Existing implementation modifications
+
+Wrap existing forcing packages in a forecast/evaluation context rather than repurposing their
+issue_time. Add exact event, input-availability and model/state references to new forecast
+contracts. Keep legacy forcing readers and package identities intact.
 
 ## Objective
 
@@ -1821,18 +2151,203 @@ velocity_metric
 data_quality
 ```
 
-## Completion gate
+## Inherited component acceptance
 
 A reproducible forcing event produces a complete FloodCube, RoadFloodState time series, and correct stream-scoped forecast freshness metadata.
 
----
+## Forecast purpose and evidence
 
-# Sequence 15 — Ensemble Probability, Scenario Sensitivity and Decision Intelligence
+Keep forecast_type for orchestration (OPERATIONAL / SCENARIO / REPLAY / ENSEMBLE_MEMBER).
+Add a separate evaluation_mode: OBSERVED_REPLAY / HYDRAULIC_RECONSTRUCTION /
+REANALYSIS_HINDCAST / ISSUE_TIME_BACKTEST / SYNTHETIC_DEMONSTRATION. Validate permitted
+combinations; UI purpose, input provenance and scientific claim are not inferred from one enum.
 
-**Release target:** v1.5  
-**Logical unit:** `risk-service`
+ISSUE_TIME_BACKTEST selects only inputs evidenced as available by the historical issue time,
+including rainfall, boundaries, operational controls and initialization observations. A future
+measurement cannot enter a predictor or state initializer. Unknown availability prevents a strict
+backtest claim; it may permit a labelled retrospective experiment. Reanalysis hindcasts are separate.
 
-## Objective
+Define explicit issue/valid/lead times and output interpolation. Standard display times do not
+create new forcing information. Refuse an unsupported 180-minute horizon or publish a declared
+shorter supported run. Long replays consist of successive bounded forecasts/reconstructions.
+Preserve stream-scoped supersession so replay/scenario jobs cannot displace live products.
+
+## Baseline evaluation before learned-model work
+
+1. Freeze the whole-event TRAIN / TUNE / TEST split and minimum evidence criteria from the inventory.
+2. Perform sensitivity/identifiability analysis on development events before hydraulic calibration.
+3. Calibrate only identifiable uncertain parameters within documented physical bounds.
+4. Produce a new parameter-set version and mandatory new immutable twin after calibration.
+5. Compare development/tuning events using recorded rainfall, simple rainfall forecasts and
+   externally supplied forecasts where available. Label each forcing experiment.
+6. Report mass error, depth/onset/extent metrics where measured labels exist, and data gaps.
+7. Lock the deterministic baseline and evaluation protocol for Sequence 16 comparisons.
+
+The final TEST set remains sealed until Sequence 19. Passing numerical tests and development
+evaluation makes an engineering reference available; it is not final independent validation.
+If real depth/extent evidence is missing, preserve that limitation. Rainfall correction can later
+be evaluated against genuine rainfall labels; direct flood-output learning remains blocked.
+
+## Visible result
+
+One versioned forecast or reconstruction can be replayed with depth/time plots, a baseline
+comparison, state/forcing coverage and measured observation markers where available.
+
+## Completion and freeze gate
+
+The inherited component acceptance, strict input cutoff/leakage tests, split isolation, state
+freshness, no-probability semantics, multi-level road exposure, baseline sensitivity protocol
+and reproducible event reports pass. Freeze forecast/evaluation contracts and declare exactly
+which development comparisons are supported; never manufacture missing validation labels.
+
+# Sequence 16 — GraphCast, Local Rainfall Fusion and XGBoost
+
+**Release target:** v1.6
+**Owners:** isolated weather-model worker, rainfall processing and model/evaluation records
+**Entry:** Sequence 15 engineering baseline/protocol, Sequence 11 source contracts, compatible historical data and measured resource envelope.
+
+## Scope and model responsibilities
+
+This sequence makes GraphCast and XGBoost explicit integration deliverables. GraphCast provides
+regional atmospheric forecast context; local rainfall processing supplies appropriately supported
+forcing; XGBoost learns a defined rainfall correction. The hydraulic model remains the owner of
+surface/drain water movement. There is no transformer dependency.
+
+The baseline is pretrained full-resolution GraphCast inference, with model-specific global
+inputs and retained training-history metadata. Training GraphCast from scratch or further
+fine-tuning it is a separately scoped future experiment, not a hidden prerequisite or a claimed
+achievement of this sequence. A small checkpoint may support development, but does not close
+the full-resolution integration gate. Running imported archived GraphCast outputs must be
+labelled provider-output ingestion and cannot substitute for our required inference receipt.
+
+## Existing implementation modifications
+
+Add versioned ModelArtifact, FeatureDatasetManifest, WeatherRunManifest, TrainingRunManifest,
+RainfallFusionManifest and EvaluationReport. Link them to existing Source/processing_lineage
+and forcing packages through exact hashes and references. Existing forcing-service accepts
+the resulting prepared interval rates; do not embed global model tensors or training arrays
+in its bounded JSON RainInput. Pin the model worker dependencies separately from the API.
+
+ModelArtifact records model family/variant, checkpoint/normalization hashes, code/environment
+versions, input schema, training and fine-tuning date/catchment coverage, licence evidence,
+supported task/horizon, evaluation status and promotion status. Registry labels distinguish
+IMPORTED / TRAINED / EVALUATED / REJECTED / SELECTED; creation does not activate a model.
+
+## 16.1 GraphCast execution
+
+1. Select and pin a supported 0.25-degree variant and its documented initialization contract.
+   The official variants differ in pressure levels and initialization; do not combine them.
+2. Verify global t and t-minus-6-hour atmospheric states, surface/upper-air variables, levels,
+   units, grid ordering, normalization and any required target-time forcings.
+3. Record a bounded resource assessment before downloading large archives or launching inference:
+   hardware, accelerator, memory, disk, runtime and allowed environment. Paid/external execution
+   requires its ordinary execution authorization; this roadmap does not purchase compute.
+4. Run actual pretrained inference for at least one eligible historical initialization. Retain
+   inputs, checkpoint, diagnostics, full output references and a regional extraction receipt.
+5. Audit the checkpoint training/fine-tuning cutoff against evaluation events. Holding an event
+   out of XGBoost does not make it independent of the pretrained weather model.
+6. Keep reanalysis initialization distinguishable from archived issue-time operational inputs.
+
+Use the [official GraphCast variant documentation](https://github.com/google-deepmind/weathernext/blob/main/docs/weathernext1_graph/README.md)
+to verify the selected checkpoint contract; pin the revision actually used in the run.
+
+GraphCast predicts in six-hour steps. Its coarse accumulated precipitation cannot supply the
+timing of a local ten-minute storm burst. Conversion/disaggregation must be explicitly versioned,
+conserve accumulation and carry the original effective temporal/spatial support. Fine-grid
+rendering cannot be reported as fine-resolution atmospheric skill.
+[GraphCast input/output description](https://deepmind.google/blog/graphcast-ai-model-for-faster-and-more-accurate-global-weather-forecasting/)
+
+## 16.2 Gauge/radar processing and rainfall baseline
+
+Implement numerical source decoding/QC from accepted Sequence 11 samples, radar rainfall
+estimation if required, gauge adjustment and a documented short-range nowcasting baseline
+where suitable consecutive radar scans exist. Validate each stage separately. Specify scan
+geometry, reflectivity/rain units, clutter/missing masks, geolocation, accumulation periods,
+station matching, correction windows and the motion/extrapolation method.
+
+Blend toward an available forecast for longer lead times using documented weights and supported
+horizons. Uncertainty in coarse GraphCast timing is not removed by blending. Keep an uncorrected
+forecast and simple statistical/nowcast baseline as named competitors.
+
+Live polling/recent observations use the same adapter contracts but are conditional on verified
+provider access, timestamps and measured latency. If numeric radar or gauges are unavailable,
+record that capability as unavailable and evaluate explicitly sourced alternatives. No screenshot
+decoder is promoted as numerical radar without its own validated measurement-reconstruction task.
+
+## 16.3 XGBoost training target and dataset
+
+Required first target: rainfall accumulation in millimetres for a stated geographic support,
+valid interval and forecast lead. Pair that target with GraphCast/other forecast features,
+recent rainfall and any eligible gauge/radar features. Fit feature transforms only on TRAIN.
+Record a finite nonnegative output policy and evaluate any clipping or transformations.
+
+For coarse rainfall labels, train/evaluate on their actual support and label the result an
+estimate of that product. Local-gauge accuracy requires held-out gauge evidence. Do not
+manufacture street-level labels by resampling a coarse field. A missing predictor uses the
+declared feature policy; missing labels are not converted into dry cases.
+
+FeatureDatasetManifest records target/feature definitions, source provenance, availability,
+aggregation rules, support, missingness, split hash, event geography and model-history exclusion.
+Audit all features against historical issue time, including rolling-window boundaries and
+revised archive availability. Split whole storms chronologically and reserve geographic holdouts
+where transfer is claimed. Define sufficient event diversity before training; one successful
+fit or one showcased storm is not evidence of generalization.
+
+Execute a real XGBoost fit on an eligible dataset, store seed/hyperparameters/environment,
+checkpoint and evaluation output, and compare with the frozen baseline on TUNE events.
+No automatic activation follows training completion. If correction performs worse, keep the
+baseline selected and retain the trained model as REJECTED or research-only.
+
+Direct flood-depth/occurrence XGBoost, hydraulic surrogates and GraphCast fine-tuning are optional
+future extensions requiring separate targets and evidence. A surrogate trained on simulations
+does not establish measured flood accuracy. ML never edits the conservative FloodCube in place.
+
+## 16.4 Integration, verification and visible result
+
+Produce distinct uncorrected, simple-corrected and XGBoost-corrected forcing packages and run
+the same eligible hydraulic configuration for comparisons. Evaluate rainfall accumulation,
+bias, intense-event timing/detection, coverage and runtime; evaluate flood quantities only
+where observations support them. The final independent TEST set remains sealed.
+
+Required failures: mismatched checkpoint/variables/levels, corrupt model, absent feature,
+availability leakage, base-model training overlap, negative/nonfinite rates, wrong accumulation
+units, temporal extension, provider outage, accelerator absence and interrupted/retried training.
+Training and inference are cancellable/idempotent jobs; the UI shows actual job state.
+
+Visible result: genuine saved GraphCast output, a reproducible XGBoost training receipt, rainfall
+comparison charts and traceable downstream flood runs where supported. Clearly show input
+support, selected baseline/model and why a candidate was retained or rejected.
+
+## Completion and freeze gate
+
+All four subparts must have explicit results. Required: a real full-resolution GraphCast
+inference receipt, a real eligible XGBoost fit/evaluation, end-to-end prepared-forcing integration,
+compatibility/leakage tests and baseline comparisons. Numerical gauge/radar/live capabilities
+are reported separately and may remain unavailable; they are never claimed from fixture tests.
+Missing mandatory data/compute leaves this sequence NOT_FROZEN with a named blocker, even if
+adapter/unit tests pass. Positive model improvement is a selection condition, not a fabricated
+gate result. No operational accuracy or calibrated probability is claimed before Sequence 19.
+
+# Sequence 17 — Risk, Engineering Scenarios and Time-Dependent Routing
+
+**Release target:** v1.7
+**Owners:** risk-service and routing-service
+**Entry:** Sequence 15 forecast/exposure contracts and Sequence 16 integration results; active forecast source is explicitly selected.
+
+## Existing implementation modifications
+
+Add derived risk/route products referencing immutable forecasts and policies. Preserve deterministic
+FloodCube variables. Introduce no hazard weights into the hydraulic solver or static source geometry.
+
+## Scope and completion rule
+
+Both subparts below are required and have separate verification receipts. Ensemble calculations
+require a declared ensemble; a deterministic fallback remains available. Learned rainfall intervals
+or arbitrary engineering cases are not automatically spatial-temporal ensemble members.
+
+## 17.A Ensemble risk and engineering scenarios
+
+### Risk objective
 
 Add uncertainty and decision support without mixing statistical probability with manually selected engineering scenarios.
 
@@ -1889,18 +2404,13 @@ These outputs are labeled scenario comparisons, not probabilities.
 - onset and peak warnings;
 - before/after intervention comparison.
 
-## Completion gate
+## Inherited component acceptance
 
 The system clearly separates deterministic forecast, ensemble exceedance, validated/provisional probability status, engineering scenarios, data confidence, and model readiness.
 
----
+## 17.B Time-dependent routing
 
-# Sequence 16 — Time-Dependent Flood-Aware Routing
-
-**Release target:** v1.6  
-**Logical unit:** `routing-service`
-
-## Objective
+### Routing objective
 
 Calculate lower-risk routes using flood conditions expected while a vehicle traverses each road segment.
 
@@ -1982,16 +2492,41 @@ Do not claim a guaranteed safe route.
 
 A road is dry when the trip departs but becomes hazardous before the vehicle would finish traversing it. The router must choose a lower-risk alternative when one exists.
 
-## Completion gate
+## Inherited component acceptance
 
 The routing engine demonstrates genuinely time-dependent diversion and lower predicted flood exposure than the static shortest route for at least one controlled scenario.
 
----
+## Additional verification and visible result
 
-# Sequence 17 — Full 2D/3D Operational Dashboard
+Define the policy for missing/failed ensemble members, member weights and spatial-temporal
+coherence; report the actual denominator and retained-member set. Do not present arbitrary
+independent pixel quantiles as coherent flood-event samples.
 
-**Release target:** v1.7  
-**Logical units:** `geospatial-service` + `web`
+Test route traversal beyond forecast coverage, stale/superseded forecasts, disconnected/no-route
+cases, unsafe waiting locations if waiting is allowed, multi-level geometry and unavailable risk
+products. Unsupported future segments must not be assumed dry. Every scenario must execute a
+real model run or load an exactly matching recorded run; a slider cannot cosmetically alter depth.
+
+Visible result: baseline/intervention comparison plus a trip whose route changes because an edge
+floods during traversal. Show forecast identity, departure time, assumptions and coverage.
+
+## Completion and freeze gate
+
+Both inherited component acceptances, missing-member/coverage policies and route failure tests
+pass. Freeze EnsembleDefinition, scenario comparison, RoadRiskState and route contracts. Retain
+PROVISIONAL probability status until supported by Sequence 19 independent reliability evidence.
+
+# Sequence 18 — Historical Replay and Forecast Comparison Dashboard
+
+**Release target:** v1.8
+**Owners:** geospatial-service and web
+**Entry:** Sequence 11 preview/event contracts and actual Sequence 15-17 output products.
+
+## Existing implementation modifications
+
+Extend the small rainfall preview into the full browser workflow. Add tile/COG/vector/3D
+publication and comparison read APIs referencing immutable scientific artifacts. Keep existing
+artifact APIs usable; do not make the browser download global weather fields or full training sets.
 
 ## Objective
 
@@ -2048,74 +2583,91 @@ NOW
 
 Display only information supported by the active forecast, including deterministic depth, onset, peak, velocity, risk classification when available, drain node state, utilization, surcharge, ensemble/probability status where valid, data quality, model readiness, forcing coverage, solver applicability, and limiting dataset.
 
-## Completion gate
+## Inherited component acceptance
 
 A user can execute and inspect the entire approved demo workflow through the browser without manually running backend scripts.
 
----
+## User flow
 
-# Sequence 18 — Connected-Catchment Scaling and Performance Engineering
+1. Select an event or current forecast stream. Immediately show date, catchment, mode and coverage.
+2. Inspect the 2D catchment map and choose rainfall, terrain, drainage, flood, decision or routing.
+3. Play/pause/scrub the event timeline. Map layers, charts and selected-site traces share one clock.
+4. Select a historical forecast issue time, then compare the saved forecast with later observations.
+5. Compare baseline, simple correction and XGBoost correction using the same event, support,
+   hydraulic configuration, units and legend range.
+6. Inspect a measurement marker or road/drain asset to see supported values, uncertainty and sources.
+7. Switch to 3D without losing event, valid time, selected location or comparison mode.
+8. Explicitly request an allowed forecast/scenario job, observe progress/cancellation/failure,
+   and inspect completed results. Navigation, playback and selection never start training.
 
-**Release target:** v1.8
+## Detailed interaction contract
 
-## Objective
+| Control | Action | Missing or pending state |
+|---|---|---|
+| Event selector | Load a versioned event package and supported assets | Explain missing event files and permit available layers |
+| Mode selector | Choose observed replay, reconstruction, hindcast, backtest or live view | Show input provenance and eligibility; never relabel cached replay as live |
+| Timeline/speed | Change presentation time only | Mark gaps and actual stored timestamps |
+| Issue-time selector | Select a forecast run while keeping valid time separate | Display missing horizon/initial-state support |
+| Layer toggles | Show corresponding recorded quantity with legend | Explain unsupported depth/radar/probability layers |
+| Compare | Synchronize baseline/model and observation panels | Never fill absent observations with model values |
+| Site/asset inspector | Show traces and exact product lineage | Display missing labels or datum incompatibility |
+| Run scenario/forecast | Submit the explicit documented job | Show queued/running/failed/cancelled states; no fake progress |
+| 2D/3D | Change presentation using the same scientific outputs | Fall back to 2D when 3D assets are unavailable |
+| Model results | Inspect training/evaluation and selection status | Do not imply a saved model is selected or operational |
+| Export/recorded demo | Package permitted assets and exact run references | Report unavailable redistribution/offline assets |
 
-Scale the component-tested workflow from a small pilot to one connected Kolkata drainage catchment and verify the forecast can complete within the operational update cycle.
+## Visual design
 
-## Scaling order
+Use a clear map-led layout, restrained basemap, readable text and accessible colour scales.
+Keep rainfall, water depth, hazard and confidence visually distinct. Legends carry units and a
+consistent comparison scale. Use smooth camera transitions, responsive controls and restrained
+animation. A fixed issue-time marker and moving valid-time marker explain forecast lead.
 
-```text
-Synthetic block
-→ One ward
-→ Two connected wards
-→ Several connected wards
-→ Complete drainage catchment
-→ Multiple catchments
-→ Citywide visual twin
-```
+Show measured observation markers separately from a modelled flood surface. Flow arrows require
+actual velocity outputs. Display interpolation between stored frames as presentation; it does
+not create new observations or finer information. Label vertical exaggeration in 3D. Rainfall
+accumulation is never displayed as standing flood depth.
 
-## Kolkata downstream-boundary scope
+Keep scientific lineage and detailed diagnostics available in an inspector without making
+implementation details part of the normal user journey. Display concise limitations that affect
+interpretation: source age, missing coverage, provisional probability and unsupported horizon.
 
-For the first prototype:
+## Replay package and offline behavior
 
-- represent the Hooghly primarily as a downstream hydraulic boundary series;
-- represent relevant local canals/open channels in the appropriate 1D or 2D hydraulic domain;
-- do not automatically expand the street-scale 2D solver to the full river domain.
+Define ReplayManifest with historical_event_id, exact run/model/forecast IDs, available time
+frames, layer asset hashes, chart references, observation coverage and redistribution terms.
+Precompute genuine model runs and display assets for a dependable demo and label them recorded.
+Retain permitted local basemap assets or use a local background for offline presentation.
+Demonstrate cached playback without provider access. A missing basemap cannot erase the science.
 
-## Performance metadata
+## Verification and completion gate
 
-Record:
+The inherited dashboard acceptance plus Playwright/browser checks pass for synchronized time,
+layer units, shared legends, observation separation, no automatic job starts, asynchronous jobs,
+no-data/outage states, accessibility/keyboard controls, responsive layout and offline replay.
+Visually inspect captured 2D and 3D screens using actual available products. UI fixtures are
+clearly labelled and excluded from scientific metrics. Freeze publication and ReplayManifest
+interfaces. An attractive screen alone cannot close missing model/data gates.
 
-```text
-hardware
-surface_cell_count
-drain_node_count
-drain_edge_count
-forecast_horizon
-ensemble_size
-runtime
-peak_memory
-RainCube_size
-FloodCube_size
-```
-
-## Operational runtime rule
-
-\[
-T_{forecast}<T_{forcing-update}
-\]
-
-The declared operational configuration must complete before the next expected forcing update on declared reference hardware.
-
-## Completion gate
-
-At least one connected Kolkata drainage catchment runs end-to-end within the declared runtime and memory envelope.
-
----
-
-# Sequence 19 — Sensitivity, Calibration, Independent Validation and Reproducibility
+# Sequence 19 — Independent Validation, Catchment Scaling and Performance
 
 **Release target:** v1.9
+**Owners:** evaluation, hydraulics, forecast, risk, routing and platform performance
+**Entry:** frozen Sequence 15 baseline, Sequence 16 candidates, Sequence 17/18 products and a sealed independent TEST set.
+
+## Existing implementation modifications
+
+Feed evidenced corrections through the original registry/geometry/parameter owners, create new
+versions/twins and repeat affected downstream checks. Do not modify old calibration or test
+outputs in place. This sequence audits final integrated claims, not only the latest ML component.
+
+## Validation staging
+
+Sequence 15 already owns development sensitivity/calibration; Sequence 16 owns learned-model
+training and tuning. The detailed requirements below apply to their final audit and any
+documented development-data refit. Freeze all models, features, thresholds and policies before
+opening TEST results. Any subsequent tuning consumes that test set as development evidence
+and requires a fresh independent test. A demonstration event is not automatically test evidence.
 
 ## Objective
 
@@ -2222,15 +2774,129 @@ random_seed_if_used
 result_checksum
 ```
 
-## Completion gate
+## Inherited component acceptance
 
-Every major SIH claim is supported by independent validation evidence or is explicitly labelled as a prototype limitation.
+Every major SIH claim has an independent evidence assessment and an explicit support/limitation
+status. Listing a limitation does not satisfy a mandatory measured-evidence requirement in the
+containing sequence's completion gate.
 
----
+## 19.13 Learned-model and historical-availability audit
 
-# Sequence 20 — Resilience, Packaging and Final SIH Release
+Evaluate the selected baseline, simple correction and XGBoost pipeline on the same independent
+events, including rain and dry cases and severe events represented in the dataset. Audit
+GraphCast checkpoint training overlap, feature transforms and all issue-time inputs. Report
+reanalysis hindcast, strict backtest and hydraulic reconstruction results separately.
+
+Report event counts, spatial/temporal support, missing labels, model-selection history and
+uncertainty on aggregate results where defensible. Include rainfall MAE/RMSE/bias, CSI/FSS at
+declared thresholds/scales, intense-event timing, flood-depth/onset/extent metrics where observed,
+and Brier/reliability/CRPS or interval coverage only for appropriate probability products.
+
+A model can be implemented and independently evaluated yet remain unselected because it does
+not improve the baseline. Publish that outcome. No promised accuracy percentage is a completion
+criterion. Measured flood validation cannot be closed using only simulated labels.
+
+## 19.14 Connected-catchment scaling
+
+### Scaling objective
+
+Scale the component-tested workflow from a small pilot to one connected Kolkata drainage catchment and verify the forecast can complete within the operational update cycle.
+
+## Scaling order
+
+```text
+Synthetic block
+→ One ward
+→ Two connected wards
+→ Several connected wards
+→ Complete drainage catchment
+→ Multiple catchments
+→ Citywide visual twin
+```
+
+## Kolkata downstream-boundary scope
+
+For the first prototype:
+
+- represent the Hooghly primarily as a downstream hydraulic boundary series;
+- represent relevant local canals/open channels in the appropriate 1D or 2D hydraulic domain;
+- do not automatically expand the street-scale 2D solver to the full river domain.
+
+## Performance metadata
+
+Record:
+
+```text
+hardware
+surface_cell_count
+drain_node_count
+drain_edge_count
+forecast_horizon
+ensemble_size
+runtime
+peak_memory
+RainCube_size
+FloodCube_size
+```
+
+## Operational runtime rule
+
+\[
+T_{forecast}<T_{forcing-update}
+\]
+
+The declared operational configuration must complete before the next expected forcing update on declared reference hardware.
+
+## Inherited component acceptance
+
+At least one connected Kolkata drainage catchment runs end-to-end within the declared runtime and memory envelope.
+
+## End-to-end runtime and resource budget
+
+Extend the inherited performance metadata with source observation age, ingest/QC latency,
+GraphCast runtime, feature/fusion runtime, hydraulic runtime, ensemble cost, publication delay,
+browser playback latency, cold start, queue delay and peak memory/disk. Pin reference hardware.
+Measure both recorded-demo playback and recomputation; a cached animation is not a forecast
+runtime benchmark. Test the same accepted model configurations at each supported scale.
+
+For a live claim, the entire required pipeline must satisfy the declared update/latency budget.
+If it cannot, retain replay/research availability and mark the live configuration unsupported.
+Benchmark actual GraphCast resources rather than assuming every laptop supports full inference.
+
+Before claiming operational forecast performance, run prospective shadow forecasts with actual
+incoming source delays and unchanged model/decision policies. Retain failures, missed updates
+and subsequent observations alongside successful events. Historical hindcast skill and cached
+playback are not substitutes for this live-path evidence. Public warning/release authority
+remains governed by the final supported scope and acceptance record.
+
+## Visible result
+
+A complete validation report and model comparison tied to the displayed events, plus one
+connected Kolkata catchment benchmark with declared hardware, runtime and scientific scope.
+
+## Completion and freeze gate
+
+Both inherited validation/scaling acceptances and the learned-model/availability audit pass for
+the declared scope. At least one eligible connected real catchment and independent measured
+flood evidence are required for a validated flood-prediction claim. Missing mandatory evidence
+leaves that acceptance NOT_FROZEN; a report listing limitations does not waive it.
+
+Maintain a claim matrix: IMPLEMENTED, ENGINEERING_VERIFIED, INDEPENDENTLY_EVALUATED,
+SUPPORTED_FOR_DECLARED_SCOPE, BLOCKED or UNSUPPORTED, with report references. Probability
+promotion is scoped to validated products. Human-only engineering acceptance remains pending
+Sequence 20 under the existing review policy; technical validation cannot impersonate it.
+
+# Sequence 20 — Resilience, Reproducible Demo and Final Acceptance
 
 **Release target:** v2.0
+**Owners:** platform/package maintainers and existing final review process
+**Entry:** Sequence 19 claim/evidence matrix, prior engineering gates and exact candidate artifacts.
+
+## Existing implementation modifications
+
+Complete additive migrations, legacy reader checks, backup/restore and deployment documentation
+for the full application. Preserve existing reference packages and historical gate reports.
+Re-run affected predecessor gates after all evidence-backed corrections.
 
 ## Objective
 
@@ -2296,156 +2962,166 @@ Include:
 - known limitations;
 - backup/restore instructions.
 
-## Checkpoint D
+## Checkpoint D release target
 
-**Final Validated SIH Release**
+**Final Validated SIH Release**, only after the complete technical, measured-evidence and human
+acceptance gate below passes.
 
-## Completion gate
+## Inherited component acceptance
 
 A documented clean environment can start the platform and execute the selected Kolkata end-to-end demonstration without manual backend repair.
 
----
+## Additional model/data/demo failure cases
+
+Test expired credentials, partial historical downloads, changed provider schema, revised source
+files, missing model/checkpoint/normalization assets, model corruption, incompatible feature
+schema, missing accelerator, training/inference cancellation, failed ensemble members, event
+availability gaps, incompatible hotstart and missing offline chart/tile assets.
+
+Retry only idempotent work; never publish partial model/forecast outputs as complete. Preserve
+the selected deterministic baseline when an optional correction cannot run, with an explicit
+new run identity and source-selection record. Never silently swap models inside a saved run.
+
+## Final demonstration
+
+Package one repeatable historical event, the comparison outputs actually produced, scientific
+and browser-ready assets, source/model licences, model cards, dependency locks, run manifests,
+database migrations, backup/restore instructions and a clean-machine walkthrough.
+
+The walkthrough shows rainfall development, forecast issue/valid time, simulated flooding,
+available measured comparisons, model performance, scenario/routing behavior and 2D/3D playback.
+Clearly label recorded results. Live demonstration is conditional on verified feeds and runtime;
+the offline historical path remains usable without claiming it is a live forecast.
+
+## Human acceptance and release labels
+
+Complete the existing human-only review register with real reviewer evidence; do not fabricate
+sign-offs or infer them from this planning authorization. DATA-08-01 and inherited scientific
+blockers must be resolved through their owning gates. Technical acceptance, human acceptance,
+local checkpoint, hosted deployment and final release are separate records.
+
+An engineering/research demonstration may be packaged with explicit limitations, but cannot be
+labelled a Final Validated SIH Release while required independent evidence, real-catchment
+readiness or final review is missing. Do not silently reduce required GraphCast/XGBoost execution
+to placeholders. Any reduced scope needs an explicit revised claim and roadmap disposition.
+
+## Completion and freeze gate
+
+The inherited clean-environment gate, offline replay, model/data failure recovery, backward
+compatibility and final claim/review checks pass. Each advertised capability has a matching
+evidence receipt. Freeze the actual released interfaces and record exact code/lock/model/data
+versions; this plan's frozen status alone never establishes software or scientific completion.
 
 # 13. Project Checkpoints
 
-## Checkpoint A — After Sequence 9
+| Checkpoint | R2 location | Required outcome |
+|---|---|---|
+| A | After Sequence 9 | Eligible versioned real digital twin, including the original cross-ward requirement; currently blocked by DATA-08-01 |
+| A-data | After Sequence 11 | Compatible historical event/observation records, genuine rainfall replay and a bounded data preview |
+| B | After Sequence 15 | Conservative coupled deterministic forecast, initialized state, exposure/freshness and development baseline evaluation |
+| B-model | After Sequence 16 | Actual GraphCast inference and XGBoost training/evaluation integrated through versioned forcing |
+| C | After Sequence 18 | Risk/scenario/routing workflow and complete 2D/3D historical/live-capable comparison viewer |
+| C-validation | After Sequence 19 | Independent claim audit and connected-catchment performance evidence |
+| D | After Sequence 20 | Reproducible package, resilience, required real evidence and final human acceptance |
 
-**Versioned Digital Twin Ready**
+These are readiness checkpoints, not automatic release labels. A-data can demonstrate rainfall
+while A remains blocked; it cannot promote that twin to hydraulic readiness. All required
+dependencies must pass before a later capability is declared complete.
 
-Must include normalized city data, visual/hydraulic terrain, visual/hydraulic city representations, cross-ward drainage graph, hydraulic parameter readiness, Roof Runoff Receiving Geometry, Exchange Geometry, and immutable twin manifest.
+# 14. Development Priority and Scope Control
 
-## Checkpoint B — After Sequence 14
+The next work order is Sequence 11, then 12 through 20. Finish the active sequence's mandatory
+contracts/tests before starting a dependent sequence. Inspection and acquisition of needed
+inputs may occur as prerequisites; they do not count as later model/feature implementation.
 
-**Deterministic Coupled Flood Forecast Ready**
+1. Preserve existing products and resolve real-pilot evidence; establish event/availability data.
+2. Complete the surface, drainage, coupling and deterministic development reference (12-15).
+3. Execute and evaluate the specified weather/learned integration (16).
+4. Add risk/routing and the polished replay workflow (17-18).
+5. Independently validate, measure connected-catchment performance and package acceptance (19-20).
 
-Must include ForcingPackage, HydraulicState, local-inertial 2D surface solver, SWMM Dynamic Wave drainage hydraulics, ExchangeBinding, Roof Runoff Grid Binding, C1 lagged-head coupling, explicit bidirectional exchange physics, volume ledger, FloodCube, RoadFloodState, and forecast freshness control.
-
-## Checkpoint C — After Sequence 17
-
-**Feature-Complete SIH Prototype**
-
-Must include deterministic forecast, provisional/validated ensemble risk where supported, engineering scenario analysis, decision intelligence, time-dependent flood-aware routing, and complete 2D/3D dashboard.
-
-## Checkpoint D — After Sequence 20
-
-**Final Validated SIH Release**
-
-Must additionally include connected-catchment scaling, runtime benchmarks, sensitivity analysis, calibration and independent validation, meteorological validation where applicable, reproducible packaging, and resilience/degraded-mode behavior.
-
----
-
-# 14. Development Priority if Time Becomes Limited
-
-## Priority 1 — Sequences 1–14
-
-These create the core scientific product:
-
-```text
-Data
-→ Digital Twin
-→ Dynamic Forcing
-→ State Initialization
-→ 2D Surface Hydraulics
-↕
-1D SWMM Dynamic Wave Drainage
-→ Deterministic Flood Forecast
-→ Road Exposure
-```
-
-## Priority 2 — Sequences 15–17
-
-These add uncertainty/risk, scenario analysis, decision support, routing, and polished visualization.
-
-## Priority 3 — Sequences 18–20
-
-These add catchment-scale performance, calibration, independent validation, operational resilience, and final packaging.
-
----
+Validation planning starts in 11, numerical validation occurs in every solver sequence,
+development sensitivity/calibration occurs in 15 and final independent evaluation occurs in 19.
+Neither data acquisition nor scientific verification is postponed until presentation work.
 
 # 15. Scope Reduction Rule
 
-If the project becomes too large, reduce geographic extent first.
+Reduce geographic extent and supported optional feeds first. Preserve conservation, vertical
+references, source truth, time availability, state initialization, independent evaluation and
+honest labels. Do not turn arbitrary scenarios into probabilities, use a static route while
+claiming time dependence, infer road-level flooding from incompatible surfaces, or present
+resampled sources as finer measurements.
 
-Do not respond to schedule pressure by:
+The ten sequences are fixed work packages, not a promise of equal duration. Sequences 16, 17
+and 19 have explicit subgates because they combine related work. Splitting execution into
+smaller tasks is allowed; skipping a mandatory subgate is not.
 
-- removing conservation tests;
-- skipping drainage validation;
-- inventing missing engineering values;
-- presenting computational resolution as source-data resolution;
-- turning arbitrary scenarios into probability;
-- claiming guaranteed route safety;
-- claiming citywide centimetre-level accuracy without supporting data;
-- replacing the declared exchange physics with an undocumented shortcut;
-- replacing Dynamic Wave with a routing mode unable to represent the claimed sewer behavior.
+Full GraphCast retraining, transformer development, direct learned flood-depth replacement,
+citywide hydraulic simulation and unsupported live-feed guarantees are outside this revision.
+The required pretrained GraphCast and XGBoost rainfall integration remains in Sequence 16.
 
-Preferred final claim:
+Preferred final claim, only after matching evidence and review:
 
-> **A scientifically validated end-to-end urban flood digital twin demonstrated on one connected Kolkata drainage catchment, with architecture designed for extension to larger city areas.**
-
----
+> A scientifically validated end-to-end urban flood digital twin demonstrated on one connected
+> Kolkata drainage catchment, with independently evaluated rainfall modelling and reproducible
+> historical replay, designed for extension to larger city areas.
 
 # 16. Final End-to-End Architecture
 
-```text
-DATA SOURCES
-    ↓
-Data Source Registry
-    ↓
-Automatic Harvester
-    ↓
-Immutable Raw Data Vault
-    ↓
-Spatial + Vertical Harmonization
-    ↓
- ┌─────────────────────┬─────────────────────┬──────────────────────┐
- ↓                     ↓                     ↓
-Terrain Preparation    Urban GIS             Drain Reconstruction
- ↓                     ↓                     ↓
-Hydraulic Terrain      Hydraulic Surface     Drain Graph + Parameters
-                                               ↓
-                                        Exchange Geometry
-           \                 |                 /
-            \                |                /
-             └────── Versioned Digital Twin ─┘
-                              ↓
-                   Dynamic Forcing Package
-                    ├── RainCube
-                    ├── Hydraulic Boundary Series
-                    ├── Operational Control Series
-                    └── Antecedent Forcing
-                              ↓
-                     State Initialization
-                              ↓
-                       HydraulicState
-                              ↓
-                      Hydraulics Worker
-                    ┌─────────┼──────────┐
-                    ↓         ↓          ↓
-                2D Surface   SWMM     Bidirectional
-                  Solver    DYNWAVE   Exchange/Time
-                    \         |          /
-                     \        |         /
-                       Volume Ledger
-                            ↓
-                         FloodCube
-                            ↓
-                  Road Exposure Projector
-                            ↓
-                      RoadFloodState
-                            ↓
-              ┌─────────────┼─────────────┐
-              ↓             ↓             ↓
-          Ensemble       Decision      Time-Dependent
-          Analysis       Intelligence  Routing
-              \             |             /
-               \            |            /
-                   2D / 3D Dashboard
-```
+~~~text
+Permitted urban / atmospheric / rainfall / flood-observation sources
+                          |
+             Registry + immutable raw vault
+                          |
+       Spatial/vertical/time/QC normalization
+          |               |                      |
+   Versioned twin   Historical event +      Global model inputs
+   and parameters   availability manifests         |
+          |               |                Pinned GraphCast run
+          |       Gauge/radar/satellite             |
+          |       rainfall preparation <-----------+
+          |               |
+          |       Baseline / simple correction / trained XGBoost
+          |               |
+          |       Versioned ForcingPackage + run lineage
+          +---------------+
+                          |
+           State initialization / compatible hotstart
+                          |
+        One hydraulics worker: 2D + SWMM DYNWAVE
+        + bidirectional exchange + time/volume ledger
+                          |
+          FloodCube + RoadFloodState + freshness
+                |                         |
+       Risk / scenarios / routing   Independent comparison
+                |                   with held-out observations
+                +-------------------------+
+                          |
+        Versioned publication and replay assets
+                          |
+       Synchronized 2D/3D map, timeline and charts
+~~~
 
----
+Training reads only its permitted dataset splits. Independent observations enter evaluation,
+not a predictor's future inputs. Historical manifests reference products; they do not duplicate
+ownership of raw data, forcing, hydraulic state or scientific outputs.
 
 # 17. Final Engineering Principle
 
-> **Build the smallest scientifically valid system first. Freeze its contracts. Verify water, space, time, provenance, exchange physics, and numerical stability. Calibrate only identifiable parameters. Validate on independent data. Then scale geography, ensembles, AI, and visualization.**
+Build traceable inputs and a conservative reference, define independent evaluation before model
+selection, and make the prototype explain actual recorded computations. Maintain numerical,
+data, operational, visual and human-acceptance evidence as separate facts. A readable animation
+and a successful model fit are useful deliverables; neither substitutes for measured flood skill.
 
-A validated connected drainage catchment is a stronger final prototype than an unvalidated whole-city animation.
+# 18. External Source References for This Revision
+
+These documents inform the integration design; they do not prove access to a Kolkata feed or
+successful local execution. Verify product versions, access and schemas when implementing.
+
+- GraphCast variants and pretrained checkpoints: [official model documentation](https://github.com/google-deepmind/weathernext/blob/main/docs/weathernext1_graph/README.md).
+- GraphCast temporal/global input context: [DeepMind model description](https://deepmind.google/blog/graphcast-ai-model-for-faster-and-more-accurate-global-weather-forecasting/).
+- ERA5 retrospective atmospheric data: [Copernicus catalogue](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?tab=overview).
+- IMERG product support and latency: [NASA technical documentation](https://gpm.nasa.gov/resources/documents/imerg-v07-technical-documentation).
+- IMD observations and product discovery: [official API reference](https://api.imd.gov.in/public/api_reference.html).
+- Numerical radar request route: [IMD radar data request guide](https://radarapi.imd.gov.in/Received_data/dsp_userguide.pdf).
+- MOSDAC programmatic archive access: [official download manual](https://mosdac.gov.in/downloadapi-manual).

@@ -11,7 +11,9 @@ It computes no flow, hydraulic state, surface runoff, surcharge volume or foreca
 Nodes are INLET, MANHOLE, JUNCTION, STORAGE, PUMP and OUTFALL. Edges are PIPE, OPEN_DRAIN,
 CULVERT and CANAL, owned by NETWORK_1D. POINT_INLET and MANHOLE_SURCHARGE are physical
 exchange point geometries with matching x/y, node identity, rim, area, coefficient, capacity,
-inlet type, source and confidence. Surface cell IDs are forbidden; binding belongs to Sequence 11.
+inlet type, source and confidence. Surface cell IDs are forbidden; numerical-grid binding belongs
+to Sequence 12 under ROADMAP-R2-2026-09-07 (formerly Sequence 11). This changes the forward
+roadmap reference only; the Sequence 8 physical-geometry contract is unchanged.
 LINEAR_OVERTOP remains unimplemented unless pilot evidence requires distributed overtopping.
 
 ## Frozen input contracts

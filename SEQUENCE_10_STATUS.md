@@ -95,3 +95,12 @@ Sequence 11 is outside this task. DATA-08-01 remains an inherited freeze blocker
 The task is local to branch `sequence-10-forcing`. main and remotes were not changed. No hosted
 release, merge, human sign-off, Sequence 9 freeze or operational hydraulic validation is claimed.
 Read `SEQUENCE_10_CONTINUATION.txt` before subsequent work and verify live state again.
+
+## Planning revision recorded 7 September 2026
+
+ROADMAP-R2-2026-09-07 redesigns future Sequences 11-20 at the owner's request.
+The next planned sequence is compatibility/historical events/observation data; the surface
+solver is now Sequence 12, coupled initialization remains assigned to Sequence 14 in R2,
+and deterministic forecasting is Sequence 15. Read the active frozen plan and
+`ROADMAP_R2_CONTINUATION.txt`. All implementation, test and freeze claims above refer to the
+recorded Sequence 10 source; this documentation revision does not rerun or change those receipts.

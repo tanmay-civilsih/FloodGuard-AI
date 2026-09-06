@@ -41,3 +41,11 @@ Full gate: python scripts/sequence10_development_gate.py --run-checks
 It returns nonzero while the inherited DATA-08-01 blocker remains, with assembly result separate.
 
 main and remotes were not changed. Preserve immutable historical artifacts and prior gate reports.
+
+Planning update, 7 September 2026:
+The owner requested and received ROADMAP-R2-2026-09-07 in the active frozen plan.
+Future numbering has changed: 11 compatibility/history/data; 12 surface; 13 SWMM;
+14 coupling/initialization; 15 deterministic forecast/baseline evaluation; 16 GraphCast/XGBoost;
+17 risk/routing; 18 dashboard/replay; 19 independent validation/scaling; 20 final acceptance.
+Use ROADMAP_R2_CONTINUATION.txt for the current planning handoff. This update does not claim
+new implementation, a fresh runtime check, new model execution or closure of DATA-08-01.

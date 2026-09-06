@@ -1,0 +1,72 @@
+FloodGuard-AI - Roadmap R2 planning handoff
+Date: 7 September 2026
+Workspace: D:\Projects\FloodGuard-AI
+Revision: ROADMAP-R2-2026-09-07
+
+AUTHORITY
+The owner explicitly requested redesign of the next ten sequences and modification of the
+frozen plan. The sole active specification is:
+docs/Urban_Flood_Digital_Twin_Authoritative_20_Sequence_Plan_FROZEN.md
+agent.md and README.md have been aligned with it.
+The frozen status applies to the planning baseline, not to unfinished implementation.
+
+WHAT WAS CHANGED
+Sequences 1-10 retain their original specification text. Future Sequences 11-20 now cover
+compatibility changes, historical observation/event data, pretrained GraphCast execution,
+XGBoost rainfall learning, conservative hydraulics, replay graphics and independent evaluation.
+The former plan is preserved exactly in:
+docs/planning/archive/AUTHORITATIVE_PLAN_BEFORE_R2_2026-09-07.txt
+That file is an archive, not an alternative instruction source.
+The earlier GraphCast/replay proposals are background notes integrated into R2.
+Change mapping and existing-code ownership:
+docs/planning/ROADMAP_R2_CHANGE_REVIEW.md
+Documentation consistency evidence:
+docs/validation/roadmap-r2-document-review-2026-09-07.json
+
+NEW ORDER
+11 Compatibility, historical events, observation data and bounded rainfall preview.
+12 Baseline 2D local-inertial surface solver, roof and exchange numerical bindings.
+13 SWMM Dynamic Wave drainage, stage/control inputs and reference tests.
+14 Bidirectional conservative coupling, initialization, state continuity and reconstruction.
+15 Deterministic forecasts, road exposure, issue-time rules and development baseline evaluation.
+16 Actual full-resolution pretrained GraphCast inference, rainfall fusion, actual XGBoost fit.
+17 Ensemble/scenario risk and time-dependent routing, with separate mandatory subgates.
+18 Full 2D/3D event replay, forecast/model comparison and offline display assets.
+19 Sealed independent evaluation, real connected-catchment scaling and resource benchmarks.
+20 Resilience, reproducible package, human review and final supported-claim acceptance.
+
+CHECKPOINTS
+A remains after 9 and retains the genuine cross-ward requirement.
+A-data follows 11; B follows 15; B-model follows 16; C follows 18;
+C-validation follows 19; D follows 20.
+Actual model improvement determines selection; a poor candidate can remain rejected.
+Missing mandatory model execution/data/compute prevents freeze; it is not replaced by mocks.
+Radar/gauge/live capabilities remain conditional on actual source access and evidence.
+
+PRESERVED IMPLEMENTATION STATE
+The planning work was on sequence-10-forcing.
+Sequence 10's recorded implementation source is 2c39b70 and its status records 730 passing
+tests, assembly verification and NOT_FROZEN due to inherited DATA-08-01.
+Those are retained historical receipts, not freshly rerun runtime checks.
+No solver, model, training, provider acquisition or dashboard was implemented by this revision.
+No historical validation reports or immutable scientific artifacts were rewritten.
+No plan change waives the real-pilot/data gates or the existing Sequence 20 human-review policy.
+
+NEXT IMPLEMENTATION START
+Read agent.md, the active plan sections 0 and 3.7, revised Sequence 11, and the current
+Sequence 8-10 status/gate records. Inspect live Git/runtime state.
+Implement Sequence 11 when the owner requests development; do not assume the earlier
+Sequence 10 authorization covers every later sequence.
+First define compatible event/availability records and retain known v1 artifact identities.
+Then add the selected real historical rainfall adapter and evidence-labelled preview.
+Do not begin by changing the old forcing policy identifier or bypassing the three-hour bound.
+
+KEY CLAIM RULES
+Observed replay, hydraulic reconstruction, reanalysis hindcast and issue-time backtest differ.
+For strict backtests, provider availability is evidenced, and future observations cannot enter
+predictors or initialization. Keep training/tuning/test storms separate and audit GraphCast's
+own training-history cutoff. Simulated labels do not prove measured flood accuracy.
+GraphCast fine-tuning/full retraining, transformers and direct learned flood-depth replacement
+are outside R2; pretrained inference and XGBoost rainfall correction are inside Sequence 16.
+Render actual model arrays; rainfall accumulation is not standing flood depth.
+Retain source age, units, support, independent evidence and actual model-selection status.

@@ -8,6 +8,13 @@ The authoritative scientific roadmap is:
 
 If code, comments, issues, generated files, or agent suggestions conflict with that document, the authoritative plan wins unless a deliberate architecture/scientific revision is first documented and approved.
 
+The active revision is **ROADMAP-R2-2026-09-07**, requested by the owner on
+7 September 2026. It redesigns Sequences 11-20. Earlier sequence numbers in
+historical receipts refer to the former roadmap; use the R2 migration table for
+future work. The archived plan and background proposals are not alternative
+instructions. This revision authorizes planning changes, not execution of all
+future sequences.
+
 ---
 
 ## 1. Mission
@@ -36,7 +43,11 @@ For each active sequence:
 6. document assumptions and limitations;
 7. freeze the validated interface before proceeding.
 
-Do not jump ahead to dashboard, AI, routing, or city-scale features while an earlier scientific gate is incomplete.
+Follow the explicit R2 dependencies and distinguish engineering checks, data readiness,
+independent evaluation and sequence freeze. Sequence 11 includes a bounded rainfall-data
+preview; full dashboard development belongs to Sequence 18. Sequence 16 introduces actual
+GraphCast inference and XGBoost rainfall training after the Sequence 15 engineering baseline.
+Neither feature replaces missing physics/data or waives an inherited gate.
 
 ---
 
@@ -504,7 +515,23 @@ ML is not required for the baseline deterministic flood forecast.
 
 Do not introduce a neural network merely to make the project appear AI-based.
 
-ML/GNN work should begin only after there is a validated deterministic reference model and reproducible dataset.
+R2 separates an engineering reference from final independent validation. Sequence 11 defines
+historical datasets and source availability; Sequence 15 establishes the conservative
+deterministic reference, development sensitivity/calibration and locked evaluation protocol.
+Sequence 16 then performs the required pretrained GraphCast inference and XGBoost rainfall
+training/evaluation. Sequence 19 owns final independent testing and supported-use decisions.
+Do not continue to enforce the superseded rule that all ML must wait until after Sequence 19.
+
+GraphCast requires its selected checkpoint's global atmospheric input contract. Local weather
+tables alone are insufficient. Pin the model, normalization, environment and training-history
+cutoffs. Full GraphCast retraining/fine-tuning and transformer development are outside R2.
+XGBoost has a defined rainfall target; direct flood-depth learning is a separate later task.
+Retain an uncorrected/simple baseline and select models only from measured comparisons.
+Model import or completed training does not automatically activate a model.
+
+Historical replay, hydraulic reconstruction, reanalysis hindcast and issue-time backtest must
+remain distinguishable. Provider availability must be evidenced for strict historical cutoffs.
+Keep final test storms separate from training/tuning and audit pretrained-model overlap.
 
 Acceptable later uses include:
 
@@ -564,9 +591,9 @@ versioned configuration
 
 Equations central to the solver belong in `docs/mathematics/`, not only in code comments.
 
-Sequence 11 requires a Surface Solver Mathematical Specification.
+Sequence 12 requires a Surface Solver Mathematical Specification.
 
-Sequence 13 requires a 1D–2D Exchange Mathematical Specification.
+Sequence 14 requires a 1D–2D Exchange Mathematical Specification.
 
 ---
 
@@ -640,22 +667,14 @@ Agents must not:
 
 ## 22. Immediate Repository Priority
 
-Because the repository begins from an empty implementation, build in this order:
+The repository has implementation through Sequence 10; inspect its current ledgers and live
+state before acting. The next R2 implementation target is Sequence 11: compatibility,
+historical event/availability records, source adapters and a bounded rainfall preview.
+Sequences 12-15 provide the conservative deterministic forecast and development reference;
+16 adds GraphCast/XGBoost, 17 risk/routing, 18 the full viewer, 19 independent validation and
+catchment performance, and 20 resilience/final acceptance.
 
-```text
-Sequence 1 foundation
-↓
-contracts + units + time + verification
-↓
-Sequence 2 data registry
-↓
-Sequence 3 immutable acquisition/versioning
-↓
-Sequence 4 spatial/vertical normalization
-↓
-continue strictly by sequence
-```
-
-Do not start by building the final Cesium dashboard.
-
-The first visible milestone should demonstrate a reproducible project foundation and scientific contracts. The first major scientific milestone is Checkpoint B: a conservative deterministic coupled flood forecast.
+Preserve earlier immutable artifacts, versioned readers and validation receipts. The real
+DATA-08-01 cross-ward requirement remains; a rainfall preview or synthetic benchmark cannot
+close it. Do not infer implementation authorization or a waived gate from this planning revision.
+Read ROADMAP_R2_CONTINUATION.txt for the planning handoff and the active plan for requirements.

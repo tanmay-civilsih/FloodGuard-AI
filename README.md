@@ -8,6 +8,31 @@ Development is governed by:
 - `docs/validation/final-human-review-policy.md`
 - `agent.md`
 
+## Active roadmap revision
+
+**ROADMAP-R2-2026-09-07** is the owner-requested frozen planning baseline.
+It preserves the Sequence 1-10 specifications and redesigns the next ten sequences.
+Planning status is separate from the implementation milestone below.
+
+| Sequence | Planned work |
+|---|---|
+| 11 | Compatibility, historical event/availability records, observation adapters and rainfall preview |
+| 12 | 2D surface solver and numerical bindings |
+| 13 | SWMM drainage engine and operational boundaries |
+| 14 | Conservative coupling, initialization and historical reconstruction |
+| 15 | Deterministic forecasts and development baseline evaluation |
+| 16 | Actual pretrained GraphCast inference, rainfall fusion and XGBoost training/evaluation |
+| 17 | Risk, engineering scenarios and time-dependent routing |
+| 18 | Full 2D/3D historical replay and forecast comparison dashboard |
+| 19 | Independent validation, connected-catchment scaling and performance |
+| 20 | Resilience, reproducible demonstration and final acceptance |
+
+Use [the authoritative plan](docs/Urban_Flood_Digital_Twin_Authoritative_20_Sequence_Plan_FROZEN.md)
+for detailed dependencies, changes to existing modules and completion gates.
+[ROADMAP_R2_CONTINUATION.txt](ROADMAP_R2_CONTINUATION.txt) is the planning handoff.
+Previous sequence numbering in retained historical receipts is not the new execution order.
+The revision does not close DATA-08-01 or claim that any new model, solver or viewer is implemented.
+
 ## Current milestone
 
 **Sequence 10 - Dynamic Forcing Service (v1.0)**
