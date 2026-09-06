@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
-from io import BytesIO
 from typing import Any, Protocol, cast
 
 from minio import Minio
 from minio.error import S3Error
 from minio.versioningconfig import VersioningConfig
+
+from floodguard.common.conditional_storage import (
+    ConditionalObjectExistsError,
+    ConditionalObjectWriter,
+)
+from floodguard.common.config import get_settings
 
 
 class SpatialObjectExistsError(RuntimeError):
@@ -46,12 +51,14 @@ class MinioSpatialObjectStore:
     ) -> None:
         self.raw_bucket = raw_bucket
         self.spatial_bucket = spatial_bucket
+        self.max_read_bytes = get_settings().spatial_max_object_bytes
         self.client = Minio(
             endpoint,
             access_key=access_key,
             secret_key=secret_key,
             secure=secure,
         )
+        self._writer = ConditionalObjectWriter(self.client, self.spatial_bucket)
 
     def ensure_ready(self) -> None:
         if not self.client.bucket_exists(self.raw_bucket):
@@ -64,9 +71,17 @@ class MinioSpatialObjectStore:
         )
 
     def _read(self, bucket: str, object_key: str) -> bytes:
-        response = cast(Any, self.client.get_object(bucket, object_key))
         try:
-            return bytes(response.read())
+            response = cast(Any, self.client.get_object(bucket, object_key))
+        except S3Error as exc:
+            if exc.code in {"NoSuchKey", "NoSuchObject", "NoSuchBucket"}:
+                raise FileNotFoundError(object_key) from exc
+            raise
+        try:
+            payload = bytes(response.read(self.max_read_bytes + 1))
+            if len(payload) > self.max_read_bytes:
+                raise RuntimeError("stored object exceeds the configured spatial read limit")
+            return payload
         finally:
             response.close()
             response.release_conn()
@@ -77,17 +92,6 @@ class MinioSpatialObjectStore:
     def read_spatial(self, object_key: str) -> bytes:
         return self._read(self.spatial_bucket, object_key)
 
-    def _assert_absent(self, object_key: str) -> None:
-        try:
-            self.client.stat_object(self.spatial_bucket, object_key)
-        except S3Error as exc:
-            if exc.code in {"NoSuchKey", "NoSuchObject", "NoSuchBucket"}:
-                return
-            raise
-        raise SpatialObjectExistsError(
-            f"immutable spatial object already exists: {self.spatial_bucket}/{object_key}"
-        )
-
     def put_spatial_once(
         self,
         object_key: str,
@@ -95,14 +99,10 @@ class MinioSpatialObjectStore:
         *,
         content_type: str,
     ) -> None:
-        self._assert_absent(object_key)
-        self.client.put_object(
-            self.spatial_bucket,
-            object_key,
-            BytesIO(payload),
-            length=len(payload),
-            content_type=content_type,
-        )
+        try:
+            self._writer.put(object_key, payload, length=len(payload), content_type=content_type)
+        except ConditionalObjectExistsError as exc:
+            raise SpatialObjectExistsError(object_key) from exc
 
 
 class MemorySpatialObjectStore:

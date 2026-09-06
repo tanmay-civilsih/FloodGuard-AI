@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from io import BytesIO
 from pathlib import Path
 from typing import Protocol
 
 from minio import Minio
-from minio.error import S3Error
 from minio.versioningconfig import VersioningConfig
+
+from floodguard.common.conditional_storage import (
+    ConditionalObjectExistsError,
+    ConditionalObjectWriter,
+)
 
 
 class ImmutableObjectExistsError(RuntimeError):
@@ -30,11 +33,7 @@ class RawVault(Protocol):
 
 
 class MinioRawVault:
-    """Application-enforced immutable object writer.
-
-    Each dataset version receives a unique prefix. Existing keys are never overwritten.
-    Bucket versioning is enabled as an additional development safeguard.
-    """
+    """Atomic create-only writer; bucket versioning remains an extra safeguard."""
 
     def __init__(
         self,
@@ -52,45 +51,30 @@ class MinioRawVault:
             secret_key=secret_key,
             secure=secure,
         )
+        self._writer = ConditionalObjectWriter(self.client, self.bucket)
 
     def ensure_ready(self) -> None:
         if not self.client.bucket_exists(self.bucket):
             self.client.make_bucket(self.bucket)
         self.client.set_bucket_versioning(self.bucket, VersioningConfig("Enabled"))
 
-    def _assert_absent(self, object_key: str) -> None:
-        try:
-            self.client.stat_object(self.bucket, object_key)
-        except S3Error as exc:
-            if exc.code in {"NoSuchKey", "NoSuchObject", "NoSuchBucket"}:
-                return
-            raise
-        raise ImmutableObjectExistsError(
-            f"immutable raw object already exists: {self.bucket}/{object_key}"
-        )
-
     def put_file_once(
         self, object_key: str, path: Path, *, content_type: str | None = None
     ) -> None:
-        self._assert_absent(object_key)
-        self.client.fput_object(
-            self.bucket,
-            object_key,
-            str(path),
-            content_type=content_type or "application/octet-stream",
-        )
+        try:
+            with path.open("rb") as stream:
+                self._writer.put(object_key, stream, length=path.stat().st_size,
+                                 content_type=content_type or "application/octet-stream")
+        except ConditionalObjectExistsError as exc:
+            raise ImmutableObjectExistsError(object_key) from exc
 
     def put_bytes_once(
         self, object_key: str, payload: bytes, *, content_type: str
     ) -> None:
-        self._assert_absent(object_key)
-        self.client.put_object(
-            self.bucket,
-            object_key,
-            BytesIO(payload),
-            length=len(payload),
-            content_type=content_type,
-        )
+        try:
+            self._writer.put(object_key, payload, length=len(payload), content_type=content_type)
+        except ConditionalObjectExistsError as exc:
+            raise ImmutableObjectExistsError(object_key) from exc
 
 
 class MemoryRawVault:
