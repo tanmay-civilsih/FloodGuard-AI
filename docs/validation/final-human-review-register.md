@@ -108,3 +108,19 @@ The builder's reference recreation is objective software evidence only. The real
 retains actual terrain and normalized GIS plus the source drain draft; missing urban GIS, graph,
 exchanges, complete parameter set and pump assets remain MISSING. A successful VISUAL_ONLY snapshot
 does not demonstrate genuine source-bound cross-ward drainage or final Checkpoint A acceptance.
+
+
+Sequence 9 verified assembly anchors (6 September 2026):
+
+- Source implementation `6477175c5c02ee7693aa548a7e1c50478c7362ec`.
+- Reference twin `0d72c671-314e-5753-a015-cf26cf260377`, twelve available controlled components.
+- Real twin `a73bc1b5-ec4e-5291-825f-aed596d97999`, five available and seven missing components,
+  VISUAL_ONLY. Its provisional rectangular extent exceeds the selected ward union; HR-09-01 must
+  address the intended accepted pilot boundary as well as component coverage.
+- Both twins recreated with identical IDs/manifest bytes in an empty metadata database.
+- Exact component/source hashes: `docs/validation/sequence-09-development-gate-6477175.json`.
+- Assembly validation PASSED; technical freeze NOT_FROZEN with sole blocker DATA-08-01.
+
+These anchors do not close any human review or the real two-ward requirement. A supplied real graph
+and revised pilot/component selection create a new immutable twin, which must become the target
+of subsequent engineering acceptance.

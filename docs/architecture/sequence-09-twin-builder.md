@@ -1,6 +1,7 @@
 # Sequence 9 - Versioned static twin builder
 
-Status: implementation complete; full clean-commit deployed gate pending. DATA-08-01 remains open.
+Status: implementation and deployed assembly validation passed on `6477175`.
+Sequence 9 remains NOT_FROZEN because DATA-08-01 is open. See SEQUENCE_9_STATUS.md.
 The authoritative plan and approved final-human-review policy are unchanged.
 
 ## Objective and ownership

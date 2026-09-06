@@ -12,7 +12,8 @@ Development is governed by:
 
 **Sequence 9 - Versioned Urban Digital Twin Builder (v0.9)**
 
-Sequence 9 implementation is complete; final deployed validation is pending. The twin builder fixes
+Sequence 9 implementation and deployed assembly validation passed on `6477175` (671 tests,
+136 type-checked files, 21 HTTP artifact checks, independent twin recreation). The twin builder fixes
 exact component versions in an immutable manifest and can recreate a twin without upstream latest
 lookups. The aligned reference is scenario-ready and the actual Ward 7 snapshot is VISUAL_ONLY.
 **Sequence 9 is not frozen:** the genuine real adjacent-ward drainage requirement DATA-08-01 remains

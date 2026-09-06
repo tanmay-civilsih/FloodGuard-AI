@@ -1,0 +1,37 @@
+FloodGuard-AI - Sequence 9 continuation
+Workspace: D:\Projects\FloodGuard-AI
+Branch: sequence-9-twin-builder
+Implementation: 6477175c5c02ee7693aa548a7e1c50478c7362ec
+Validated source fingerprint: b54ff96498f199d998f1903d6403bfa728c8afa04006d5a1e6fd319483ff61ff
+
+Read agent.md, the frozen Sequence 9 specification, SEQUENCE_9_STATUS.md and
+  docs/validation/sequence-09-development-gate-6477175.json
+before changing anything. Recheck live Git/API state; do not assume a handoff is current evidence.
+
+Implemented and verified: immutable 12-component twin manifests, exact source adapters, independent
+recreation, static consistency/readiness, API/QA, CLI, additive migration and full deployed gate.
+671 tests pass; mypy 136 files; six services healthy; 21 HTTP artifacts verified; both committed-source
+twins recreated in an empty database. The complete gate has one blocker: DATA-08-01.
+
+NOT FROZEN. No genuine real source-bound adjacent-ward path and documented downstream destination
+exists. This is an objective Sequence 9 requirement, not human-only acceptance deferred to Sequence 20.
+Do not mark Sequence 9 frozen, start Sequence 10, create review identities, invent source bindings,
+assign unverified IVL labels, fabricate outlet geometry, or substitute reference geography.
+
+Current committed-source twin IDs:
+  Reference: 0d72c671-314e-5753-a015-cf26cf260377 (12 components, scenario-ready reference)
+  Real: a73bc1b5-ec4e-5291-825f-aed596d97999 (5 available / 7 missing, visual-only)
+Existing real drain import: 30c05f00-2ab5-5aea-a640-5275711ce127 (286 candidates, no direction/topology)
+
+Needed input: a defensible source-backed real directed drainage binding plan across adjacent wards,
+with a documented downstream destination and physical inlet/manhole exchanges. Keep parameter gaps
+explicit. Use docs/examples/sequence-08-drain-binding.schema.json as a schema, not as evidence.
+Validate with python -m floodguard.drainage.import_model --binding-plan PATH --dry-run before applying.
+Then update a copy of docs/examples/sequence-09-pilot-selection.json with the NEW immutable graph ID
+and a matching pilot area. Use python -m floodguard.twin.build --request PATH --dry-run before building.
+Run database/object-store commands in docker compose exec -T api with access to the input file.
+
+After real evidence passes: clean commit, rebuild API, run
+  python scripts/sequence9_development_gate.py --run-checks
+Retain its exact report. Freeze only with no gate blockers. Human review HR-08/HR-09 remains pending
+Sequence 20. main and remotes were not changed by this task.

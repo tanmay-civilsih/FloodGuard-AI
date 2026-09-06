@@ -1,0 +1,632 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-09-06T17:10:13.708480+00:00",
+  "sequence": 9,
+  "release": "0.9.0",
+  "scope": "AUTOMATED_DEVELOPMENT_GATE_ONLY",
+  "human_review_deferred_to_sequence": 20,
+  "deferred_human_review": [
+    "Acceptance of exact real pilot component selections and missing-data limitations.",
+    "Cross-component geographic and vertical-reference engineering acceptance.",
+    "Visual review of immutable manifests and their real source artifacts."
+  ],
+  "final_human_acceptance_status": "PENDING_SEQUENCE_20",
+  "real_pilot_constraint": "DATA-08-01: genuine source-bound adjacent-ward drainage to a defensible destination is mandatory for Sequence 9 technical freeze; human review deferral does not waive it.",
+  "repository_commit": "6477175c5c02ee7693aa548a7e1c50478c7362ec",
+  "source_fingerprint": "b54ff96498f199d998f1903d6403bfa728c8afa04006d5a1e6fd319483ff61ff",
+  "dependency_lock_mismatches": [],
+  "software_and_services_passed": true,
+  "deployed_conditional_storage_passed": true,
+  "twin_readiness": {
+    "city_id": "kolkata",
+    "current_pipeline_version": "sequence-9-twin-v1",
+    "total_twins": 4,
+    "verified_twins": 4,
+    "reference_scenario_ready": 2,
+    "provisional_real_twins": 2,
+    "real_cross_ward_twins": 0,
+    "assembly_development_gate_passed": true,
+    "technical_development_gate_passed": false,
+    "checkpoint_a_status": "REFERENCE_ONLY",
+    "freeze_blockers": [
+      "DATA-08-01: genuine source-bound adjacent-ward drainage is still required."
+    ],
+    "final_human_acceptance_pending": true,
+    "final_completion_gate_passed": false,
+    "qa_viewer_path": "/twins/qa"
+  },
+  "twin_products": [
+    {
+      "twin_id": "a73bc1b5-ec4e-5291-825f-aed596d97999",
+      "city_id": "kolkata",
+      "pilot_area_id": "kolkata-ward-7",
+      "fingerprint": "a43d7ea58ec9675cdb35d3fcaa4b6e4628da72e4f362acf6b3dc1a058687b8d0",
+      "pipeline_version": "sequence-9-twin-v1",
+      "evidence_scope": "REAL_PILOT_PROVISIONAL",
+      "hydraulic_readiness": "VISUAL_ONLY",
+      "manifest": {
+        "manifest_version": "sequence-9-twin-v1",
+        "twin_id": "a73bc1b5-ec4e-5291-825f-aed596d97999",
+        "city_id": "kolkata",
+        "pilot_area": {
+          "pilot_area_id": "kolkata-ward-7",
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  640200,
+                  2499810
+                ],
+                [
+                  641460,
+                  2499810
+                ],
+                [
+                  641460,
+                  2500770
+                ],
+                [
+                  640200,
+                  2500770
+                ],
+                [
+                  640200,
+                  2499810
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "ward_ids": [
+            "7",
+            "8",
+            "10",
+            "12"
+          ]
+        },
+        "evidence_scope": "REAL_PILOT_PROVISIONAL",
+        "visual_terrain_version": {
+          "status": "AVAILABLE",
+          "source": {
+            "domain": "TERRAIN",
+            "product_id": "302999c4-68d7-5dc9-bdd3-b12fd41c13d6",
+            "pipeline_version": "sequence-6-terrain-v7",
+            "evidence_scope": "REAL_PILOT_PROVISIONAL",
+            "source_sha256": "c0c19a76d08e1b9bd624ca4a41a3fda15a95391cd470274ddff65465df8cec89"
+          },
+          "artifact": {
+            "object_key": "twins/blobs/c0c19a76d08e1b9bd624ca4a41a3fda15a95391cd470274ddff65465df8cec89.json",
+            "sha256": "c0c19a76d08e1b9bd624ca4a41a3fda15a95391cd470274ddff65465df8cec89",
+            "byte_size": 7342
+          },
+          "missing_reason": null
+        },
+        "hydraulic_terrain_version": {
+          "status": "AVAILABLE",
+          "source": {
+            "domain": "TERRAIN",
+            "product_id": "302999c4-68d7-5dc9-bdd3-b12fd41c13d6",
+            "pipeline_version": "sequence-6-terrain-v7",
+            "evidence_scope": "REAL_PILOT_PROVISIONAL",
+            "source_sha256": "fc6970cb047fc66d97dfb0449ed83de3a4f6ecc734efc2d14857625e35884145"
+          },
+          "artifact": {
+            "object_key": "twins/blobs/fc6970cb047fc66d97dfb0449ed83de3a4f6ecc734efc2d14857625e35884145.json",
+            "sha256": "fc6970cb047fc66d97dfb0449ed83de3a4f6ecc734efc2d14857625e35884145",
+            "byte_size": 7345
+          },
+          "missing_reason": null
+        },
+        "visual_city_version": {
+          "status": "MISSING",
+          "source": null,
+          "artifact": null,
+          "missing_reason": "Real urban GIS is absent; reference substitution is forbidden."
+        },
+        "hydraulic_surface_version": {
+          "status": "MISSING",
+          "source": null,
+          "artifact": null,
+          "missing_reason": "Real urban GIS is absent; reference substitution is forbidden."
+        },
+        "roof_runoff_geometry_version": {
+          "status": "MISSING",
+          "source": null,
+          "artifact": null,
+          "missing_reason": "Real urban GIS is absent; reference substitution is forbidden."
+        },
+        "drain_graph_version": {
+          "status": "MISSING",
+          "source": null,
+          "artifact": null,
+          "missing_reason": "Selected source is an unbound VISUAL_ONLY drain import draft."
+        },
+        "exchange_geometry_version": {
+          "status": "MISSING",
+          "source": null,
+          "artifact": null,
+          "missing_reason": "Selected source is an unbound VISUAL_ONLY drain import draft."
+        },
+        "hydraulic_parameter_set_version": {
+          "status": "MISSING",
+          "source": null,
+          "artifact": null,
+          "missing_reason": "Both drainage parameters and surface policies are required."
+        },
+        "ward_version": {
+          "status": "AVAILABLE",
+          "source": {
+            "domain": "SPATIAL",
+            "product_id": "acff42f4-d7a0-5bed-bcdc-28d5ed740b63",
+            "pipeline_version": "sequence-4-v3",
+            "evidence_scope": "REAL_PILOT_PROVISIONAL",
+            "source_sha256": "da962cba8ec62bdf45e86a70d403880532f880f205e437aa5dc678dabc74d65a"
+          },
+          "artifact": {
+            "object_key": "twins/blobs/da962cba8ec62bdf45e86a70d403880532f880f205e437aa5dc678dabc74d65a.json",
+            "sha256": "da962cba8ec62bdf45e86a70d403880532f880f205e437aa5dc678dabc74d65a",
+            "byte_size": 2710890
+          },
+          "missing_reason": null
+        },
+        "catchment_version": {
+          "status": "AVAILABLE",
+          "source": {
+            "domain": "SPATIAL",
+            "product_id": "9db50e2f-b853-5500-8a3d-7e507c78e40c",
+            "pipeline_version": "sequence-4-v3",
+            "evidence_scope": "REAL_PILOT_PROVISIONAL",
+            "source_sha256": "765d91196d414e59b467a017a3cba851d4b5c93767b0086d9d2ba1b0f9e5a8e3"
+          },
+          "artifact": {
+            "object_key": "twins/blobs/765d91196d414e59b467a017a3cba851d4b5c93767b0086d9d2ba1b0f9e5a8e3.json",
+            "sha256": "765d91196d414e59b467a017a3cba851d4b5c93767b0086d9d2ba1b0f9e5a8e3",
+            "byte_size": 5524630
+          },
+          "missing_reason": null
+        },
+        "waterbody_version": {
+          "status": "AVAILABLE",
+          "source": {
+            "domain": "SPATIAL",
+            "product_id": "2d93a6a7-6357-50b5-9839-766c5b6b9340",
+            "pipeline_version": "sequence-4-v3",
+            "evidence_scope": "REAL_PILOT_PROVISIONAL",
+            "source_sha256": "671ef005ec99eba4989831a424c3dcb7453c523485d5955797f9be69ba5ce2e1"
+          },
+          "artifact": {
+            "object_key": "twins/blobs/671ef005ec99eba4989831a424c3dcb7453c523485d5955797f9be69ba5ce2e1.json",
+            "sha256": "671ef005ec99eba4989831a424c3dcb7453c523485d5955797f9be69ba5ce2e1",
+            "byte_size": 2933609
+          },
+          "missing_reason": null
+        },
+        "pump_asset_version": {
+          "status": "MISSING",
+          "source": null,
+          "artifact": null,
+          "missing_reason": "Selected source is an unbound VISUAL_ONLY drain import draft."
+        },
+        "horizontal_crs": "EPSG:32645",
+        "vertical_reference_status": "UNRESOLVED",
+        "hydraulic_readiness": "VISUAL_ONLY",
+        "software_version": "0.9.0",
+        "software_source_sha256": "b54ff96498f199d998f1903d6403bfa728c8afa04006d5a1e6fd319483ff61ff",
+        "evidence_artifacts": {
+          "catchment-metadata": {
+            "object_key": "twins/blobs/9157ea3e29557f9a89047252b4324beded0f4f47367ff5c85b0ee7608bc61d97.json",
+            "sha256": "9157ea3e29557f9a89047252b4324beded0f4f47367ff5c85b0ee7608bc61d97",
+            "byte_size": 1693
+          },
+          "catchment-qa": {
+            "object_key": "twins/blobs/c4768f0ecc2133c68f004ad0bc637ad4c6a54737e25b9aeeedd019ea0c34d169.json",
+            "sha256": "c4768f0ecc2133c68f004ad0bc637ad4c6a54737e25b9aeeedd019ea0c34d169",
+            "byte_size": 5562302
+          },
+          "drain-audit": {
+            "object_key": "twins/blobs/c2dce3d8088f50325a23b46c98be9b7c6d0187df971bd57504f23550185f43ac.json",
+            "sha256": "c2dce3d8088f50325a23b46c98be9b7c6d0187df971bd57504f23550185f43ac",
+            "byte_size": 898
+          },
+          "drain-draft": {
+            "object_key": "twins/blobs/5fe47bb2b03976d0963ac50a5a948321142236b7d5f437a50072fafec2005144.json",
+            "sha256": "5fe47bb2b03976d0963ac50a5a948321142236b7d5f437a50072fafec2005144",
+            "byte_size": 260872
+          },
+          "drain-input": {
+            "object_key": "twins/blobs/59139fa45e2b1ebc4ed36f82a81158e306e9ff16f2e96340302eb7145408ccf8.json",
+            "sha256": "59139fa45e2b1ebc4ed36f82a81158e306e9ff16f2e96340302eb7145408ccf8",
+            "byte_size": 2954431
+          },
+          "drain-metadata": {
+            "object_key": "twins/blobs/ed71a24f54413711c80b63520e61c40f7480594c442b3a973248eeea456a3b88.json",
+            "sha256": "ed71a24f54413711c80b63520e61c40f7480594c442b3a973248eeea456a3b88",
+            "byte_size": 1892
+          },
+          "drain-qa": {
+            "object_key": "twins/blobs/dd38807453b78cbba2a5b2044a67d0e1585eb8f2f50d3fab0788a330ec548f55.json",
+            "sha256": "dd38807453b78cbba2a5b2044a67d0e1585eb8f2f50d3fab0788a330ec548f55",
+            "byte_size": 65930
+          },
+          "drain-source-reconstruction": {
+            "object_key": "twins/blobs/5cda954e5d61d2f2191b63c80e19efdb99848c4ecaafa6fcffa90ee0d5e351b6.json",
+            "sha256": "5cda954e5d61d2f2191b63c80e19efdb99848c4ecaafa6fcffa90ee0d5e351b6",
+            "byte_size": 242623
+          },
+          "drain-source-wards": {
+            "object_key": "twins/blobs/da962cba8ec62bdf45e86a70d403880532f880f205e437aa5dc678dabc74d65a.json",
+            "sha256": "da962cba8ec62bdf45e86a70d403880532f880f205e437aa5dc678dabc74d65a",
+            "byte_size": 2710890
+          },
+          "drain-wards": {
+            "object_key": "twins/blobs/e299256e315620e9f2dcc4d99e3cdf1e4a8af902de3f044a55da325955c51269.json",
+            "sha256": "e299256e315620e9f2dcc4d99e3cdf1e4a8af902de3f044a55da325955c51269",
+            "byte_size": 2704669
+          },
+          "selection": {
+            "object_key": "twins/blobs/2c75ec046c8e931ae5faca54af078858e6fb523514b60a784ec748296b128863.json",
+            "sha256": "2c75ec046c8e931ae5faca54af078858e6fb523514b60a784ec748296b128863",
+            "byte_size": 647
+          },
+          "terrain-audit": {
+            "object_key": "twins/blobs/0c9e789b48fa0320d3c88d18b5932c37da104833bc2c61bcc13d0f0d883cb90d.json",
+            "sha256": "0c9e789b48fa0320d3c88d18b5932c37da104833bc2c61bcc13d0f0d883cb90d",
+            "byte_size": 4887
+          },
+          "terrain-metadata": {
+            "object_key": "twins/blobs/d294e6b0e676293dbb1bf04d2bee8acbefe4b2aab3bc4a5576156ed7975eed1a.json",
+            "sha256": "d294e6b0e676293dbb1bf04d2bee8acbefe4b2aab3bc4a5576156ed7975eed1a",
+            "byte_size": 4211
+          },
+          "terrain-multi_level_structure_catalog": {
+            "object_key": "twins/blobs/a59fb745d27507f35f8563cef3fc2eeb39e693da6a8963a4c64efbbe0d7eb54d.json",
+            "sha256": "a59fb745d27507f35f8563cef3fc2eeb39e693da6a8963a4c64efbbe0d7eb54d",
+            "byte_size": 122
+          },
+          "terrain-qa": {
+            "object_key": "twins/blobs/04748c00e43c0a243c3def32b7088b412bd0fc8843148de5aa72d39a5eb146ff.json",
+            "sha256": "04748c00e43c0a243c3def32b7088b412bd0fc8843148de5aa72d39a5eb146ff",
+            "byte_size": 611678
+          },
+          "terrain-raw_elevation": {
+            "object_key": "twins/blobs/a33db2996270c1755e283ea376a861ad3edf0e3bd91d238dedf06683a1adc358.json",
+            "sha256": "a33db2996270c1755e283ea376a861ad3edf0e3bd91d238dedf06683a1adc358",
+            "byte_size": 25934402
+          },
+          "ward-metadata": {
+            "object_key": "twins/blobs/d38a4aeb99d20dfac261357cdaf2afa3f1220aa8df107016a381e6dac36bf47a.json",
+            "sha256": "d38a4aeb99d20dfac261357cdaf2afa3f1220aa8df107016a381e6dac36bf47a",
+            "byte_size": 1677
+          },
+          "ward-qa": {
+            "object_key": "twins/blobs/b49502d151b9710ccb18976630257167c13634573289dae145026fbc9f14b92d.json",
+            "sha256": "b49502d151b9710ccb18976630257167c13634573289dae145026fbc9f14b92d",
+            "byte_size": 2711137
+          },
+          "waterbody-metadata": {
+            "object_key": "twins/blobs/70a3d82ff4c7bc1d39886f88433c0e876435e9aa3c32406817988b13d1a2e6d5.json",
+            "sha256": "70a3d82ff4c7bc1d39886f88433c0e876435e9aa3c32406817988b13d1a2e6d5",
+            "byte_size": 1651
+          },
+          "waterbody-qa": {
+            "object_key": "twins/blobs/f89ca6cc23382d1982e6347688cba6db390a75ec6b0d69dd3777eaf11faf10eb.json",
+            "sha256": "f89ca6cc23382d1982e6347688cba6db390a75ec6b0d69dd3777eaf11faf10eb",
+            "byte_size": 2903946
+          }
+        },
+        "readiness_blockers": [
+          "Pilot geometry extends beyond its selected wards.",
+          "Selected terrain is not scenario-ready.",
+          "Terrain, drain and static boundary elevations lack one compatible metric datum.",
+          "drain_graph_version: Selected source is an unbound VISUAL_ONLY drain import draft.",
+          "exchange_geometry_version: Selected source is an unbound VISUAL_ONLY drain import draft.",
+          "hydraulic_parameter_set_version: Both drainage parameters and surface policies are required.",
+          "hydraulic_surface_version: Real urban GIS is absent; reference substitution is forbidden.",
+          "pump_asset_version: Selected source is an unbound VISUAL_ONLY drain import draft.",
+          "roof_runoff_geometry_version: Real urban GIS is absent; reference substitution is forbidden.",
+          "visual_city_version: Real urban GIS is absent; reference substitution is forbidden."
+        ],
+        "real_cross_ward_path_available": false,
+        "final_human_acceptance_pending": true,
+        "hydraulic_validation_claimed": false
+      },
+      "audit": {
+        "object_key": "twins/a73bc1b5-ec4e-5291-825f-aed596d97999/audit.json",
+        "sha256": "baf3b8640f24412307588ebc00f03dd61411433b07776c0b4507e3257b99061b",
+        "byte_size": 484
+      },
+      "created_at": "2026-09-06T17:11:47.222427Z",
+      "http_readback_artifacts": 7,
+      "frozen_evidence_artifacts": 20,
+      "http_readback_verified": true
+    },
+    {
+      "twin_id": "0d72c671-314e-5753-a015-cf26cf260377",
+      "city_id": "kolkata",
+      "pilot_area_id": "kolkata-sequence9-reference",
+      "fingerprint": "91e17322e6bf6ef4ffbc25e2551c63ee54c6bb224300df7a2b7e2b47f586111d",
+      "pipeline_version": "sequence-9-twin-v1",
+      "evidence_scope": "REFERENCE_FIXTURE",
+      "hydraulic_readiness": "HYDRAULIC_SCENARIO_READY",
+      "manifest": {
+        "manifest_version": "sequence-9-twin-v1",
+        "twin_id": "0d72c671-314e-5753-a015-cf26cf260377",
+        "city_id": "kolkata",
+        "pilot_area": {
+          "pilot_area_id": "kolkata-sequence9-reference",
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  299990,
+                  2499990
+                ],
+                [
+                  300110,
+                  2499990
+                ],
+                [
+                  300110,
+                  2500070
+                ],
+                [
+                  299990,
+                  2500070
+                ],
+                [
+                  299990,
+                  2499990
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "ward_ids": [
+            "reference-A",
+            "reference-B"
+          ]
+        },
+        "evidence_scope": "REFERENCE_FIXTURE",
+        "visual_terrain_version": {
+          "status": "AVAILABLE",
+          "source": {
+            "domain": "REFERENCE",
+            "product_id": "reference-terrain-v1",
+            "pipeline_version": "sequence-9-reference-v1",
+            "evidence_scope": "REFERENCE_FIXTURE",
+            "source_sha256": "1daee97359bad6fdce307f69ef12015e1ce9ab08dede848d6bee4bbdbe4b47b9"
+          },
+          "artifact": {
+            "object_key": "twins/blobs/1daee97359bad6fdce307f69ef12015e1ce9ab08dede848d6bee4bbdbe4b47b9.json",
+            "sha256": "1daee97359bad6fdce307f69ef12015e1ce9ab08dede848d6bee4bbdbe4b47b9",
+            "byte_size": 874
+          },
+          "missing_reason": null
+        },
+        "hydraulic_terrain_version": {
+          "status": "AVAILABLE",
+          "source": {
+            "domain": "REFERENCE",
+            "product_id": "reference-terrain-v1",
+            "pipeline_version": "sequence-9-reference-v1",
+            "evidence_scope": "REFERENCE_FIXTURE",
+            "source_sha256": "827e90c21e77d3895bc0efcead05ede6216cbde17846c1eb0cef14517bd7a0d3"
+          },
+          "artifact": {
+            "object_key": "twins/blobs/827e90c21e77d3895bc0efcead05ede6216cbde17846c1eb0cef14517bd7a0d3.json",
+            "sha256": "827e90c21e77d3895bc0efcead05ede6216cbde17846c1eb0cef14517bd7a0d3",
+            "byte_size": 877
+          },
+          "missing_reason": null
+        },
+        "visual_city_version": {
+          "status": "AVAILABLE",
+          "source": {
+            "domain": "REFERENCE",
+            "product_id": "reference-urban-v1",
+            "pipeline_version": "sequence-9-reference-v1",
+            "evidence_scope": "REFERENCE_FIXTURE",
+            "source_sha256": "28d0ca56ed9292e5f534876d00b35545ca7b33b495d0818cf5372dce9fe3e936"
+          },
+          "artifact": {
+            "object_key": "twins/blobs/28d0ca56ed9292e5f534876d00b35545ca7b33b495d0818cf5372dce9fe3e936.json",
+            "sha256": "28d0ca56ed9292e5f534876d00b35545ca7b33b495d0818cf5372dce9fe3e936",
+            "byte_size": 1468
+          },
+          "missing_reason": null
+        },
+        "hydraulic_surface_version": {
+          "status": "AVAILABLE",
+          "source": {
+            "domain": "REFERENCE",
+            "product_id": "reference-urban-v1",
+            "pipeline_version": "sequence-9-reference-v1",
+            "evidence_scope": "REFERENCE_FIXTURE",
+            "source_sha256": "fdb8ddd537d5fb29f05e54e6d694831b15873092713467ed4db780f73f34b113"
+          },
+          "artifact": {
+            "object_key": "twins/blobs/fdb8ddd537d5fb29f05e54e6d694831b15873092713467ed4db780f73f34b113.json",
+            "sha256": "fdb8ddd537d5fb29f05e54e6d694831b15873092713467ed4db780f73f34b113",
+            "byte_size": 4256
+          },
+          "missing_reason": null
+        },
+        "roof_runoff_geometry_version": {
+          "status": "AVAILABLE",
+          "source": {
+            "domain": "REFERENCE",
+            "product_id": "reference-urban-v1",
+            "pipeline_version": "sequence-9-reference-v1",
+            "evidence_scope": "REFERENCE_FIXTURE",
+            "source_sha256": "edb2d2670262c45a6ef90766860a3071d3ed0f75e1b66ad119be66948d0051c6"
+          },
+          "artifact": {
+            "object_key": "twins/blobs/edb2d2670262c45a6ef90766860a3071d3ed0f75e1b66ad119be66948d0051c6.json",
+            "sha256": "edb2d2670262c45a6ef90766860a3071d3ed0f75e1b66ad119be66948d0051c6",
+            "byte_size": 567
+          },
+          "missing_reason": null
+        },
+        "drain_graph_version": {
+          "status": "AVAILABLE",
+          "source": {
+            "domain": "REFERENCE",
+            "product_id": "reference-drain-v1",
+            "pipeline_version": "sequence-9-reference-v1",
+            "evidence_scope": "REFERENCE_FIXTURE",
+            "source_sha256": "63bed904c9acd8fc7ea1930630b2badbc81463e115ee7e1fbd7d25fcdf69c85b"
+          },
+          "artifact": {
+            "object_key": "twins/blobs/63bed904c9acd8fc7ea1930630b2badbc81463e115ee7e1fbd7d25fcdf69c85b.json",
+            "sha256": "63bed904c9acd8fc7ea1930630b2badbc81463e115ee7e1fbd7d25fcdf69c85b",
+            "byte_size": 21303
+          },
+          "missing_reason": null
+        },
+        "exchange_geometry_version": {
+          "status": "AVAILABLE",
+          "source": {
+            "domain": "REFERENCE",
+            "product_id": "reference-drain-v1",
+            "pipeline_version": "sequence-9-reference-v1",
+            "evidence_scope": "REFERENCE_FIXTURE",
+            "source_sha256": "148a3cd1362ba694f6025906e8b0791a2a07264a40c810ea57470114e2bfb1a9"
+          },
+          "artifact": {
+            "object_key": "twins/blobs/148a3cd1362ba694f6025906e8b0791a2a07264a40c810ea57470114e2bfb1a9.json",
+            "sha256": "148a3cd1362ba694f6025906e8b0791a2a07264a40c810ea57470114e2bfb1a9",
+            "byte_size": 2670
+          },
+          "missing_reason": null
+        },
+        "hydraulic_parameter_set_version": {
+          "status": "AVAILABLE",
+          "source": {
+            "domain": "ASSEMBLY",
+            "product_id": "d6411f4902b477c9dafee71e0b55061782f44c7ed2920e3b060fc9370144680d",
+            "pipeline_version": "sequence-9-parameters-v1",
+            "evidence_scope": "REFERENCE_FIXTURE",
+            "source_sha256": "d6411f4902b477c9dafee71e0b55061782f44c7ed2920e3b060fc9370144680d"
+          },
+          "artifact": {
+            "object_key": "twins/blobs/d6411f4902b477c9dafee71e0b55061782f44c7ed2920e3b060fc9370144680d.json",
+            "sha256": "d6411f4902b477c9dafee71e0b55061782f44c7ed2920e3b060fc9370144680d",
+            "byte_size": 17312
+          },
+          "missing_reason": null
+        },
+        "ward_version": {
+          "status": "AVAILABLE",
+          "source": {
+            "domain": "REFERENCE",
+            "product_id": "reference-wards-v1",
+            "pipeline_version": "sequence-9-reference-v1",
+            "evidence_scope": "REFERENCE_FIXTURE",
+            "source_sha256": "686a6b91e24e370aafd0d091221544874dcdc45d095c5c89a6dacb308f3bdf58"
+          },
+          "artifact": {
+            "object_key": "twins/blobs/686a6b91e24e370aafd0d091221544874dcdc45d095c5c89a6dacb308f3bdf58.json",
+            "sha256": "686a6b91e24e370aafd0d091221544874dcdc45d095c5c89a6dacb308f3bdf58",
+            "byte_size": 447
+          },
+          "missing_reason": null
+        },
+        "catchment_version": {
+          "status": "AVAILABLE",
+          "source": {
+            "domain": "REFERENCE",
+            "product_id": "reference-catchment-v1",
+            "pipeline_version": "sequence-9-reference-v1",
+            "evidence_scope": "REFERENCE_FIXTURE",
+            "source_sha256": "611e1445047bb8faa1d24b1f8d257b28992221d41e1b554b66740c52855c2bb4"
+          },
+          "artifact": {
+            "object_key": "twins/blobs/611e1445047bb8faa1d24b1f8d257b28992221d41e1b554b66740c52855c2bb4.json",
+            "sha256": "611e1445047bb8faa1d24b1f8d257b28992221d41e1b554b66740c52855c2bb4",
+            "byte_size": 256
+          },
+          "missing_reason": null
+        },
+        "waterbody_version": {
+          "status": "AVAILABLE",
+          "source": {
+            "domain": "REFERENCE",
+            "product_id": "reference-water-v1",
+            "pipeline_version": "sequence-9-reference-v1",
+            "evidence_scope": "REFERENCE_FIXTURE",
+            "source_sha256": "e45ae1f645c44f16f1881119699becb8d95ea3475b735519947c3f10d85be197"
+          },
+          "artifact": {
+            "object_key": "twins/blobs/e45ae1f645c44f16f1881119699becb8d95ea3475b735519947c3f10d85be197.json",
+            "sha256": "e45ae1f645c44f16f1881119699becb8d95ea3475b735519947c3f10d85be197",
+            "byte_size": 275
+          },
+          "missing_reason": null
+        },
+        "pump_asset_version": {
+          "status": "AVAILABLE",
+          "source": {
+            "domain": "REFERENCE",
+            "product_id": "reference-drain-v1",
+            "pipeline_version": "sequence-9-reference-v1",
+            "evidence_scope": "REFERENCE_FIXTURE",
+            "source_sha256": "a8be275986b3b88b2c640f02fa7240b911b6a5c7cddfc0a3ec725b2ac1ef63bb"
+          },
+          "artifact": {
+            "object_key": "twins/blobs/a8be275986b3b88b2c640f02fa7240b911b6a5c7cddfc0a3ec725b2ac1ef63bb.json",
+            "sha256": "a8be275986b3b88b2c640f02fa7240b911b6a5c7cddfc0a3ec725b2ac1ef63bb",
+            "byte_size": 402
+          },
+          "missing_reason": null
+        },
+        "horizontal_crs": "EPSG:32645",
+        "vertical_reference_status": "COMPATIBLE",
+        "hydraulic_readiness": "HYDRAULIC_SCENARIO_READY",
+        "software_version": "0.9.0",
+        "software_source_sha256": "b54ff96498f199d998f1903d6403bfa728c8afa04006d5a1e6fd319483ff61ff",
+        "evidence_artifacts": {
+          "drain-input": {
+            "object_key": "twins/blobs/61f09095d9f2dabf23badf40b5933daba8ecceab322de933a1529577e1d409ea.json",
+            "sha256": "61f09095d9f2dabf23badf40b5933daba8ecceab322de933a1529577e1d409ea",
+            "byte_size": 23280
+          },
+          "drain-parameters": {
+            "object_key": "twins/blobs/91b5777fd4c27156815518288ef9abfeb9d8996190aab289fb3b91806ba901ed.json",
+            "sha256": "91b5777fd4c27156815518288ef9abfeb9d8996190aab289fb3b91806ba901ed",
+            "byte_size": 15301
+          },
+          "reference-description": {
+            "object_key": "twins/blobs/1388799f78a4bf7bbaebd644981ce806257039a7750e7c3ea18ccd0a4b1d326c.json",
+            "sha256": "1388799f78a4bf7bbaebd644981ce806257039a7750e7c3ea18ccd0a4b1d326c",
+            "byte_size": 102
+          },
+          "terrain-metadata": {
+            "object_key": "twins/blobs/2a2bb8b318943b8dbf9a40080be85ce3b3134bae6e96263347a84d3573ab5f32.json",
+            "sha256": "2a2bb8b318943b8dbf9a40080be85ce3b3134bae6e96263347a84d3573ab5f32",
+            "byte_size": 136
+          }
+        },
+        "readiness_blockers": [],
+        "real_cross_ward_path_available": false,
+        "final_human_acceptance_pending": true,
+        "hydraulic_validation_claimed": false
+      },
+      "audit": {
+        "object_key": "twins/0d72c671-314e-5753-a015-cf26cf260377/audit.json",
+        "sha256": "7240f912db86d0db8b6ec401b45eabf0c2a52ada2140c3bb84f322402756e213",
+        "byte_size": 484
+      },
+      "created_at": "2026-09-06T17:11:39.960059Z",
+      "http_readback_artifacts": 14,
+      "frozen_evidence_artifacts": 4,
+      "http_readback_verified": true
+    }
+  ],
+  "technical_blockers": [
+    "DATA-08-01: genuine source-bound adjacent-ward drainage to a defensible destination is mandatory for Sequence 9 technical freeze; human review deferral does not waive it."
+  ],
+  "assembly_validation_status": "PASSED",
+  "development_status": "BLOCKED",
+  "technical_development_freeze_status": "NOT_ELIGIBLE",
+  "freeze_status": "NOT_FROZEN"
+}
