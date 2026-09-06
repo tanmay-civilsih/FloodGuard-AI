@@ -1,4 +1,4 @@
-"""Local verification entry point through Sequence 6."""
+"""Local verification entry point through Sequence 7."""
 
 from __future__ import annotations
 
@@ -40,6 +40,7 @@ def verify_files() -> None:
         ROOT / "migrations" / "versions" / "0003_sequence_4_spatial.py",
         ROOT / "migrations" / "versions" / "0004_sequence_5_reconstruction.py",
         ROOT / "migrations" / "versions" / "0005_sequence_6_terrain.py",
+        ROOT / "migrations" / "versions" / "0006_sequence_7_urban_gis.py",
         ROOT / "floodguard" / "registry" / "contracts.py",
         ROOT / "floodguard" / "registry" / "seed.py",
         ROOT / "floodguard" / "harvester" / "contracts.py",
@@ -63,6 +64,11 @@ def verify_files() -> None:
         ROOT / "floodguard" / "terrain" / "acquisition.py",
         ROOT / "floodguard" / "terrain" / "acquire_srtm.py",
         ROOT / "floodguard" / "terrain" / "jobs.py",
+        ROOT / "floodguard" / "urban_gis" / "contracts.py",
+        ROOT / "floodguard" / "urban_gis" / "policy.py",
+        ROOT / "floodguard" / "urban_gis" / "service.py",
+        ROOT / "floodguard" / "urban_gis" / "bootstrap.py",
+        ROOT / "floodguard" / "urban_gis" / "qa_viewer.py",
         ROOT
         / "floodguard"
         / "reconstruction"
@@ -70,6 +76,7 @@ def verify_files() -> None:
         / "kmc-opencity-ward-7-v1.json",
         ROOT / "docs" / "architecture" / "sequence-05-drainage-reconstruction.md",
         ROOT / "docs" / "architecture" / "sequence-06-terrain-conditioning.md",
+        ROOT / "docs" / "architecture" / "sequence-07-urban-gis.md",
         ROOT / "docs" / "architecture" / "sequence-04-spatial-normalization.md",
         ROOT / "docs" / "Urban_Flood_Digital_Twin_Authoritative_20_Sequence_Plan_FROZEN.md",
     ]
@@ -146,8 +153,8 @@ def verify_services() -> None:
     print("OK API /health")
 
     version = get_json("http://localhost:8000/version")
-    if version.get("sequence") != 6 or version.get("version") != "0.6.0":
-        raise SystemExit("API is not serving FloodGuard-AI Sequence 6 / v0.6.0")
+    if version.get("sequence") != 7 or version.get("version") != "0.7.0":
+        raise SystemExit("API is not serving FloodGuard-AI Sequence 7 / v0.7.0")
     print("OK API /version")
 
     registry = get_json("http://localhost:8000/registry/readiness")
@@ -200,6 +207,17 @@ def verify_services() -> None:
     if "Acquire pilot terrain" not in terrain_qa:
         raise SystemExit("Sequence 6 automatic terrain acquisition is missing; rebuild the API")
     print("OK API /terrain/readiness and /terrain/qa")
+
+    urban_gis = get_json("http://localhost:8000/urban-gis/readiness?city_id=kolkata")
+    if urban_gis.get("current_pipeline_version") != "sequence-7-urban-gis-v1":
+        raise SystemExit("Sequence 7 urban GIS pipeline identity is unexpected")
+    if "technical_development_gate_passed" not in urban_gis:
+        raise SystemExit("Sequence 7 urban GIS readiness contract is incomplete")
+    if urban_gis.get("qa_viewer_path") != "/urban-gis/qa":
+        raise SystemExit("Sequence 7 urban GIS QA path is unexpected")
+    if "Urban GIS QA" not in get_text("http://localhost:8000/urban-gis/qa"):
+        raise SystemExit("Sequence 7 urban GIS QA viewer is not reachable")
+    print("OK API /urban-gis/readiness and /urban-gis/qa")
 
 
 def run_harvester_bootstrap_gate() -> None:
@@ -330,12 +348,43 @@ def run_terrain_bootstrap_gate() -> None:
     print("OK terrain conditioning and conservative readiness completion gate")
 
 
+def run_urban_gis_bootstrap_gate() -> None:
+    run(
+        [
+            "docker",
+            "compose",
+            "exec",
+            "-T",
+            "api",
+            "python",
+            "-m",
+            "floodguard.urban_gis.bootstrap",
+            "--city-id",
+            "kolkata",
+        ]
+    )
+    readiness = get_json("http://localhost:8000/urban-gis/readiness?city_id=kolkata")
+    if readiness.get("technical_development_gate_passed") is not True:
+        raise SystemExit("Sequence 7 automated urban GIS development gate did not pass")
+    ready_total = 0
+    for field in ("reference_ready", "provisional_real_ready", "reviewed_real_ready"):
+        value = readiness.get(field)
+        if not isinstance(value, int):
+            raise SystemExit(f"Sequence 7 readiness field {field} is invalid")
+        ready_total += value
+    if ready_total < 1:
+        raise SystemExit("Sequence 7 bootstrap produced no ready current-pipeline package")
+    if "Urban GIS QA" not in get_text("http://localhost:8000/urban-gis/qa"):
+        raise SystemExit("Sequence 7 urban GIS QA viewer gate failed")
+    print("OK Sequence 7 automated urban GIS development gate")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--services",
         action="store_true",
-        help="also verify the running Docker Compose platform and APIs through Sequence 6",
+        help="also verify the running Docker Compose platform and APIs through Sequence 7",
     )
     parser.add_argument(
         "--bootstrap",
@@ -359,8 +408,16 @@ def main() -> None:
         "--terrain-bootstrap",
         action="store_true",
         help=(
-            "run the Sequence 6 terrain completion gate; requires an assessed metric "
-            "*.terrain.json package and implies --services"
+            "run the Sequence 6 final terrain completion gate; requires assessed real terrain "
+            "and implies --services"
+        ),
+    )
+    parser.add_argument(
+        "--urban-gis-bootstrap",
+        action="store_true",
+        help=(
+            "run the Sequence 7 automated reference-package development gate; final real-pilot "
+            "human acceptance remains deferred to Sequence 20"
         ),
     )
     args = parser.parse_args()
@@ -374,6 +431,7 @@ def main() -> None:
         or args.spatial_bootstrap
         or args.reconstruction_bootstrap
         or args.terrain_bootstrap
+        or args.urban_gis_bootstrap
     ):
         verify_services()
     if args.bootstrap:
@@ -384,11 +442,15 @@ def main() -> None:
         run_reconstruction_bootstrap_gate()
     if args.terrain_bootstrap:
         run_terrain_bootstrap_gate()
-    print("Sequence 6 software verification PASSED")
-    if args.terrain_bootstrap:
-        print("Sequence 6 terrain completion gate PASSED")
+    if args.urban_gis_bootstrap:
+        run_urban_gis_bootstrap_gate()
+
+    print("Sequence 7 software verification PASSED")
+    if args.urban_gis_bootstrap:
+        print("Sequence 7 automated development gate PASSED")
+        print("Final real-pilot human acceptance remains deferred to Sequence 20.")
     else:
-        print("Terrain completion was not checked; run --terrain-bootstrap before freezing.")
+        print("Urban GIS bootstrap was not checked; run --urban-gis-bootstrap for technical freeze.")
 
 
 if __name__ == "__main__":
