@@ -89,7 +89,12 @@ def assessment_bytes(assessment: TerrainAssessment) -> bytes:
 
 
 def assessment_template(base_package_sha256: str) -> dict[str, Any]:
-    """Export an intentionally incomplete form; blank evidence cannot be imported."""
+    """Export a source-informed but intentionally incomplete operator review form.
+
+    Facts inherent to SRTMGL1 are prefilled so the operator is not asked to restate
+    source metadata. Identity/time and the two site-specific engineering assessments
+    remain blank/NOT_ASSESSED and therefore cannot be imported as a completed review.
+    """
     return {
         "assessment_version": "sequence-6-terrain-assessment-v1",
         "base_package_sha256": base_package_sha256,
@@ -97,8 +102,14 @@ def assessment_template(base_package_sha256: str) -> dict[str, Any]:
         "reviewed_at": None,
         "datum_transform_status": "UNRESOLVED",
         "local_vertical_datum": None,
-        "vertical_reference_evidence": "",
-        "surface_use_evidence": "",
+        "vertical_reference_evidence": (
+            "SRTMGL1 source elevations use EGM96; compatibility with local drain, stage, "
+            "and survey levels has not been established."
+        ),
+        "surface_use_evidence": (
+            "SRTMGL1 is coarse radar-derived surface elevation and is not treated as surveyed "
+            "bare-earth street-scale terrain."
+        ),
         "depression_assessment": "NOT_ASSESSED",
         "depression_evidence": "",
         "multi_level_assessment": "NOT_ASSESSED",
@@ -110,9 +121,15 @@ def assessment_template(base_package_sha256: str) -> dict[str, Any]:
             "road_sag_validation": "NOT_ASSESSED",
             "underpass_validation": "NOT_ASSESSED",
             "drain_rim_elevation_consistency": "NOT_ASSESSED",
-            "limitations": [],
+            "limitations": [
+                "No independent vertical control points are supplied by the SRTM source; "
+                "hydraulic validation is not claimed."
+            ],
         },
-        "limitations": [],
+        "limitations": [
+            "Scenario use must retain SRTM resolution, acquisition-epoch, radar-surface, and "
+            "unresolved local vertical-reference limitations."
+        ],
     }
 
 

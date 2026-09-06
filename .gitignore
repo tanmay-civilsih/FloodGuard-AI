@@ -77,6 +77,10 @@ artifacts/
 *.rpt
 *.out
 
+# Local engineering-evidence drafts. Completed assessments are ingested into
+# immutable object storage with checksums; working copies are not source code.
+*-terrain-assessment.json
+
 # Frontend artifacts (reserved for later sequences)
 node_modules/
 apps/web/dist/
