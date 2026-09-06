@@ -65,6 +65,19 @@ def select_product(
     return max(candidates, key=order)
 
 
+def terrain_deferred_constraints(audit: dict[str, Any]) -> list[str]:
+    assessment = audit.get("terrain_assessment")
+    if not isinstance(assessment, dict):
+        return []
+    if assessment.get("datum_transform_status") == "UNRESOLVED":
+        return [
+            "Local vertical-reference compatibility remains unresolved; do not compare terrain "
+            "elevations with drain inverts, river/canal/tide stages, or survey levels until a "
+            "compatible or explicitly transformed reference is established."
+        ]
+    return []
+
+
 def terrain_blockers(
     product: dict[str, Any], audit: dict[str, Any], plan: dict[str, Any],
 ) -> list[str]:
@@ -95,9 +108,12 @@ def terrain_blockers(
     for field in ("depression_assessment", "multi_level_assessment"):
         if assessment.get(field) not in {"CATALOGUED", "CONFIRMED_NONE"}:
             blockers.append(f"Terrain assessment is incomplete: {field}.")
-    if (assessment.get("datum_transform_status") != "COMPATIBLE"
-        or assessment.get("local_vertical_datum") != "EGM96"):
-        blockers.append("Local vertical-reference compatibility is unresolved.")
+    datum_status = assessment.get("datum_transform_status")
+    if datum_status == "COMPATIBLE":
+        if assessment.get("local_vertical_datum") != "EGM96":
+            blockers.append("Compatible SRTM assessment must identify local EGM96 compatibility.")
+    elif datum_status != "UNRESOLVED":
+        blockers.append("Terrain assessment has an unsupported datum_transform_status.")
     try:
         reviewed = datetime.fromisoformat(str(assessment.get("reviewed_at")).replace("Z", "+00:00"))
         if reviewed.tzinfo is None:
@@ -123,7 +139,8 @@ def collect(base: str, *, city: str, ward: str, run_checks: bool) -> dict[str, A
                               "freeze_status": "NOT_FROZEN", "city_id": city, "ward_id": ward,
                               "scope": "CURRENT_EXECUTION_ENVIRONMENT_ONLY",
                               "local_python": sys.version.split()[0], "api_origin": base,
-                              "engineering_acceptance_remaining": MANUAL_ACCEPTANCE.copy()}
+                              "engineering_acceptance_remaining": MANUAL_ACCEPTANCE.copy(),
+                              "deferred_constraints": []}
     if sys.version_info[:2] != (3, 12):
         blockers.append(f"Pinned Python 3.12 is required; found {sys.version.split()[0]}.")
     try:
@@ -217,6 +234,7 @@ def collect(base: str, *, city: str, ward: str, run_checks: bool) -> dict[str, A
                 if not isinstance(audit, dict):
                     raise ValueError("terrain audit must be an object")
                 blockers.extend(terrain_blockers(product, audit, plan))
+                report["deferred_constraints"] = terrain_deferred_constraints(audit)
                 current_plan = get("/terrain/acquisition/plan?" + urlencode({
                     "city_id": city, "ward_id": ward,
                 }))

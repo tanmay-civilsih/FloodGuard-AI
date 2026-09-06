@@ -8,6 +8,7 @@ from scripts.sequence6_preflight import (
     MANUAL_ACCEPTANCE,
     select_product,
     terrain_blockers,
+    terrain_deferred_constraints,
     validate_base_url,
 )
 
@@ -40,6 +41,7 @@ def evidence():
 def test_synthetic_consistency_does_not_remove_human_acceptance() -> None:
     product, audit, plan = evidence()
     assert terrain_blockers(product, audit, plan) == []
+    assert terrain_deferred_constraints(audit) == []
     assert len(MANUAL_ACCEPTANCE) == 4
 
 
@@ -90,9 +92,27 @@ def test_empty_evidence_is_a_blocker(field: str) -> None:
     assert terrain_blockers(product, audit, plan)
 
 
-def test_unresolved_datum_is_a_blocker() -> None:
+def test_unresolved_datum_is_deferred_not_a_sequence6_blocker() -> None:
     product, audit, plan = evidence()
-    audit["terrain_assessment"]["datum_transform_status"] = "UNRESOLVED"
+    assessment = audit["terrain_assessment"]
+    assessment["datum_transform_status"] = "UNRESOLVED"
+    assessment["local_vertical_datum"] = None
+    assert terrain_blockers(product, audit, plan) == []
+    constraints = terrain_deferred_constraints(audit)
+    assert len(constraints) == 1
+    assert "do not compare" in constraints[0]
+
+
+def test_compatible_srtm_requires_explicit_egm96_compatibility() -> None:
+    product, audit, plan = evidence()
+    audit["terrain_assessment"]["local_vertical_datum"] = "UNKNOWN"
+    messages = terrain_blockers(product, audit, plan)
+    assert any("EGM96" in message for message in messages)
+
+
+def test_unsupported_datum_status_is_a_blocker() -> None:
+    product, audit, plan = evidence()
+    audit["terrain_assessment"]["datum_transform_status"] = "TRANSFORMED"
     assert terrain_blockers(product, audit, plan)
 
 
