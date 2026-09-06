@@ -11,6 +11,7 @@ from floodguard.reconstruction import models as reconstruction_models  # noqa: F
 from floodguard.registry.models import Base
 from floodguard.spatial import models as spatial_models  # noqa: F401
 from floodguard.terrain import models as terrain_models  # noqa: F401
+from floodguard.urban_gis import models as urban_gis_models  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:
