@@ -160,7 +160,9 @@ def collect(base: str, *, run_checks: bool) -> dict[str, Any]:
         or fingerprint is None
         or version.get("source_fingerprint") != fingerprint
     ):
-        blockers.append("Running API source/runtime identity does not match this Sequence 7 checkout.")
+        blockers.append(
+            "Running API source/runtime identity does not match this Sequence 7 checkout."
+        )
 
     readiness = read_json(base, "/urban-gis/readiness?city_id=kolkata")
     if readiness is None:
