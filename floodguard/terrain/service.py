@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import UTC
 from uuid import UUID, uuid5
 
 from floodguard.contracts.time import utc_now
@@ -13,6 +14,7 @@ from floodguard.harvester.contracts import (
     RawObjectRead,
 )
 from floodguard.registry.contracts import SourceCategory, SourceRead
+from floodguard.registry.seed import ESA_SRTM_ID
 from floodguard.spatial.object_store import SpatialObjectExistsError, SpatialObjectStore
 from floodguard.spatial.reference import validate_metric_working_crs
 from floodguard.terrain.assessment import (
@@ -34,6 +36,7 @@ from floodguard.terrain.contracts import (
     ValidationCheckStatus,
     VerticalQuality,
 )
+from floodguard.terrain.download import MAX_SRTM_ZIP_BYTES, SrtmArchive, unpack_srtm
 from floodguard.terrain.grid import (
     artifact_bytes,
     decode_package,
@@ -53,7 +56,7 @@ from floodguard.terrain.srtm import (
 from floodguard.terrain.validation import VerticalEvaluation, evaluate_vertical_controls
 
 TERRAIN_NAMESPACE = UUID("8bb3b744-5f90-4a2b-a2a5-e1a11e8c2c1a")
-TERRAIN_PIPELINE_VERSION = "sequence-6-terrain-v6"
+TERRAIN_PIPELINE_VERSION = "sequence-6-terrain-v7"
 
 
 class TerrainConditioningError(RuntimeError):
@@ -159,10 +162,10 @@ class TerrainService:
 
     def _original_elevation(
         self, package: TerrainPackage, version: DatasetVersionRead, package_object: RawObjectRead
-    ) -> tuple[RawObjectRead, TerrainAssessment | None]:
+    ) -> tuple[RawObjectRead, TerrainAssessment | None, SrtmArchive | None]:
         derivation = package.derivation
         if derivation is None:
-            return package_object, None
+            return package_object, None, None
         candidates = [
             item
             for item in version.objects
@@ -187,6 +190,35 @@ class TerrainService:
             raise TerrainConditioningError(
                 "original elevation bytes do not match the immutable manifest"
             )
+        archive = None
+        if version.source_id == ESA_SRTM_ID:
+            tile_name = original.filename[:7].upper()
+            zip_entries = [
+                item for item in version.objects
+                if item.filename == f"{tile_name}.SRTMGL1.hgt.zip"
+            ]
+            if len(zip_entries) != 1:
+                raise TerrainConditioningError(
+                    "ESA terrain requires its original ZIP manifest entry"
+                )
+            entry = zip_entries[0]
+            if (
+                entry.dataset_version_id != version.dataset_version_id
+                or entry.byte_size > min(MAX_SRTM_ZIP_BYTES, self.max_object_bytes)
+            ):
+                raise TerrainConditioningError("invalid SRTM archive manifest entry")
+            zip_bytes = self.object_store.read_raw(entry.object_key)
+            if len(zip_bytes) != entry.byte_size or sha256(zip_bytes) != entry.sha256:
+                raise TerrainConditioningError("SRTM ZIP bytes do not match the immutable manifest")
+            archive = SrtmArchive(
+                source_url=entry.source_url, filename=entry.filename, payload=zip_bytes,
+                downloaded_at=version.acquired_at.replace(tzinfo=UTC)
+                if version.acquired_at.tzinfo is None else version.acquired_at,
+                etag=entry.etag, last_modified=entry.last_modified,
+            )
+            extracted_name, extracted = unpack_srtm(archive, tile_name)
+            if extracted_name != original.filename or extracted != payload:
+                raise TerrainConditioningError("original HGT does not reproduce the downloaded ZIP")
         tile = decode_hgt(payload, original.filename)
         grid = package.grid
         reproduced = sample_hgt_grid(
@@ -245,7 +277,7 @@ class TerrainService:
             raise TerrainConditioningError(
                 "SRTM package changes require a matching immutable terrain assessment"
             )
-        return original, assessment
+        return original, assessment, archive
 
     def build_from_raw(
         self,
@@ -283,7 +315,7 @@ class TerrainService:
                 "terrain package must be in the configured metric working CRS; "
                 "run the raster reference-system adapter before conditioning"
             )
-        original_elevation, assessment = self._original_elevation(
+        original_elevation, assessment, archive = self._original_elevation(
             package, dataset_version, raw_object
         )
 
@@ -394,6 +426,13 @@ class TerrainService:
             "terrain_assessment": assessment.model_dump(mode="json") if assessment else None,
             "assessment_evidence_verification": (
                 "OPERATOR_ASSERTED_NOT_INDEPENDENTLY_VERIFIED" if assessment else None
+            ),
+            "source_archive": (
+                {
+                    key: value for key, value in archive.provenance().items()
+                    if key != "downloaded_at"
+                }
+                if archive else None
             ),
             "vertical_validation": {
                 "method": validation.method,

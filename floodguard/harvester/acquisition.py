@@ -18,6 +18,7 @@ from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
 
 from floodguard.registry.contracts import AccessMethod, SourceRead
+from floodguard.registry.seed import ESA_SRTM_BASE_URL, ESA_SRTM_ID
 
 
 class AcquisitionError(RuntimeError):
@@ -159,6 +160,15 @@ class AcquisitionPlanner:
         params = parameters or {}
         request_headers = dict(headers or {})
         method = source.access_method
+
+        if source.source_id == ESA_SRTM_ID:
+            tile = params.get("tile")
+            if not isinstance(tile, str) or not re.fullmatch(r"[NS]\d{2}[EW]\d{3}", tile):
+                raise AcquisitionParametersRequired("ESA SRTM acquisition requires one tile name")
+            if source.endpoint != ESA_SRTM_BASE_URL:
+                raise AcquisitionError("ESA SRTM source endpoint does not match the vetted mirror")
+            filename = f"{tile}.SRTMGL1.hgt.zip"
+            return [RemoteRequest(url=ESA_SRTM_BASE_URL + filename, filename=filename)]
 
         if method is AccessMethod.CKAN:
             return self._plan_ckan(source, request_headers)

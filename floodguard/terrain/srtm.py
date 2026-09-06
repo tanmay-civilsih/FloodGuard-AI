@@ -57,6 +57,47 @@ class SrtmTarget(TerrainInput):
         return self
 
 
+class SrtmGridGeometry(TerrainInput):
+    width: int
+    height: int
+    origin_x_m: float
+    origin_y_m: float
+    cell_size_m: float
+    crs: str
+
+
+def target_grid(target: SrtmTarget) -> SrtmGridGeometry:
+    xmin, ymin, xmax, ymax = target.bounds_working
+    step = target.cell_size_m
+    ratios = [value / step for value in (xmin, ymin, xmax, ymax)]
+    if not all(math.isfinite(value) for value in ratios):
+        raise ValueError("pilot grid dimensions exceed the supported range")
+    x_index, y_index = math.floor(ratios[0]), math.floor(ratios[1])
+    width = math.ceil(ratios[2]) - x_index
+    height = math.ceil(ratios[3]) - y_index
+    if width < 1 or height < 1 or width * height > MAX_PILOT_CELLS:
+        raise ValueError(f"pilot grid must contain 1 to {MAX_PILOT_CELLS} cells")
+    return SrtmGridGeometry(
+        width=width, height=height,
+        origin_x_m=x_index * step, origin_y_m=y_index * step,
+        cell_size_m=step, crs=target.working_crs,
+    )
+
+
+def required_srtm_tiles(target: SrtmTarget) -> list[str]:
+    """Trace actual snapped cell centres, including cells beyond the unsnapped pilot bounds."""
+    lon, lat = _wgs84_centres(**target_grid(target).model_dump())
+    west, south = math.floor(float(lon.min())), math.floor(float(lat.min()))
+    east = max(west, math.ceil(float(lon.max())) - 1)
+    north = max(south, math.ceil(float(lat.max())) - 1)
+    if (east - west + 1) * (north - south + 1) > 4:
+        raise ValueError("pilot spans too many SRTM tiles; mosaics are unsupported")
+    return [
+        f"{('N' if y >= 0 else 'S')}{abs(y):02d}{('E' if x >= 0 else 'W')}{abs(x):03d}"
+        for y in range(south, north + 1) for x in range(west, east + 1)
+    ]
+
+
 @dataclass(frozen=True, slots=True)
 class HgtTile:
     west: int
@@ -81,8 +122,7 @@ def decode_hgt(payload: bytes, filename: str) -> HgtTile:
     return HgtTile(west=longitude, south=latitude, elevations=values)
 
 
-def sample_hgt_grid(
-    tile: HgtTile,
+def _wgs84_centres(
     *,
     width: int,
     height: int,
@@ -90,8 +130,7 @@ def sample_hgt_grid(
     origin_y_m: float,
     cell_size_m: float,
     crs: str,
-) -> TerrainGrid:
-    """Select nearest posts at metric cell centres; ties go east/south in source order."""
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     validate_metric_working_crs(crs)
     if width < 1 or height < 1 or width * height > MAX_PILOT_CELLS:
         raise ValueError(f"pilot grid must contain 1 to {MAX_PILOT_CELLS} cells")
@@ -106,10 +145,28 @@ def sample_hgt_grid(
     longitude, latitude = inverse.transform(xx, yy, errcheck=True)
     lon = np.asarray(longitude, dtype=np.float64)
     lat = np.asarray(latitude, dtype=np.float64)
+    if not np.all(np.isfinite(lon)) or not np.all(np.isfinite(lat)):
+        raise ValueError("pilot coordinates do not project to finite WGS84 locations")
+    return lon, lat
+
+
+def sample_hgt_grid(
+    tile: HgtTile,
+    *,
+    width: int,
+    height: int,
+    origin_x_m: float,
+    origin_y_m: float,
+    cell_size_m: float,
+    crs: str,
+) -> TerrainGrid:
+    """Select nearest posts at metric cell centres; ties go east/south in source order."""
+    lon, lat = _wgs84_centres(
+        width=width, height=height, origin_x_m=origin_x_m, origin_y_m=origin_y_m,
+        cell_size_m=cell_size_m, crs=crs,
+    )
     if not (
-        np.all(np.isfinite(lon))
-        and np.all(np.isfinite(lat))
-        and np.all((lon >= tile.west) & (lon <= tile.west + 1))
+        np.all((lon >= tile.west) & (lon <= tile.west + 1))
         and np.all((lat >= tile.south) & (lat <= tile.south + 1))
     ):
         raise ValueError(
@@ -141,23 +198,7 @@ def convert_srtm(
     boundary_reference: str,
 ) -> TerrainPackage:
     tile = decode_hgt(payload, filename)
-    xmin, ymin, xmax, ymax = target.bounds_working
-    step = target.cell_size_m
-    ratios = [value / step for value in (xmin, ymin, xmax, ymax)]
-    if not all(math.isfinite(value) for value in ratios):
-        raise ValueError("pilot grid dimensions exceed the supported range")
-    x_index, y_index = math.floor(ratios[0]), math.floor(ratios[1])
-    width = math.ceil(ratios[2]) - x_index
-    height = math.ceil(ratios[3]) - y_index
-    grid = sample_hgt_grid(
-        tile,
-        width=width,
-        height=height,
-        origin_x_m=x_index * step,
-        origin_y_m=y_index * step,
-        cell_size_m=step,
-        crs=target.working_crs,
-    )
+    grid = sample_hgt_grid(tile, **target_grid(target).model_dump())
     return unassessed_srtm_package(
         tile,
         grid=grid,

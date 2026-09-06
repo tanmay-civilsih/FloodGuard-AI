@@ -296,6 +296,68 @@ immutable review versions, stale-source rejection, corruption failures, dry-run 
 a newer failed review removes an older product's eligibility. These are software benchmarks,
 not real Kolkata terrain evidence.
 
+### Atomic increment 6.7 — automatic public SRTM acquisition
+
+The approved reconstruction now supplies the pilot bounds, working CRS and immutable boundary
+reference automatically. The worker selects the SRTM tile covering the **snapped metric grid's
+sample centres**, checks the registered mirror's automation policy, and retrieves the exact tile
+from [ESA STEP's public SRTMGL1 directory](https://step.esa.int/auxdata/dem/SRTMGL1/).
+ESA's [SNAP guidance](https://forum.step.esa.int/t/how-to-import-an-external-dem-into-snap/18204)
+describes automatic SRTM HGT retrieval. This mirror has its own registry identity; it does not
+change the NASA Earthdata portal's authentication classification. Source seeding preserves any
+operator governance edits. The generic harvester requires an explicit tile for this mirror, so it
+cannot ingest the directory HTML as elevation data.
+
+Only one SRTMGL1 tile is supported per pilot. Requests crossing tile boundaries fail before
+downloading; mosaicking is not implemented. Downloads use a fixed HTTPS origin, no credentials,
+no redirects, a 32 MiB archive ceiling (or smaller configured limit), bounded reads and a 120 s
+elapsed-time check between reads with at most 30 s per socket operation. The archive must contain
+exactly the requested 3601 × 3601 HGT. CRC, member name, byte size and original raster shape are
+checked in memory; archive paths are never extracted. HTML, other tiles and 3 arc-second rasters
+are rejected before any raw version is written.
+
+The raw version retains the exact ZIP and HGT, the derived metric package, and an acquisition
+receipt including URL, acquisition time, SHA-256, byte size, ETag and Last-Modified when supplied.
+Worker builds verify both original objects and reproduce the derived package. Policy version is
+`sequence-6-terrain-v7`. Repeated acquisition verifies and reuses stored bytes; it does not erase an
+assessment or replace a reviewed package with an unassessed one. Changed pilot bounds generate a
+new input version from the cached tile. A pilot approval change during download prevents writes.
+
+After pulling and rebuilding the API (which seeds the new source), run:
+
+```powershell
+docker compose exec -T api python -m floodguard.terrain.acquire_srtm --city-id kolkata --plan
+docker compose exec -T api python -m floodguard.terrain.acquire_srtm --city-id kolkata
+python scripts\verify.py --services
+Start-Process "http://localhost:8000/terrain/qa?city_id=kolkata"
+```
+
+`--dry-run` validates without persisting a raw/terrain version. `--assessment-template` exports
+the same incomplete, hash-bound form as the local importer, using the cached tile where available:
+
+```powershell
+docker compose exec -T api python -m floodguard.terrain.acquire_srtm --assessment-template /tmp/kolkata-auto-assessment.json
+docker compose cp api:/tmp/kolkata-auto-assessment.json "D:\Terrain\kolkata-auto-assessment.json"
+```
+
+After completing the assessment from actual evidence, copy it back into the API container and
+pass `--assessment /tmp/kolkata-auto-reviewed.json --dry-run`, then the same command without
+`--dry-run`. No manual elevation download or access-reference entry is required for this mirror.
+The assessment requirements in increment 6.6 still apply; automatic data acquisition does not
+establish local vertical compatibility, classify urban structures or grant a Sequence 6 freeze.
+
+Tests cover acquisition/reuse, preserved review versions, changed pilot boundaries, rejected
+governance, missing/corrupted originals, bounded transport, malformed archives, snapped tile
+selection and CLI plan/dry-run/review modes. Synthetic terrain fixtures remain explicitly labelled.
+
+On 2026-09-06, a live unauthenticated worker smoke test downloaded `N22E088.SRTMGL1.hgt.zip`,
+retained four immutable input objects in a memory vault backed by SQLite records, and built a
+4 × 4 terrain grid for a 100 m test extent near Kolkata. The original HGT SHA-256 was
+`a33db2996270c1755e283ea376a861ad3edf0e3bd91d238dedf06683a1adc358`. A second acquisition reused
+the same version without downloading. Readiness was `VISUAL_READY` and the completion gate stayed
+false. This checks the real public file and code path; it is not a Docker deployment test or a
+review of the user's approved pilot boundary.
+
 ## Scientific boundary
 
 This checkpoint demonstrates defensible preparation and auditable conditioning logic. It is not a

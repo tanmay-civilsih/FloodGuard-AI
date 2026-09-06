@@ -27,6 +27,8 @@ def seed_id(slug: str) -> UUID:
 
 OSM_GEOFABRIK_ID = seed_id("osm-geofabrik-eastern-zone")
 IMERG_ID = seed_id("nasa-gpm-imerg")
+ESA_SRTM_ID = seed_id("esa-step-srtmgl1")
+ESA_SRTM_BASE_URL = "https://step.esa.int/auxdata/dem/SRTMGL1/"
 
 PROTOTYPE_REQUIRED_CATEGORIES = (
     SourceCategory.DRAINAGE_MAP,
@@ -252,6 +254,37 @@ def kolkata_seed_sources() -> list[SourceCreate]:
                 "https://www.earthdata.nasa.gov/engage/open-data-services-software/data-use-policy"
             ),
             last_verified_at=VERIFIED_AT,
+        ),
+        SourceCreate(
+            source_id=ESA_SRTM_ID,
+            provider="NASA SRTM via ESA STEP public DEM mirror",
+            dataset_name="SRTMGL1 elevation tiles from ESA STEP",
+            city_id="kolkata",
+            category=SourceCategory.ELEVATION,
+            endpoint=ESA_SRTM_BASE_URL,
+            access_method=AccessMethod.HTTP,
+            format="ZIP containing original SRTMGL1 HGT",
+            licence="NASA SRTM open Earth science data; retain the original product citation",
+            redistribution_policy="Preserve NASA attribution, mirror URL and immutable checksums.",
+            automation_allowed=True,
+            access_class=AccessClass.OPEN_AUTOMATED,
+            authentication_type=AuthenticationType.NONE,
+            authority_level=AuthorityLevel.INTERNATIONAL_AGENCY,
+            horizontal_crs="EPSG:4326",
+            vertical_datum="EGM96; local engineering compatibility requires assessment",
+            spatial_resolution="1 arc-second posts; effective information is coarser",
+            temporal_resolution="SRTM acquisition in February 2000; static product",
+            refresh_policy="Acquire only the approved pilot tile; reuse immutable cached versions",
+            fallback_strategy="Retain the last verified copy or explicitly import an original HGT.",
+            status=SourceStatus.AVAILABLE,
+            terms_url="https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance",
+            last_verified_at=datetime(2026, 9, 6, tzinfo=UTC),
+            notes=(
+                "ESA STEP distributes these tiles for SNAP SRTM 1Sec HGT auto-download. "
+                "A bounded tile parameter is required; the directory itself is not elevation data. "
+                "Public N22E088 archive verified without credentials; NASA portal access remains "
+                "a separate source. https://forum.step.esa.int/t/how-to-import-an-external-dem-into-snap/18204"
+            ),
         ),
         SourceCreate(
             source_id=seed_id("copernicus-sentinel-2"),

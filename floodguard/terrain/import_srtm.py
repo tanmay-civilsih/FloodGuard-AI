@@ -4,13 +4,11 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 from pathlib import Path
 
 from floodguard.common.config import get_settings
 from floodguard.harvester.factory import build_harvester_service
 from floodguard.harvester.repository import HarvesterRepository
-from floodguard.reconstruction.contracts import DrainageReconstructionRead, ReconstructionStatus
 from floodguard.reconstruction.repository import ReconstructionRepository
 from floodguard.registry.database import get_session_factory
 from floodguard.registry.seed import seed_id
@@ -23,21 +21,8 @@ from floodguard.terrain.assessment import (
 )
 from floodguard.terrain.factory import build_terrain_service
 from floodguard.terrain.importer import SrtmImportRequest, TerrainInputImporter
-from floodguard.terrain.srtm import SRTM_BYTES, SrtmTarget
-
-
-def select_pilot(
-    records: list[DrainageReconstructionRead], city_id: str, ward_id: str, working_crs: str
-) -> DrainageReconstructionRead:
-    candidates = [item for item in records if item.city_id == city_id and item.ward_id == ward_id]
-    if not candidates:
-        raise ValueError("no reconstruction exists for this pilot ward")
-    latest = max(candidates, key=lambda item: (item.created_at, str(item.reconstruction_id)))
-    if latest.status is not ReconstructionStatus.APPROVED:
-        raise ValueError("the latest pilot reconstruction requires recorded human QA approval")
-    if latest.working_crs != working_crs:
-        raise ValueError("pilot reconstruction does not use the configured working CRS")
-    return latest
+from floodguard.terrain.pilot import select_pilot
+from floodguard.terrain.srtm import SRTM_BYTES, SrtmTarget, required_srtm_tiles
 
 
 def main() -> None:
@@ -91,13 +76,7 @@ def main() -> None:
                 cell_size_m=args.cell_size_m,
             )
             if args.plan:
-                west, south, east, north = pilot.bounds_wgs84
-                tiles = [
-                    f"{('N' if lat >= 0 else 'S')}{abs(lat):02d}"
-                    f"{('E' if lon >= 0 else 'W')}{abs(lon):03d}.hgt"
-                    for lat in range(math.floor(south), math.floor(north) + 1)
-                    for lon in range(math.floor(west), math.floor(east) + 1)
-                ]
+                tiles = [f"{tile}.hgt" for tile in required_srtm_tiles(target)]
                 print(
                     json.dumps(
                         {

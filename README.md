@@ -21,8 +21,9 @@ residuals, and make the QA map's sampling and selected-product status explicit. 
 are not the Sequence 6 freeze; real pilot terrain evidence and service/engineering QA remain required.
 
 The checkpoint accepts a versioned metric `*.terrain.json` package as a small, deterministic
-interchange contract. An explicit local importer can now prepare one from an original SRTMGL1 HGT
-file using the latest approved reconstruction's extent. It does not fabricate a DEM, silently convert DSM to DTM, or
+interchange contract. Automatic acquisition traces the latest approved reconstruction to its
+SRTMGL1 tile on the public ESA STEP mirror, downloads it without login, and prepares the package.
+An explicit local importer also accepts original HGT files. Neither path fabricates a DEM, silently converts DSM to DTM, or
 claim hydraulic validation where vertical observations are unavailable. Sequence 5's real Ward 7
 reconstruction remains available through its human-reviewed QA record.
 
@@ -107,16 +108,20 @@ python scripts/verify.py --reconstruction-bootstrap
 The gate requires the recorded human QA approval for the real reconstruction; it remains a separate
 gate from Sequence 6 terrain readiness.
 
-If no terrain product exists, inspect the real-data input requirements first:
+If no terrain product exists, inspect the automatic acquisition plan, then acquire the pilot tile:
 
 ```bash
-docker compose exec -T api python -m floodguard.terrain.import_srtm --plan
+docker compose exec -T api python -m floodguard.terrain.acquire_srtm --plan
+docker compose exec -T api python -m floodguard.terrain.acquire_srtm --city-id kolkata
 ```
 
-The registered SRTM entry is a portal, not an automatic download adapter. Obtain the required
-original HGT using your authorized access, then follow the **Local PowerShell workflow** in
-[the terrain guide](docs/architecture/sequence-06-terrain-conditioning.md). Planning and dry runs
-write no data; importing creates a provenance-preserving raw version and visual-only terrain.
+This uses a separately registered, unauthenticated ESA mirror; the NASA Earthdata portal's access
+rules remain recorded separately. The worker preserves the ZIP, original HGT, metric package and
+acquisition receipt in an immutable version. Repeating acquisition reuses the verified download and
+preserves completed assessments. `--plan` makes no network request; `--dry-run` may download but
+writes no data. Initial terrain is visual-ready and still needs documented terrain assessments.
+See [automatic acquisition](docs/architecture/sequence-06-terrain-conditioning.md#atomic-increment-67--automatic-public-srtm-acquisition)
+or the guide's **Local PowerShell workflow** for an already downloaded HGT.
 
 Build Sequence 6 products when a versioned terrain package is available:
 

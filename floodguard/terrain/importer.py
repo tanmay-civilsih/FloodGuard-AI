@@ -23,7 +23,7 @@ from floodguard.harvester.service import (
 )
 from floodguard.harvester.vault import RawVault
 from floodguard.registry.contracts import AccessClass, SourceCategory, SourceRead, SourceStatus
-from floodguard.registry.seed import seed_id
+from floodguard.registry.seed import ESA_SRTM_ID, seed_id
 from floodguard.terrain.assessment import (
     ASSESSMENT_FILENAME,
     MAX_ASSESSMENT_BYTES,
@@ -33,6 +33,7 @@ from floodguard.terrain.assessment import (
 )
 from floodguard.terrain.conditioning import condition_package
 from floodguard.terrain.contracts import TerrainBuildResult, TerrainInput
+from floodguard.terrain.download import SrtmArchive, unpack_srtm
 from floodguard.terrain.grid import package_bytes, sha256
 from floodguard.terrain.service import TerrainService
 from floodguard.terrain.srtm import SrtmTarget, convert_srtm
@@ -68,6 +69,8 @@ class ImportObject:
     payload: bytes
     content_type: str
     source_url: str
+    etag: str | None = None
+    last_modified: str | None = None
 
 
 class TerrainInputImporter:
@@ -97,12 +100,15 @@ class TerrainInputImporter:
         *,
         dry_run: bool = False,
         assessment: TerrainAssessment | None = None,
+        archive: SrtmArchive | None = None,
     ) -> SrtmImportResult:
         if (
-            source.source_id != seed_id("nasa-srtmgl1")
+            source.source_id not in {seed_id("nasa-srtmgl1"), ESA_SRTM_ID}
             or source.category is not SourceCategory.ELEVATION
         ):
-            raise ValueError("SRTM importer requires the registered NASA SRTMGL1 source")
+            raise ValueError(
+                "SRTM importer requires a registered NASA SRTMGL1 source or ESA mirror"
+            )
         if source.status is not SourceStatus.AVAILABLE or source.access_class not in {
             AccessClass.OPEN_AUTOMATED,
             AccessClass.OPEN_MANUAL,
@@ -115,6 +121,20 @@ class TerrainInputImporter:
             raise ValueError("import target must match the configured metric working CRS")
         if len(payload) > self.max_object_bytes:
             raise ValueError("original elevation exceeds configured object size limit")
+        if source.source_id == ESA_SRTM_ID:
+            if (
+                not source.automation_allowed
+                or source.access_class is not AccessClass.OPEN_AUTOMATED
+                or archive is None
+            ):
+                raise HarvestAccessError(
+                    "ESA SRTM requires permitted automation and its source ZIP"
+                )
+            extracted_name, extracted = unpack_srtm(archive, request.filename[:7].upper())
+            if extracted_name != request.filename or extracted != payload:
+                raise ValueError("original HGT does not match the downloaded SRTM archive")
+        elif archive is not None:
+            raise ValueError("automated mirror archives must retain the ESA source identity")
         package = convert_srtm(
             payload,
             filename=request.filename,
@@ -145,16 +165,31 @@ class TerrainInputImporter:
             "access_evidence_verification": "OPERATOR_ASSERTED_NOT_INDEPENDENTLY_VERIFIED",
             "network_acquisition_performed": False,
         }
+        if archive is not None:
+            receipt.update({
+                "mode": "AUTOMATED_PUBLIC_MIRROR",
+                "acquisition": archive.provenance(),
+                "network_acquisition_performed": True,
+                "access_evidence_verification": "CURATED_PUBLIC_SOURCE_CONFIGURATION",
+            })
         if encoded_assessment is not None:
             receipt["assessment_sha256"] = sha256(encoded_assessment)
             receipt["base_package_sha256"] = base_package_sha256
         encoded_receipt = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
         derived_url = f"urn:floodguard:derived:srtmgl1:{sha256(payload)}"
         objects = [
-            ImportObject(request.filename, payload, "application/octet-stream", source.endpoint),
+            ImportObject(
+                request.filename, payload, "application/octet-stream",
+                archive.source_url if archive else source.endpoint,
+            ),
             ImportObject("pilot.terrain.json", encoded_package, "application/json", derived_url),
             ImportObject("import-receipt.json", encoded_receipt, "application/json", derived_url),
         ]
+        if archive is not None:
+            objects.append(ImportObject(
+                archive.filename, archive.payload, "application/zip", archive.source_url,
+                etag=archive.etag, last_modified=archive.last_modified,
+            ))
         if encoded_assessment is not None:
             objects.append(
                 ImportObject(
@@ -251,8 +286,8 @@ class TerrainInputImporter:
                         sha256=sha256(item.payload),
                         byte_size=len(item.payload),
                         content_type=item.content_type,
-                        etag=None,
-                        last_modified=None,
+                        etag=item.etag,
+                        last_modified=item.last_modified,
                     )
                 )
             manifest_key = f"{prefix}/manifest.json"
