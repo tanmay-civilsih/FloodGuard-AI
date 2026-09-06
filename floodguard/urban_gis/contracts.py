@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Final, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -10,9 +10,9 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from floodguard.spatial.geometry_validation import validate_geometry
 from floodguard.spatial.reference import validate_metric_working_crs
 
-URBAN_GIS_PACKAGE_VERSION = "sequence-7-urban-gis-v1"
-SURFACE_POLICY_VERSION = "sequence-7-surface-policy-v1"
-ROOF_RUNOFF_POLICY_VERSION = "sequence-7-roof-runoff-v1"
+URBAN_GIS_PACKAGE_VERSION: Final = "sequence-7-urban-gis-v1"
+SURFACE_POLICY_VERSION: Final = "sequence-7-surface-policy-v1"
+ROOF_RUNOFF_POLICY_VERSION: Final = "sequence-7-roof-runoff-v1"
 URBAN_GIS_PIPELINE_VERSION = "sequence-7-urban-gis-v1"
 DEFAULT_ROOF_VOLUME_RELATIVE_TOLERANCE = 1e-9
 
@@ -215,7 +215,10 @@ class UrbanGisPackage(UrbanGisInput):
         if len(set(rule_ids)) != len(rule_ids):
             raise ValueError("each roof may have only one runoff rule")
 
-        for feature in [*self.visual_features, *self.hydraulic_features]:
+        features: list[VisualFeature | HydraulicFeature] = [
+            *self.visual_features, *self.hydraulic_features
+        ]
+        for feature in features:
             validate_geometry(feature.geometry, geographic=False)
             if feature.geometry.get("type") not in {"Polygon", "MultiPolygon"}:
                 raise ValueError("Sequence 7 city surface features must be polygonal")

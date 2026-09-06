@@ -74,3 +74,33 @@ def test_configured_working_crs_must_match_package() -> None:
             service.build(package().model_validate(data))
     finally:
         session.close()
+
+
+@pytest.mark.parametrize(
+    "key_field",
+    ["visual_object_key", "hydraulic_object_key", "roof_runoff_object_key",
+     "qa_object_key", "audit_object_key"],
+)
+@pytest.mark.parametrize("failure", ["corrupted", "missing"])
+def test_invalid_artifact_blocks_readiness_and_reuse(key_field: str, failure: str) -> None:
+    service, session, store = build_service()
+    try:
+        result = service.build(package())
+        record = service.repository.get(result.urban_gis_id)
+        assert record is not None
+        key = getattr(record, key_field)
+        if failure == "missing":
+            del store.spatial_objects[key]
+        else:
+            store.spatial_objects[key] += b" "
+
+        readiness = service.readiness(city_id="kolkata")
+        assert readiness.total_packages == 1
+        assert readiness.eligible_packages == 0
+        assert readiness.technical_development_gate_passed is False
+        assert readiness.final_completion_gate_passed is False
+        with pytest.raises((UrbanGisError, FileNotFoundError)):
+            service.build(package())
+        assert len(service.list_products(city_id="kolkata")) == 1
+    finally:
+        session.close()

@@ -139,6 +139,7 @@ class UrbanGisService:
         )
         existing = self.repository.find_by_fingerprint(fingerprint)
         if existing is not None:
+            self._verify_artifacts(existing)
             return UrbanGisBuildResult(
                 urban_gis_id=existing.urban_gis_id,
                 created=False,
@@ -287,6 +288,7 @@ class UrbanGisService:
             limitations=list(package.limitations),
         )
         persisted, created = self.repository.add(record)
+        self._verify_artifacts(persisted)
         return UrbanGisBuildResult(
             urban_gis_id=persisted.urban_gis_id,
             created=created,
@@ -324,13 +326,26 @@ class UrbanGisService:
             raise UrbanGisError("urban GIS artifact failed its SHA-256 integrity check")
         return payload
 
+    def _verify_artifacts(self, record: UrbanGisRecord) -> None:
+        for kind in ("visual", "hydraulic", "roof-runoff", "qa", "audit"):
+            self.read_artifact(record.urban_gis_id, kind)
+
     def readiness(self, *, city_id: str) -> UrbanGisReadiness:
         all_records = self.repository.list_products(city_id=city_id)
-        records = [
-            record
-            for record in all_records
-            if record.pipeline_version == URBAN_GIS_PIPELINE_VERSION
-        ]
+        records: list[UrbanGisRecord] = []
+        for record in all_records:
+            if (
+                record.pipeline_version != URBAN_GIS_PIPELINE_VERSION
+                or record.working_crs != self.working_crs
+                or not record.domain_ownership_complete
+                or not record.roof_rules_complete
+            ):
+                continue
+            try:
+                self._verify_artifacts(record)
+            except (UrbanGisError, FileNotFoundError):
+                continue
+            records.append(record)
         counts = {status: 0 for status in UrbanGisReadinessStatus}
         for record in records:
             counts[UrbanGisReadinessStatus(record.readiness_status)] += 1

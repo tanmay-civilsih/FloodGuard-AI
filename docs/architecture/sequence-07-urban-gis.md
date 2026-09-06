@@ -118,6 +118,11 @@ urban-gis/{city_id}/{pilot_area_id}/{urban_gis_id}/
 
 Every artifact SHA-256 is stored in `urban_gis_products`. Reads recompute the checksum and fail closed on corruption. Rebuilding an identical package is idempotent.
 
+Readiness verifies all five stored artifacts before counting a current-pipeline package as
+eligible. Missing or corrupted artifacts remove that package from readiness, while retaining its
+historical database record. Reuse also verifies all artifacts and cannot silently recreate missing
+objects or return success for corrupted bytes. New builds read back their persisted artifacts.
+
 The audit records:
 
 - pipeline/fingerprint;
@@ -189,6 +194,10 @@ python scripts/sequence7_development_gate.py --run-checks
 ```
 
 The gate requires static/type/test checks, service health, Sequence 7 API identity, current-pipeline reference readiness, immutable object storage and source/runtime identity. Real-pilot visual classification, hydraulic class/domain review and roof receiving-target acceptance remain in the Sequence 20 human-review register.
+
+The gate rechecks the source fingerprint, commit and clean worktree after verification. Evidence
+collected across a source/commit change cannot qualify for a technical freeze. CLI regression tests
+write reports into isolated temporary directories, preserving operator evidence.
 
 ## Explicit limitations at technical freeze
 

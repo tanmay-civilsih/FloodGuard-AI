@@ -71,7 +71,7 @@ def urban_readiness_blockers(readiness: dict[str, Any]) -> list[str]:
     ready_total = 0
     for field in ("reference_ready", "provisional_real_ready", "reviewed_real_ready"):
         value = readiness.get(field)
-        if not isinstance(value, int):
+        if type(value) is not int or value < 0:
             blockers.append(f"Sequence 7 readiness field {field} is invalid.")
         else:
             ready_total += value
@@ -170,6 +170,26 @@ def collect(base: str, *, run_checks: bool) -> dict[str, Any]:
     else:
         blockers.extend(urban_readiness_blockers(readiness))
         report["urban_gis_readiness"] = readiness
+
+    if fingerprint is not None:
+        try:
+            if source_fingerprint(ROOT) != fingerprint:
+                blockers.append("Release source changed during the development gate.")
+        except (OSError, ValueError):
+            blockers.append("Release source became unavailable during the development gate.")
+    if report.get("repository_commit"):
+        try:
+            commit_after = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, stderr=subprocess.DEVNULL
+            ).strip()
+            dirty_after = subprocess.check_output(
+                ["git", "status", "--porcelain"], cwd=ROOT, text=True,
+                stderr=subprocess.DEVNULL,
+            ).strip()
+            if commit_after != report["repository_commit"] or dirty_after:
+                blockers.append("Git checkout changed or became dirty during the development gate.")
+        except (OSError, subprocess.CalledProcessError):
+            blockers.append("Git evidence became unavailable during the development gate.")
 
     report["technical_blockers"] = list(dict.fromkeys(blockers))
     passed = not report["technical_blockers"]

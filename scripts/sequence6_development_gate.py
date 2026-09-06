@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
-from scripts.sequence6_preflight import collect, validate_base_url
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 HUMAN_REVIEW_SEQUENCE = 20
 HUMAN_TERRAIN_PREFIXES = (
@@ -88,6 +89,8 @@ def classify_for_development(preflight: dict[str, Any]) -> dict[str, Any]:
 
 
 def main() -> None:
+    from scripts.sequence6_preflight import collect, validate_base_url
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-url", default="http://localhost:8000")
     parser.add_argument("--city-id", default="kolkata")
