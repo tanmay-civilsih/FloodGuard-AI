@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -32,6 +33,8 @@ def _as_increasing_edges(
     edges = np.asarray(values, dtype=np.float64)
     if edges.ndim != 1 or edges.size < 2:
         raise ValueError(f"{name} must be a one-dimensional edge array")
+    if not np.all(np.isfinite(edges)) or not np.all(np.isfinite(np.diff(edges))):
+        raise ValueError(f"{name} and cell widths must be finite")
     if not np.all(np.diff(edges) > 0):
         raise ValueError(f"{name} must be strictly increasing")
     return edges
@@ -45,9 +48,25 @@ def _as_increasing_centers(
     centers = np.asarray(values, dtype=np.float64)
     if centers.ndim != 1 or centers.size < 1:
         raise ValueError(f"{name} must be a one-dimensional center array")
+    if not np.all(np.isfinite(centers)):
+        raise ValueError(f"{name} must be finite")
     if centers.size > 1 and not np.all(np.diff(centers) > 0):
         raise ValueError(f"{name} must be strictly increasing")
     return centers
+
+
+def _require_supported_centers(source: FloatArray, target: FloatArray, *, name: str) -> None:
+    # These contracts contain centres, not footprint edges; do not infer edge support.
+    if target[0] < source[0] or target[-1] > source[-1]:
+        raise ValueError(f"{name} lies outside the source centre domain; extrapolation is disabled")
+
+
+def _cell_areas(x_edges: FloatArray, y_edges: FloatArray) -> FloatArray:
+    with np.errstate(over="ignore", invalid="ignore"):
+        areas = np.diff(y_edges)[:, np.newaxis] * np.diff(x_edges)[np.newaxis, :]
+    if not np.all(np.isfinite(areas)) or np.any(areas <= 0):
+        raise ValueError("cell areas must be finite and positive")
+    return areas
 
 
 def nearest_resample_categorical(
@@ -65,6 +84,8 @@ def nearest_resample_categorical(
     dy = _as_increasing_centers(destination_y, name="destination_y")
     if data.shape != (sy.size, sx.size):
         raise ValueError("categorical array shape must equal (len(source_y), len(source_x))")
+    _require_supported_centers(sx, dx, name="destination_x")
+    _require_supported_centers(sy, dy, name="destination_y")
     x_indices = np.abs(sx[np.newaxis, :] - dx[:, np.newaxis]).argmin(axis=1)
     y_indices = np.abs(sy[np.newaxis, :] - dy[:, np.newaxis]).argmin(axis=1)
     return data[np.ix_(y_indices, x_indices)]
@@ -79,7 +100,11 @@ def bilinear_resample_elevation(
     *,
     source_uncertainty_m: float | None,
 ) -> ElevationRemap:
-    """Bilinear-like rectilinear interpolation while carrying source uncertainty unchanged."""
+    """Interpolate finite in-domain centres; reject nodata and all extrapolation.
+
+    Source uncertainty is retained, not interpreted as validated interpolation error.
+    Masked/nodata rasters require an explicit adapter before using this utility.
+    """
     data = np.asarray(elevation_m, dtype=np.float64)
     sx = _as_increasing_centers(source_x, name="source_x")
     sy = _as_increasing_centers(source_y, name="source_y")
@@ -87,13 +112,21 @@ def bilinear_resample_elevation(
     dy = _as_increasing_centers(destination_y, name="destination_y")
     if data.shape != (sy.size, sx.size):
         raise ValueError("elevation array shape must equal (len(source_y), len(source_x))")
-    if source_uncertainty_m is not None and source_uncertainty_m < 0:
-        raise ValueError("source_uncertainty_m must be non-negative")
+    if not np.all(np.isfinite(data)):
+        raise ValueError("elevation values must be finite; nodata requires an explicit adapter")
+    if source_uncertainty_m is not None and (
+        not math.isfinite(source_uncertainty_m) or source_uncertainty_m < 0
+    ):
+        raise ValueError("source_uncertainty_m must be finite and non-negative")
+    _require_supported_centers(sx, dx, name="destination_x")
+    _require_supported_centers(sy, dy, name="destination_y")
 
     x_interpolated = np.vstack([np.interp(dx, sx, row) for row in data])
     output = np.vstack(
         [np.interp(dy, sy, x_interpolated[:, column]) for column in range(dx.size)]
     ).T
+    if not np.all(np.isfinite(output)):
+        raise ValueError("elevation interpolation produced non-finite values")
     return ElevationRemap(output.astype(np.float64), source_uncertainty_m)
 
 
@@ -105,8 +138,8 @@ def rainfall_volume_m3(
     timestep_seconds: float,
 ) -> float:
     """Area-integrated rainfall volume for one or more equal-duration timesteps."""
-    if timestep_seconds <= 0:
-        raise ValueError("timestep_seconds must be positive")
+    if not math.isfinite(timestep_seconds) or timestep_seconds <= 0:
+        raise ValueError("timestep_seconds must be finite and positive")
     x_edges = _as_increasing_edges(x_edges_m, name="x_edges_m")
     y_edges = _as_increasing_edges(y_edges_m, name="y_edges_m")
     rates = np.asarray(rain_rate_mm_h, dtype=np.float64)
@@ -114,11 +147,17 @@ def rainfall_volume_m3(
         rates = rates[np.newaxis, :, :]
     if rates.ndim != 3 or rates.shape[1:] != (y_edges.size - 1, x_edges.size - 1):
         raise ValueError("rainfall shape must be (time, y_cells, x_cells) or (y_cells, x_cells)")
+    if rates.shape[0] == 0:
+        raise ValueError("rainfall requires at least one timestep")
     if np.any(rates < 0) or not np.all(np.isfinite(rates)):
         raise ValueError("rainfall rates must be finite and non-negative")
-    cell_area = np.diff(y_edges)[:, np.newaxis] * np.diff(x_edges)[np.newaxis, :]
-    volume_per_timestep = (rates / (1000.0 * 3600.0)) * cell_area * timestep_seconds
-    return float(np.sum(volume_per_timestep, dtype=np.float64))
+    cell_area = _cell_areas(x_edges, y_edges)
+    with np.errstate(over="ignore", invalid="ignore"):
+        volume_per_timestep = (rates / (1000.0 * 3600.0)) * cell_area * timestep_seconds
+        volume = float(np.sum(volume_per_timestep, dtype=np.float64))
+    if not math.isfinite(volume):
+        raise ValueError("rainfall volume exceeds the finite numerical range")
+    return volume
 
 
 def _overlap_matrix(destination_edges: FloatArray, source_edges: FloatArray) -> FloatArray:
@@ -149,16 +188,23 @@ def conservative_remap_rainfall(
     timestep_seconds: float,
     tolerance: float,
 ) -> RainfallRemap:
-    """Conservative rectilinear rainfall remapping using cell-overlap areas."""
-    if tolerance < 0:
-        raise ValueError("tolerance must be non-negative")
+    """Conservative remapping on exactly matching, finite metric footprints.
+
+    Boundary edges must be canonical and identical. No coordinate-relative tolerance,
+    implicit grid snapping or zero rainfall outside source coverage is permitted.
+    ``tolerance`` is dimensionless and applies only to the volume diagnostic.
+    """
+    if not math.isfinite(tolerance) or tolerance < 0:
+        raise ValueError("tolerance must be finite and non-negative")
+    if not math.isfinite(timestep_seconds) or timestep_seconds <= 0:
+        raise ValueError("timestep_seconds must be finite and positive")
     sx = _as_increasing_edges(source_x_edges_m, name="source_x_edges_m")
     sy = _as_increasing_edges(source_y_edges_m, name="source_y_edges_m")
     dx = _as_increasing_edges(destination_x_edges_m, name="destination_x_edges_m")
     dy = _as_increasing_edges(destination_y_edges_m, name="destination_y_edges_m")
     source_extent = [sx[0], sx[-1], sy[0], sy[-1]]
     destination_extent = [dx[0], dx[-1], dy[0], dy[-1]]
-    if not np.allclose(source_extent, destination_extent):
+    if not np.array_equal(source_extent, destination_extent):
         raise ValueError("source and destination rainfall grids must cover the same domain")
 
     rates = np.asarray(rain_rate_mm_h, dtype=np.float64)
@@ -167,12 +213,14 @@ def conservative_remap_rainfall(
         rates = rates[np.newaxis, :, :]
     if rates.ndim != 3 or rates.shape[1:] != (sy.size - 1, sx.size - 1):
         raise ValueError("rainfall shape must match the source grid")
+    if rates.shape[0] == 0:
+        raise ValueError("rainfall requires at least one timestep")
     if np.any(rates < 0) or not np.all(np.isfinite(rates)):
         raise ValueError("rainfall rates must be finite and non-negative")
 
     x_overlap = _overlap_matrix(dx, sx)
     y_overlap = _overlap_matrix(dy, sy)
-    destination_area = np.diff(dy)[:, np.newaxis] * np.diff(dx)[np.newaxis, :]
+    destination_area = _cell_areas(dx, dy)
     output = np.zeros(
         (rates.shape[0], dy.size - 1, dx.size - 1),
         dtype=np.float64,
