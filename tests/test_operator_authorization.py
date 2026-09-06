@@ -38,7 +38,9 @@ def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
 def test_read_only_qa_remains_available_without_credentials(
     client: TestClient, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.delenv("FLOODGUARD_OPERATORS_JSON")
+    # Use an explicit empty environment value so a developer's real .env cannot leak
+    # into this negative test through pydantic-settings' env_file fallback.
+    monkeypatch.setenv("FLOODGUARD_OPERATORS_JSON", "")
     assert client.get("/health").status_code == 200
     assert client.post("/terrain/acquisitions").status_code == 503
 
