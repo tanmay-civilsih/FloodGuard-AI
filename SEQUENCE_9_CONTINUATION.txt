@@ -15,7 +15,8 @@ twins recreated in an empty database. The complete gate has one blocker: DATA-08
 
 NOT FROZEN. No genuine real source-bound adjacent-ward path and documented downstream destination
 exists. This is an objective Sequence 9 requirement, not human-only acceptance deferred to Sequence 20.
-Do not mark Sequence 9 frozen, start Sequence 10, create review identities, invent source bindings,
+Sequence 10 was subsequently authorized by the owner; read SEQUENCE_10_STATUS.md for that scope.
+Do not mark Sequence 9 frozen, create review identities, invent source bindings,
 assign unverified IVL labels, fabricate outlet geometry, or substitute reference geography.
 
 Current committed-source twin IDs:

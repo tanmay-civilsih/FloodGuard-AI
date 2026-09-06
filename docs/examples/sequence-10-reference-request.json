@@ -1,0 +1,177 @@
+{
+  "twin_id": "0d72c671-314e-5753-a015-cf26cf260377",
+  "issue_time": "2026-09-06T00:00:00Z",
+  "valid_from": "2026-09-06T00:00:00Z",
+  "valid_to": "2026-09-06T03:00:00Z",
+  "target_grid": {
+    "horizontal_crs": "EPSG:32645",
+    "x_edges_m": [
+      299990.0,
+      300000.0,
+      300010.0,
+      300020.0,
+      300030.0,
+      300040.0,
+      300050.0,
+      300060.0,
+      300070.0,
+      300080.0,
+      300090.0,
+      300100.0,
+      300110.0
+    ],
+    "y_edges_m": [
+      2499990.0,
+      2500000.0,
+      2500010.0,
+      2500020.0,
+      2500030.0,
+      2500040.0,
+      2500050.0,
+      2500060.0,
+      2500070.0
+    ]
+  },
+  "forecast": {
+    "rain": {
+      "mode": "SYNTHETIC",
+      "issue_time": "2026-09-06T00:00:00Z",
+      "time_edges": [
+        "2026-09-06T00:00:00Z",
+        "2026-09-06T01:00:00Z",
+        "2026-09-06T02:00:00Z",
+        "2026-09-06T03:00:00Z"
+      ],
+      "grid": {
+        "horizontal_crs": "EPSG:32645",
+        "x_edges_m": [
+          299990.0,
+          300050.0,
+          300110.0
+        ],
+        "y_edges_m": [
+          2499990.0,
+          2500030.0,
+          2500070.0
+        ]
+      },
+      "native_spatial_resolution_m": 60.0,
+      "effective_spatial_resolution_m": 60.0,
+      "source": {
+        "source": "reference://sequence-10",
+        "version": "v1",
+        "sha256": "2604749f37ff38528144dfe4b6d7c7faa10a0a5a183db3ddbdbeff914ddaa88c",
+        "quality": "SYNTHETIC",
+        "method": "Controlled 20 mm/h rectangular storm and declared reference stage/control."
+      },
+      "processing_lineage": [],
+      "ensemble_definition": "Single controlled deterministic member.",
+      "members": [
+        {
+          "member_id": "deterministic",
+          "rain_rate_mm_h": [
+            [
+              [
+                20.0,
+                20.0
+              ],
+              [
+                20.0,
+                20.0
+              ]
+            ],
+            [
+              [
+                20.0,
+                20.0
+              ],
+              [
+                20.0,
+                20.0
+              ]
+            ],
+            [
+              [
+                20.0,
+                20.0
+              ],
+              [
+                20.0,
+                20.0
+              ]
+            ]
+          ]
+        }
+      ],
+      "units": "mm/h",
+      "temporal_interpretation": "INTERVAL_MEAN"
+    },
+    "boundaries": [
+      {
+        "boundary_id": "outfall",
+        "kind": "OUTFALL_STAGE",
+        "time": [
+          "2026-09-06T00:00:00Z",
+          "2026-09-06T01:00:00Z",
+          "2026-09-06T02:00:00Z",
+          "2026-09-06T03:00:00Z"
+        ],
+        "stage_m": [
+          1.0,
+          1.1,
+          1.2,
+          1.3
+        ],
+        "vertical_datum": "SYNTHETIC_REFERENCE_DATUM",
+        "vertical_unit": "m",
+        "vertical_transform_status": "COMPATIBLE",
+        "target_vertical_datum": null,
+        "vertical_offset_m": null,
+        "transform_method": null,
+        "interpolation_method": "LINEAR",
+        "source": {
+          "source": "reference://sequence-10",
+          "version": "v1",
+          "sha256": "2604749f37ff38528144dfe4b6d7c7faa10a0a5a183db3ddbdbeff914ddaa88c",
+          "quality": "SYNTHETIC",
+          "method": "Controlled 20 mm/h rectangular storm and declared reference stage/control."
+        }
+      }
+    ],
+    "controls": [
+      {
+        "asset_id": "pump",
+        "asset_kind": "PUMP",
+        "control_kind": "DISCRETE_STATE",
+        "time": [
+          "2026-09-06T00:00:00Z",
+          "2026-09-06T01:00:00Z",
+          "2026-09-06T02:00:00Z",
+          "2026-09-06T03:00:00Z"
+        ],
+        "operating_state": [
+          "ON",
+          "OFF",
+          "OFF",
+          "ON"
+        ],
+        "control_value": [
+          1.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "interpolation_method": "STEP_HOLD",
+        "source": {
+          "source": "reference://sequence-10",
+          "version": "v1",
+          "sha256": "2604749f37ff38528144dfe4b6d7c7faa10a0a5a183db3ddbdbeff914ddaa88c",
+          "quality": "SYNTHETIC",
+          "method": "Controlled 20 mm/h rectangular storm and declared reference stage/control."
+        }
+      }
+    ]
+  },
+  "antecedent": null,
+  "antecedent_missing_reason": "Forcing reference only; no hydraulic initial state inferred."
+}

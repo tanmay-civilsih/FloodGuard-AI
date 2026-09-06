@@ -10,14 +10,18 @@ Development is governed by:
 
 ## Current milestone
 
-**Sequence 9 - Versioned Urban Digital Twin Builder (v0.9)**
+**Sequence 10 - Dynamic Forcing Service (v1.0)**
 
-Sequence 9 implementation and deployed assembly validation passed on `6477175` (671 tests,
-136 type-checked files, 21 HTTP artifact checks, independent twin recreation). The twin builder fixes
-exact component versions in an immutable manifest and can recreate a twin without upstream latest
-lookups. The aligned reference is scenario-ready and the actual Ward 7 snapshot is VISUAL_ONLY.
-**Sequence 9 is not frozen:** the genuine real adjacent-ward drainage requirement DATA-08-01 remains
-open. See `SEQUENCE_9_STATUS.md` and `docs/architecture/sequence-09-twin-builder.md`.
+Sequence 10 implements immutable forcing packages bound to an exact twin: interval rainfall stored
+as Xarray/Zarr, dynamic stage boundaries, pump controls and explicit antecedent availability.
+Replay, synthetic and externally prepared forecast inputs use conservative remapping, declared
+interpolation and exact horizon coverage. A short forecast cannot be silently extended. See
+`SEQUENCE_10_STATUS.md` and `docs/architecture/sequence-10-forcing.md` for validation and limitations.
+
+The owner explicitly authorized Sequence 10 implementation after the Sequence 9 blocker report.
+**Sequence 9 remains NOT_FROZEN:** DATA-08-01 still requires genuine source-bound real drainage
+across adjacent wards to a documented destination. Reference forcing does not close that gate.
+Sequence 9's prior implementation/assembly validation is retained in `SEQUENCE_9_STATUS.md`.
 
 Sequence 8 is technically frozen on validated source `de6cce9`; see `SEQUENCE_8_STATUS.md`.
 Final human engineering acceptance remains pending Sequence 20.

@@ -1,4 +1,4 @@
-"""Local verification entry point through Sequence 9."""
+"""Local verification entry point through Sequence 10."""
 
 from __future__ import annotations
 
@@ -41,6 +41,8 @@ def verify_files() -> None:
         ROOT / "migrations" / "versions" / "0006_sequence_7_urban_gis.py",
         ROOT / "migrations" / "versions" / "0007_sequence_8_drain_model.py",
         ROOT / "migrations" / "versions" / "0008_sequence_9_twin.py",
+        ROOT / "migrations" / "versions" / "0009_sequence_10_forcing.py",
+        ROOT / "floodguard" / "forcing" / "service.py",
         ROOT / "floodguard" / "twin" / "service.py",
         ROOT / "floodguard" / "drainage" / "service.py",
         ROOT / "floodguard" / "drainage" / "qa_viewer.py",
@@ -151,9 +153,13 @@ def verify_services() -> None:
         raise SystemExit("API health response is not ok")
     print("OK API /health")
 
+    if get_json("http://localhost:8000/ready").get("status") != "ready":
+        raise SystemExit("API dependencies/schema are not ready")
+    print("OK API /ready and current migration head")
+
     version = get_json("http://localhost:8000/version")
-    if version.get("sequence") != 9 or version.get("version") != "0.9.0":
-        raise SystemExit("API is not serving FloodGuard-AI Sequence 9 / v0.9.0")
+    if version.get("sequence") != 10 or version.get("version") != "1.0.0":
+        raise SystemExit("API is not serving FloodGuard-AI Sequence 10 / v1.0.0")
     print("OK API /version")
 
     registry = get_json("http://localhost:8000/registry/readiness")
@@ -426,7 +432,7 @@ def main() -> None:
     parser.add_argument(
         "--services",
         action="store_true",
-        help="also verify the running Docker Compose platform and APIs through Sequence 9",
+        help="also verify the running Docker Compose platform and APIs through Sequence 10",
     )
     parser.add_argument(
         "--bootstrap",
@@ -472,6 +478,10 @@ def main() -> None:
         action="store_true",
         help="build and recreate reference and exact provisional pilot twins",
     )
+    parser.add_argument(
+        "--forcing-bootstrap", action="store_true",
+        help="build the controlled forcing benchmark and verify empty-registry recreation",
+    )
     args = parser.parse_args()
 
     verify_python()
@@ -486,6 +496,7 @@ def main() -> None:
         or args.urban_gis_bootstrap
         or args.drainage_bootstrap
         or args.twin_bootstrap
+        or args.forcing_bootstrap
     ):
         verify_services()
         verify_drainage()
@@ -507,8 +518,18 @@ def main() -> None:
     if args.twin_bootstrap:
         run_twin_bootstrap_gate()
 
-    print("Software verification through Sequence 9 PASSED")
-    if args.twin_bootstrap:
+    if args.forcing_bootstrap:
+        run(["docker", "compose", "exec", "-T", "api", "python", "-m",
+             "floodguard.forcing.bootstrap"])
+        forcing = get_json("http://localhost:8000/forcing/readiness?city_id=kolkata")
+        if forcing.get("assembly_development_gate_passed") is not True:
+            raise SystemExit("Sequence 10 forcing assembly is not ready")
+
+    print("Software verification through Sequence 10 PASSED")
+    if args.forcing_bootstrap:
+        print("Sequence 10 forcing assembly software gate PASSED")
+        print("Inherited Sequence 9 DATA-08-01 and final human acceptance remain explicit.")
+    elif args.twin_bootstrap:
         print("Sequence 9 twin assembly software gate PASSED")
         print("Sequence freeze also requires the genuine real cross-ward gate.")
     elif args.drainage_bootstrap:

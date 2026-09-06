@@ -124,3 +124,18 @@ Sequence 9 verified assembly anchors (6 September 2026):
 These anchors do not close any human review or the real two-ward requirement. A supplied real graph
 and revised pilot/component selection create a new immutable twin, which must become the target
 of subsequent engineering acceptance.
+
+## Sequence 10 - Forcing packages
+
+The owner explicitly authorized Sequence 10 development after the Sequence 9 DATA-08-01 report.
+That sequencing exception does not close the objective real drainage requirement.
+
+- HR-10-01 PENDING: accept exact real rainfall source, issue/support times, native/effective
+  resolution, processing lineage and meteorological limitations.
+- HR-10-02 PENDING: accept real boundary datum transformations, stage source, interpolation,
+  operational asset binding and control semantics against exact immutable versions.
+- HR-10-03 PENDING: accept antecedent adequacy and downstream initialization assumptions when a
+  real hydraulic workflow exists. Missing history does not imply a dry initial state.
+
+Controlled synthetic forcing and prepared-source test doubles establish software behavior only.
+No operational forecast, meteorological validation, reviewer identity or sign-off is claimed.

@@ -11,7 +11,8 @@ The versioned twin builder is implemented, locally deployed and verified end to 
 Its complete clean-commit gate has exactly one freeze blocker: DATA-08-01. A genuine real
 source-bound drainage path across adjacent wards to a defensible destination is still absent.
 This objective data/model requirement cannot be deferred to Sequence 20 with human-only review.
-Sequence 9 is therefore not marked TECHNICAL_DEVELOPMENT_FROZEN and Sequence 10 has not begun.
+Sequence 9 is therefore not marked TECHNICAL_DEVELOPMENT_FROZEN. The owner subsequently
+authorized Sequence 10 implementation after this blocker was reported; see SEQUENCE_10_STATUS.md.
 
 ## Validated implementation and evidence
 
@@ -109,7 +110,8 @@ The existing repository evidence contains no supplied real binding plan that can
    remains pending Sequence 20 under HR-08 and HR-09; no later scientific validation is inferred.
 
 The exact pilot selection and schemas are in `docs/examples/`. A concise fresh-chat handoff is
-`SEQUENCE_9_CONTINUATION.txt`. This work did not start Sequence 10 or change the frozen plan.
+`SEQUENCE_9_CONTINUATION.txt`. The original Sequence 9 task did not start Sequence 10 or change the frozen plan. The subsequent
+owner-authorized development exception is recorded in SEQUENCE_10_STATUS.md.
 
 ## Repository/deployment boundary
 

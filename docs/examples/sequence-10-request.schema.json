@@ -1,0 +1,516 @@
+{
+  "$defs": {
+    "BoundarySeries": {
+      "additionalProperties": false,
+      "properties": {
+        "boundary_id": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Boundary Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "RIVER_STAGE",
+            "CANAL_STAGE",
+            "TIDE_LEVEL",
+            "OUTFALL_STAGE"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "time": {
+          "items": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "maxItems": 10001,
+          "minItems": 2,
+          "title": "Time",
+          "type": "array"
+        },
+        "stage_m": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 10001,
+          "minItems": 2,
+          "title": "Stage M",
+          "type": "array"
+        },
+        "vertical_datum": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Vertical Datum",
+          "type": "string"
+        },
+        "vertical_unit": {
+          "const": "m",
+          "default": "m",
+          "title": "Vertical Unit",
+          "type": "string"
+        },
+        "vertical_transform_status": {
+          "enum": [
+            "COMPATIBLE",
+            "TRANSFORMED",
+            "UNRESOLVED"
+          ],
+          "title": "Vertical Transform Status",
+          "type": "string"
+        },
+        "target_vertical_datum": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Vertical Datum"
+        },
+        "vertical_offset_m": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Vertical Offset M"
+        },
+        "transform_method": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Transform Method"
+        },
+        "interpolation_method": {
+          "enum": [
+            "LINEAR",
+            "STEP_HOLD"
+          ],
+          "title": "Interpolation Method",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/Source"
+        }
+      },
+      "required": [
+        "boundary_id",
+        "kind",
+        "time",
+        "stage_m",
+        "vertical_datum",
+        "vertical_transform_status",
+        "interpolation_method",
+        "source"
+      ],
+      "title": "BoundarySeries",
+      "type": "object"
+    },
+    "ControlSeries": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_id": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "asset_kind": {
+          "enum": [
+            "PUMP",
+            "GATE",
+            "SLUICE"
+          ],
+          "title": "Asset Kind",
+          "type": "string"
+        },
+        "control_kind": {
+          "enum": [
+            "DISCRETE_STATE",
+            "CONTINUOUS_FRACTION"
+          ],
+          "title": "Control Kind",
+          "type": "string"
+        },
+        "time": {
+          "items": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "maxItems": 10001,
+          "minItems": 2,
+          "title": "Time",
+          "type": "array"
+        },
+        "operating_state": {
+          "items": {
+            "enum": [
+              "ON",
+              "OFF",
+              "AVAILABLE",
+              "UNAVAILABLE",
+              "OPEN",
+              "CLOSED"
+            ],
+            "type": "string"
+          },
+          "title": "Operating State",
+          "type": "array"
+        },
+        "control_value": {
+          "items": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "title": "Control Value",
+          "type": "array"
+        },
+        "interpolation_method": {
+          "enum": [
+            "LINEAR",
+            "STEP_HOLD"
+          ],
+          "title": "Interpolation Method",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/Source"
+        }
+      },
+      "required": [
+        "asset_id",
+        "asset_kind",
+        "control_kind",
+        "time",
+        "operating_state",
+        "control_value",
+        "interpolation_method",
+        "source"
+      ],
+      "title": "ControlSeries",
+      "type": "object"
+    },
+    "ForcingWindow": {
+      "additionalProperties": false,
+      "properties": {
+        "rain": {
+          "$ref": "#/$defs/RainInput"
+        },
+        "boundaries": {
+          "items": {
+            "$ref": "#/$defs/BoundarySeries"
+          },
+          "maxItems": 1000,
+          "title": "Boundaries",
+          "type": "array"
+        },
+        "controls": {
+          "items": {
+            "$ref": "#/$defs/ControlSeries"
+          },
+          "maxItems": 1000,
+          "title": "Controls",
+          "type": "array"
+        }
+      },
+      "required": [
+        "rain"
+      ],
+      "title": "ForcingWindow",
+      "type": "object"
+    },
+    "Grid": {
+      "additionalProperties": false,
+      "properties": {
+        "horizontal_crs": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Horizontal Crs",
+          "type": "string"
+        },
+        "x_edges_m": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 2049,
+          "minItems": 2,
+          "title": "X Edges M",
+          "type": "array"
+        },
+        "y_edges_m": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 2049,
+          "minItems": 2,
+          "title": "Y Edges M",
+          "type": "array"
+        }
+      },
+      "required": [
+        "horizontal_crs",
+        "x_edges_m",
+        "y_edges_m"
+      ],
+      "title": "Grid",
+      "type": "object"
+    },
+    "Mode": {
+      "enum": [
+        "SYNTHETIC",
+        "REPLAY",
+        "EXTERNAL_FORECAST",
+        "RADAR_NOWCAST",
+        "RADAR_NWP_BLEND"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "RainInput": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "$ref": "#/$defs/Mode"
+        },
+        "issue_time": {
+          "format": "date-time",
+          "title": "Issue Time",
+          "type": "string"
+        },
+        "time_edges": {
+          "items": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "maxItems": 1001,
+          "minItems": 2,
+          "title": "Time Edges",
+          "type": "array"
+        },
+        "grid": {
+          "$ref": "#/$defs/Grid"
+        },
+        "native_spatial_resolution_m": {
+          "exclusiveMinimum": 0,
+          "title": "Native Spatial Resolution M",
+          "type": "number"
+        },
+        "effective_spatial_resolution_m": {
+          "exclusiveMinimum": 0,
+          "title": "Effective Spatial Resolution M",
+          "type": "number"
+        },
+        "source": {
+          "$ref": "#/$defs/Source"
+        },
+        "processing_lineage": {
+          "items": {
+            "$ref": "#/$defs/Source"
+          },
+          "maxItems": 20,
+          "title": "Processing Lineage",
+          "type": "array"
+        },
+        "ensemble_definition": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Ensemble Definition",
+          "type": "string"
+        },
+        "members": {
+          "items": {
+            "$ref": "#/$defs/RainMember"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Members",
+          "type": "array"
+        },
+        "units": {
+          "const": "mm/h",
+          "default": "mm/h",
+          "title": "Units",
+          "type": "string"
+        },
+        "temporal_interpretation": {
+          "const": "INTERVAL_MEAN",
+          "default": "INTERVAL_MEAN",
+          "title": "Temporal Interpretation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mode",
+        "issue_time",
+        "time_edges",
+        "grid",
+        "native_spatial_resolution_m",
+        "effective_spatial_resolution_m",
+        "source",
+        "ensemble_definition",
+        "members"
+      ],
+      "title": "RainInput",
+      "type": "object"
+    },
+    "RainMember": {
+      "additionalProperties": false,
+      "properties": {
+        "member_id": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Member Id",
+          "type": "string"
+        },
+        "rain_rate_mm_h": {
+          "items": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "title": "Rain Rate Mm H",
+          "type": "array"
+        }
+      },
+      "required": [
+        "member_id",
+        "rain_rate_mm_h"
+      ],
+      "title": "RainMember",
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "version": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "quality": {
+          "enum": [
+            "SOURCE_DECLARED",
+            "PROVISIONAL",
+            "SYNTHETIC"
+          ],
+          "title": "Quality",
+          "type": "string"
+        },
+        "method": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Method",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "version",
+        "sha256",
+        "quality",
+        "method"
+      ],
+      "title": "Source",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "twin_id": {
+      "format": "uuid",
+      "title": "Twin Id",
+      "type": "string"
+    },
+    "issue_time": {
+      "format": "date-time",
+      "title": "Issue Time",
+      "type": "string"
+    },
+    "valid_from": {
+      "format": "date-time",
+      "title": "Valid From",
+      "type": "string"
+    },
+    "valid_to": {
+      "format": "date-time",
+      "title": "Valid To",
+      "type": "string"
+    },
+    "target_grid": {
+      "$ref": "#/$defs/Grid"
+    },
+    "forecast": {
+      "$ref": "#/$defs/ForcingWindow"
+    },
+    "antecedent": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ForcingWindow"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "antecedent_missing_reason": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Antecedent Missing Reason"
+    }
+  },
+  "required": [
+    "twin_id",
+    "issue_time",
+    "valid_from",
+    "valid_to",
+    "target_grid",
+    "forecast"
+  ],
+  "title": "BuildRequest",
+  "type": "object"
+}
