@@ -1,7 +1,7 @@
 # Sequence 10 - Dynamic Forcing Service
 
 Date: 6 September 2026. Branch: `sequence-10-forcing`. Release: `1.0.0`.
-Status: implementation complete; committed-source deployed gate pending.
+Status: **IMPLEMENTED AND VERIFIED; ASSEMBLY PASSED** on `2c39b70`.
 Freeze: NOT_FROZEN. Final human acceptance pending Sequence 20.
 
 ## Authorization and predecessor
@@ -26,11 +26,33 @@ Reference forcing does not establish real-pilot or operational readiness or waiv
 
 ## Verification
 
-Focused Sequence 10 tests: 59 passed. They cover the 576 m3 rainfall benchmark, irregular intervals,
-nonuniform rain, dry ensembles, Xarray reopening, short/disjoint coverage, stage interpolation,
-datum offset, discrete/continuous controls, wrong/missing assets, antecedent gaps/recreation,
-visual-twin refusal, empty-registry recreation, rehashed tampering and HTTP failure behavior.
-The final clean-source gate will rerun the entire repository suite and deployed probes.
+- Implementation commit: `2c39b704b60c85bc2d18d0533c6383d1d3792029`.
+- Local/API source fingerprint: `28a7e4f8da4881aca753045f82e3a28d40bb51d1a9a67ae12622ff5b86499732`.
+- Full committed-source gate: **730 passed, 1 skipped** in 60.24 seconds; no deselections.
+- Focused Sequence 10 coverage: **59 tests**; Ruff passed; strict mypy **148 source files** passed.
+- Local Python 3.12.10 / deployed Python 3.12.11, exact pinned dependencies on both platforms.
+- API v1.0.0 / Sequence 10; all six Compose services healthy; `/ready` confirms dependency/schema
+  readiness at migration head `0009_sequence_10_forcing`.
+- Controlled forcing package: `e82ca9de-a4da-5ec1-b9cc-f097a8f1aa1c`.
+- Exact controlled twin: `f6f45792-6caa-5f0b-9d29-817110269ef1`.
+- Package coverage FULL_COVERAGE, hydraulic input eligibility true for that reference twin,
+  no package blockers, antecedent explicitly MISSING, no operational validation claim.
+- Reference benchmark: 20 mm/h for three hours over 9600 m2 = **576 m3**, final depth **60 mm**.
+- Empty package registry recreation preserved identity/manifest bytes; repeat recreation reused ID.
+- All **six HTTP artifacts** matched size/hash. Full reads revalidate the retained twin and
+  recompute the forcing assessment/artifacts; missing/corrupt bytes fail closed.
+- Windows regenerated the Linux RainCube **byte for byte** and independently reopened it with Xarray.
+  RainCube shape is time/y/x = 3/8/12. Effective source resolution remains 60 m on the 10 m target grid.
+- Conditional storage: each of the two buckets had eight writers, one creation and seven rejections.
+- Assembly blockers: **none**. Inherited freeze blockers: **DATA-08-01 only**. The gate exits 1
+  for that inherited constraint while software/services/storage/assembly are explicitly PASSED.
+
+The exact gate report is `docs/validation/sequence-10-development-gate-2c39b70.json`; the cross-platform
+receipt is `docs/validation/sequence-10-cross-platform-rain-2c39b70.json`. The complete transcript and
+retained deployed RainCube are under `artifacts/validation/sequence10-2c39b70/` (local ignored artifacts).
+Reports are copied byte-for-byte from the clean source baseline; later documentation commits do not
+alter release source identity. The Windows symlink permission skip and two Xarray/NumPy deprecation
+warnings remain visible; numcodecs also emits its upstream crc32c deprecation notice.
 
 ## Limits
 
@@ -67,3 +89,9 @@ Read-only API: `/forcing/readiness`, `/forcing/products`, `/forcing/products/{id
 
 Full gate: `python scripts/sequence10_development_gate.py --run-checks`.
 Sequence 11 is outside this task. DATA-08-01 remains an inherited freeze blocker.
+
+## Repository boundary
+
+The task is local to branch `sequence-10-forcing`. main and remotes were not changed. No hosted
+release, merge, human sign-off, Sequence 9 freeze or operational hydraulic validation is claimed.
+Read `SEQUENCE_10_CONTINUATION.txt` before subsequent work and verify live state again.

@@ -1,0 +1,15 @@
+{
+  "forcing_package_id": "e82ca9de-a4da-5ec1-b9cc-f097a8f1aa1c",
+  "windows_linux_rain_bytes_identical": true,
+  "sha256": "ce5ade14880e5b9e673e6ae5aa8ca84290081eb3108bd349b1ab3531474c5289",
+  "xarray_reopen_verified": true,
+  "shape": [
+    3,
+    8,
+    12
+  ],
+  "rain_rate_mm_h": 20,
+  "final_accumulation_mm": 60,
+  "volume_m3": 576,
+  "effective_information_resolution_m": 60.0
+}

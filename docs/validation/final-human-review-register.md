@@ -139,3 +139,9 @@ That sequencing exception does not close the objective real drainage requirement
 
 Controlled synthetic forcing and prepared-source test doubles establish software behavior only.
 No operational forecast, meteorological validation, reviewer identity or sign-off is claimed.
+
+Sequence 10 evidence anchors: implementation `2c39b70`, controlled twin
+`f6f45792-6caa-5f0b-9d29-817110269ef1`, forcing package
+`e82ca9de-a4da-5ec1-b9cc-f097a8f1aa1c`. Exact hashes and automated evidence are retained in
+`docs/validation/sequence-10-development-gate-2c39b70.json`. These anchors close no human review
+or DATA-08-01 and establish no actual meteorological/operational acceptance.

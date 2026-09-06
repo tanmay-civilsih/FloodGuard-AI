@@ -1,6 +1,7 @@
 # Sequence 10 - Dynamic forcing package
 
-Status: implementation complete; deployed gate pending. Authorized by the owner to implement Sequence 10
+Status: implemented and deployed assembly verified on `2c39b70`; see SEQUENCE_10_STATUS.md.
+Authorized by the owner to implement Sequence 10
 after the Sequence 9 blocker was reported. This is an explicit development-order exception. It does
 not freeze Sequence 9, close DATA-08-01, or authorize a real hydraulic/operational claim. The frozen
 scientific contracts remain unchanged. Reference development can proceed; release eligibility must

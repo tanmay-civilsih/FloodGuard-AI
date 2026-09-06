@@ -1,0 +1,43 @@
+FloodGuard-AI - Sequence 10 continuation
+Workspace: D:\Projects\FloodGuard-AI
+Branch: sequence-10-forcing
+Implementation: 2c39b704b60c85bc2d18d0533c6383d1d3792029
+Source fingerprint: 28a7e4f8da4881aca753045f82e3a28d40bb51d1a9a67ae12622ff5b86499732
+
+Read agent.md, the frozen plan, SEQUENCE_9_STATUS.md, SEQUENCE_10_STATUS.md,
+docs/architecture/sequence-10-forcing.md and the final gate report. Recheck live Git/API state.
+
+Sequence 10 IMPLEMENTED AND VERIFIED / ASSEMBLY PASSED, release 1.0.0.
+730 tests passed, 1 Windows symlink permission skip; Ruff passed; mypy 148 files passed.
+All six services healthy, current Alembic head 0009_sequence_10_forcing, exact source/lock parity.
+Six HTTP artifacts verified; package recreated in an empty registry; Windows/Linux RainCube
+bytes identical; Xarray reopen and 576 m3 reference rain benchmark verified.
+
+Gate report: docs/validation/sequence-10-development-gate-2c39b70.json
+Cross-platform receipt: docs/validation/sequence-10-cross-platform-rain-2c39b70.json
+Full transcript: artifacts/validation/sequence10-2c39b70/development-gate.log
+Current reference twin: f6f45792-6caa-5f0b-9d29-817110269ef1
+Current forcing package: e82ca9de-a4da-5ec1-b9cc-f097a8f1aa1c
+
+Sequence 9 remains NOT_FROZEN because DATA-08-01 lacks genuine source-bound real cross-ward
+drainage to a documented destination. The owner explicitly authorized Sequence 10 development
+after that blocker report. This exception does not waive the data requirement or authorize
+Sequence 11 automatically. Final HR-08/09/10 reviews remain pending Sequence 20.
+
+Remaining data work: obtain a source-backed real binding plan, validate it through the existing
+Sequence 8 CLI, build a new immutable twin and re-run the affected gates. Never invent real
+outlets, directions, engineering bindings, reviewers or datum compatibility.
+
+The forcing service accepts normalized prepared interval-rate inputs. Radar QPE, gauge correction,
+motion estimation and actual extrapolation/NWP blend algorithms have not been claimed without
+suitable sources. Unknown gate/sluice asset IDs remain refused. Reference/operational provenance
+is explicit. Missing antecedent forcing never means a dry initial state. Sequence 14 owns that.
+
+Operator entry: python -m floodguard.forcing.build --request PATH --dry-run
+Apply explicitly without --dry-run; recreation uses --recreate-manifest PATH.
+Run platform commands inside docker compose exec -T api with access to the input file.
+Read-only API: http://localhost:8000/forcing/readiness and /forcing/products
+Full gate: python scripts/sequence10_development_gate.py --run-checks
+It returns nonzero while the inherited DATA-08-01 blocker remains, with assembly result separate.
+
+main and remotes were not changed. Preserve immutable historical artifacts and prior gate reports.

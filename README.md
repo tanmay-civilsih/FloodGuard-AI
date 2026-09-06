@@ -12,7 +12,9 @@ Development is governed by:
 
 **Sequence 10 - Dynamic Forcing Service (v1.0)**
 
-Sequence 10 implements immutable forcing packages bound to an exact twin: interval rainfall stored
+Sequence 10 implementation and deployed assembly validation passed on `2c39b70` (730 tests,
+148 type-checked files, six verified HTTP artifacts, Windows/Linux RainCube byte parity).
+It implements immutable forcing packages bound to an exact twin: interval rainfall stored
 as Xarray/Zarr, dynamic stage boundaries, pump controls and explicit antecedent availability.
 Replay, synthetic and externally prepared forecast inputs use conservative remapping, declared
 interpolation and exact horizon coverage. A short forecast cannot be silently extended. See

@@ -1,0 +1,97 @@
+{
+  "sequence": 10,
+  "release": "1.0.0",
+  "created_at": "2026-09-06T17:58:05.975979+00:00",
+  "repository_commit": "2c39b704b60c85bc2d18d0533c6383d1d3792029",
+  "source_fingerprint": "28a7e4f8da4881aca753045f82e3a28d40bb51d1a9a67ae12622ff5b86499732",
+  "api_version": {
+    "name": "FloodGuard-AI",
+    "version": "1.0.0",
+    "sequence": 10,
+    "source_fingerprint": "28a7e4f8da4881aca753045f82e3a28d40bb51d1a9a67ae12622ff5b86499732",
+    "runtime_python": "3.12.11",
+    "dependency_lock_mismatches": []
+  },
+  "software_and_services_passed": true,
+  "deployed_conditional_storage_passed": true,
+  "assembly_validation_status": "PASSED",
+  "assembly_blockers": [],
+  "inherited_freeze_blockers": [
+    "DATA-08-01: genuine source-bound adjacent-ward drainage to a defensible destination is mandatory for Sequence 9 technical freeze; human review deferral does not waive it."
+  ],
+  "freeze_status": "NOT_FROZEN",
+  "final_human_acceptance_pending": true,
+  "operational_validation_claimed": false,
+  "forcing_readiness": {
+    "city_id": "kolkata",
+    "total_packages": 1,
+    "verified_packages": 1,
+    "eligible_packages": 1,
+    "integrity_failures": [],
+    "assembly_development_gate_passed": true,
+    "inherited_freeze_blockers": [
+      "DATA-08-01: genuine source-bound adjacent-ward drainage is still required."
+    ],
+    "final_human_acceptance_pending": true,
+    "operational_validation_claimed": false
+  },
+  "forcing_products": [
+    {
+      "forcing_package_id": "e82ca9de-a4da-5ec1-b9cc-f097a8f1aa1c",
+      "http_artifacts_verified": 6,
+      "manifest": {
+        "policy": "sequence-10-forcing-v1",
+        "forcing_package_id": "e82ca9de-a4da-5ec1-b9cc-f097a8f1aa1c",
+        "twin_id": "f6f45792-6caa-5f0b-9d29-817110269ef1",
+        "city_id": "kolkata",
+        "issue_time": "2026-09-06T00:00:00Z",
+        "valid_from": "2026-09-06T00:00:00Z",
+        "valid_to": "2026-09-06T03:00:00Z",
+        "software_version": "1.0.0",
+        "software_source_sha256": "28a7e4f8da4881aca753045f82e3a28d40bb51d1a9a67ae12622ff5b86499732",
+        "artifacts": {
+          "antecedent.json": {
+            "object_key": "forcing/blobs/4695222adfd4b328c160490315a569eb0bb2d2abe14095540f0567e274ebe2a5",
+            "sha256": "4695222adfd4b328c160490315a569eb0bb2d2abe14095540f0567e274ebe2a5",
+            "byte_size": 173
+          },
+          "boundaries-and-controls.json": {
+            "object_key": "forcing/blobs/4e20ca0a2616c08fbfea3c7883f4139b6f6c02c784214a56e121afff6d15633d",
+            "sha256": "4e20ca0a2616c08fbfea3c7883f4139b6f6c02c784214a56e121afff6d15633d",
+            "byte_size": 1391
+          },
+          "rain.zarr.zip": {
+            "object_key": "forcing/blobs/ce5ade14880e5b9e673e6ae5aa8ca84290081eb3108bd349b1ab3531474c5289",
+            "sha256": "ce5ade14880e5b9e673e6ae5aa8ca84290081eb3108bd349b1ab3531474c5289",
+            "byte_size": 15701
+          },
+          "request.json": {
+            "object_key": "forcing/blobs/02ce3489fa31f5061d1ec3655b5bc9b8dda0657c76654c35f53575992c5ad782",
+            "sha256": "02ce3489fa31f5061d1ec3655b5bc9b8dda0657c76654c35f53575992c5ad782",
+            "byte_size": 2652
+          },
+          "twin-manifest.json": {
+            "object_key": "forcing/blobs/01347a12b7a4a3d6a636be9c02f71435398d7b48a8e71d03db20ea0cd2b9b129",
+            "sha256": "01347a12b7a4a3d6a636be9c02f71435398d7b48a8e71d03db20ea0cd2b9b129",
+            "byte_size": 7717
+          }
+        },
+        "quality_summary": {
+          "coverage": "FULL_COVERAGE",
+          "common_valid_from": "2026-09-06T00:00:00Z",
+          "common_valid_to": "2026-09-06T03:00:00Z",
+          "hydraulic_use_eligible": true,
+          "blockers": [],
+          "antecedent_status": "MISSING",
+          "rainfall_volume_m3_by_member": {
+            "deterministic": 576.0
+          },
+          "maximum_remap_relative_error": 0.0,
+          "final_human_acceptance_pending": true,
+          "operational_validation_claimed": false
+        }
+      }
+    }
+  ],
+  "development_order_authorization": "Owner requested Sequence 10 after the DATA-08-01 report."
+}
