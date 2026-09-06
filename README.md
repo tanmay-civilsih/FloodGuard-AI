@@ -12,6 +12,15 @@ Development is governed by:
 
 **Sequence 7 — Urban GIS Reconstruction, Hydraulic Surface Classes and Roof Runoff Policy (v0.7)**
 
+Sequence 7 is technically frozen after the full local deployed gate passed on
+`318ec92086daef14d816df16b2786a8482b452c0`; see `SEQUENCE_7_STATUS.md` and its versioned validation
+report. Final real-pilot acceptance remains pending Sequence 20.
+
+Active development is **Sequence 8, increment 8.1: typed drainage graphs and topology inspection**
+on `sequence-8-drain-model`. See `SEQUENCE_8_STATUS.md` and
+`docs/architecture/sequence-08-drain-model.md`. This increment does not publish a Sequence 8 API or
+claim a real cross-ward drainage continuation; the deployed API remains the validated v0.7 baseline.
+
 Sequence 7 keeps the visual city representation separate from the simplified hydraulic surface representation. The hydraulic contract supports exactly:
 
 ```text

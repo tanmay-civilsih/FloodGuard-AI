@@ -1,8 +1,8 @@
-﻿# Sequence 7 — TECHNICAL DEVELOPMENT FROZEN / FINAL HUMAN ACCEPTANCE PENDING
+# Sequence 7 — TECHNICAL DEVELOPMENT FROZEN / FINAL HUMAN ACCEPTANCE PENDING
 
-Date: 6 September 2026  
-Development branch: `sequence-7-urban-gis`  
-Validated code baseline: `318ec92086daef14d816df16b2786a8482b452c0`  
+Date: 6 September 2026
+Development branch: `sequence-7-urban-gis`
+Validated code baseline: `318ec92086daef14d816df16b2786a8482b452c0`
 Release identity: `0.7.0` / Sequence `7`
 
 ## State
@@ -25,10 +25,10 @@ This command exited zero against the clean committed baseline and its rebuilt lo
 .venv\Scripts\python.exe -u scripts/sequence7_development_gate.py --run-checks --output artifacts/validation/sequence7-318ec92/development-gate.json
 ```
 
-Gate started: `2026-09-06T15:08:08.782567+00:00`  
-Versioned report: `docs/validation/sequence-07-development-gate-318ec92.json`  
-Full local transcript: `artifacts/validation/sequence7-318ec92/development-gate.log`  
-Report SHA-256: `be4cc557b58603013e6253b468bbc21ec453125d36ab3bae0dd862a628f6287e`  
+Gate started: `2026-09-06T15:08:08.782567+00:00`
+Versioned report: `docs/validation/sequence-07-development-gate-318ec92.json`
+Full local transcript: `artifacts/validation/sequence7-318ec92/development-gate.log`
+Report SHA-256: `be4cc557b58603013e6253b468bbc21ec453125d36ab3bae0dd862a628f6287e`
 Source fingerprint: `7d9c660e5deaecf3e817dc41779a29a13da08c67cff71f1caf9d7146cfdf8759`
 
 Results:
