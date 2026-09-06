@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-09-06T15:08:08.782567+00:00",
+  "sequence": 7,
+  "release": "0.7.0",
+  "scope": "AUTOMATED_DEVELOPMENT_GATE_ONLY",
+  "human_review_deferred_to_sequence": 20,
+  "deferred_human_review": [
+    "Real-pilot visual-city geometry/source acceptance.",
+    "Real-pilot hydraulic surface-class and hydraulic-domain acceptance.",
+    "Every real roof's versioned receiving geometry or explicit drain-target acceptance.",
+    "Real-browser comparison of exact visual/hydraulic/roof-runoff artifacts and limitations."
+  ],
+  "final_human_acceptance_status": "PENDING_SEQUENCE_20",
+  "repository_commit": "318ec92086daef14d816df16b2786a8482b452c0",
+  "source_fingerprint": "7d9c660e5deaecf3e817dc41779a29a13da08c67cff71f1caf9d7146cfdf8759",
+  "dependency_lock_mismatches": [],
+  "software_and_services_passed": true,
+  "deployed_conditional_storage_passed": true,
+  "urban_gis_readiness": {
+    "city_id": "kolkata",
+    "current_pipeline_version": "sequence-7-urban-gis-v1",
+    "total_packages": 1,
+    "eligible_packages": 1,
+    "reference_ready": 1,
+    "provisional_real_ready": 0,
+    "reviewed_real_ready": 0,
+    "technical_development_gate_passed": true,
+    "final_human_acceptance_pending": true,
+    "final_completion_gate_passed": false,
+    "completion_reason": "Automated Sequence 7 contracts are exercised; final real-pilot human acceptance remains deferred to Sequence 20.",
+    "qa_viewer_path": "/urban-gis/qa"
+  },
+  "technical_blockers": [],
+  "development_status": "PASSED",
+  "technical_development_freeze_status": "ELIGIBLE",
+  "freeze_status": "TECHNICAL_DEVELOPMENT_FREEZE_ELIGIBLE"
+}

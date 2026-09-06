@@ -1,38 +1,83 @@
-# Sequence 7 status — TECHNICAL FREEZE CANDIDATE
+﻿# Sequence 7 — TECHNICAL DEVELOPMENT FROZEN / FINAL HUMAN ACCEPTANCE PENDING
 
 Date: 6 September 2026  
-Branch: `sequence-7-urban-gis`  
-Base: Sequence 6 technical freeze `81749b59a73e64758418083589063f4717b81352`  
+Development branch: `sequence-7-urban-gis`  
+Validated code baseline: `318ec92086daef14d816df16b2786a8482b452c0`  
 Release identity: `0.7.0` / Sequence `7`
 
 ## State
 
-- Implementation: **COMPLETE**
-- Focused automated scientific/unit validation: **PASSED**
-- Source compilation: **PASSED**
-- Full pinned Python 3.12/Ruff/mypy/repository/Docker/storage gate in this sandbox: **NOT AVAILABLE**
-- Technical development freeze: **CANDIDATE — requires one pinned-runtime gate run**
-- Final human acceptance: **PENDING SEQUENCE 20**
-- `main`: intentionally untouched
+- Automated development status: **TECHNICAL_DEVELOPMENT_FROZEN**.
+- Full pinned-runtime development gate: **PASSED**, with no technical blockers.
+- Final human acceptance: **FINAL_HUMAN_ACCEPTANCE_PENDING — SEQUENCE 20**.
+- Sequence 8 development: **permitted**.
+- Git integration: development-branch freeze; `main` remains at Sequence 5.
 
-This status does not claim real-pilot engineering acceptance, calibrated hydrology, or hydraulic validation.
+This technical freeze concerns implemented interfaces and deterministic reference validation.
+Real Kolkata GIS classification, calibrated hydrology and hydraulic validation remain pending.
+The earlier technical-freeze candidate is superseded by the evidence below.
 
-## Delivered Sequence 7 contract
+## Reproducible validation evidence
+
+This command exited zero against the clean committed baseline and its rebuilt local Docker API:
+
+```powershell
+.venv\Scripts\python.exe -u scripts/sequence7_development_gate.py --run-checks --output artifacts/validation/sequence7-318ec92/development-gate.json
+```
+
+Gate started: `2026-09-06T15:08:08.782567+00:00`  
+Versioned report: `docs/validation/sequence-07-development-gate-318ec92.json`  
+Full local transcript: `artifacts/validation/sequence7-318ec92/development-gate.log`  
+Report SHA-256: `be4cc557b58603013e6253b468bbc21ec453125d36ab3bae0dd862a628f6287e`  
+Source fingerprint: `7d9c660e5deaecf3e817dc41779a29a13da08c67cff71f1caf9d7146cfdf8759`
+
+Results:
+
+- Local Python **3.12.10**; API Python **3.12.11**; no dependency-lock mismatches.
+- Ruff **passed**; strict mypy **passed across 104 source files**.
+- Pytest: **409 passed, 1 skipped** (unavailable Windows symlink permission).
+- All six Docker services and API/readiness/QA verifier **passed**.
+- API fingerprint **matched** the validated local source.
+- Reference package **created successfully and REFERENCE_READY**.
+- Real conditional-storage concurrency **passed in both raw and spatial buckets**:
+  8 concurrent writers, exactly 1 creation and 7 rejections per bucket; winning bytes read back intact.
+- Source fingerprint, Git commit and clean worktree remained unchanged throughout the gate.
+
+The recorded gate reports:
+
+```text
+development_status = PASSED
+technical_development_freeze_status = ELIGIBLE
+freeze_status = TECHNICAL_DEVELOPMENT_FREEZE_ELIGIBLE
+technical_blockers = []
+```
+
+This status marker records the resulting technical freeze. Its documentation-only commit follows
+the validated implementation commit; the implementation commit remains the evidence baseline.
+
+## Frozen contracts and repairs
 
 - Separate immutable visual-city and hydraulic-surface products.
-- All eight frozen-plan hydraulic surface classes.
-- Explicit hydraulic-domain ownership with Sequence 7 rejection of `NETWORK_1D` surface ownership.
-- Mutually exclusive simplified-runoff vs explicit-loss hydrology policies.
-- Engineering parameter provenance states retained in the contract.
-- One versioned roof-runoff rule per roof.
-- Receiving-geometry or explicit-drain-target policy; numerical `surface_cell_ids` are forbidden in Sequence 7.
-- Roof generated-volume and transfer-conservation calculations with declared relative tolerance.
-- Strict metric-CRS and topology validation using the existing spatial guardrails.
-- Immutable create-only artifacts with SHA-256 verification on read.
-- Sequence 7 migration, API, QA inspector, deterministic reference bootstrap, verifier integration and development gate.
-- `REFERENCE_FIXTURE`, provisional-real and reviewed-real evidence scopes kept distinct.
+- All eight hydraulic surface classes with explicit domain ownership.
+- Mutually exclusive simplified-runoff and explicit-loss policies with parameter provenance.
+- Exactly one versioned receiving-geometry or explicit-drain-target rule per roof.
+- Roof generated-volume and transfer-conservation calculations with declared tolerances.
+- Numerical `surface_cell_ids` forbidden until the later grid sequence.
+- Strict metric CRS, geometry and topology checks.
+- Five create-only artifacts, SHA-256 verification on read, and verified idempotent reuse.
+- Readiness verifies every artifact; missing or corrupted bytes cannot remain eligible.
+- Script package discovery and direct Sequence 6/7 gate entrypoints work under Python 3.12.
+- CLI regression tests isolate report outputs and preserve operator evidence.
+- Invalid readiness counters and source changes during verification cannot pass the gate.
 
-## Immutable product contract
+## Immutable reference anchor
+
+- Evidence scope: `REFERENCE_FIXTURE`.
+- Pilot ID: `kolkata-sequence7-reference`.
+- Package SHA-256: `03b2390c74c767bc37007b28ec791381b4dfae05be4e5042a6cbde86e556801a`.
+- Fingerprint: `81b1ad3ebc673871344c1841e3677cc044b957f73958705e03bc47024a83dad5`.
+- `urban_gis_id`: `4346f39d-77a5-5a25-9dcb-2c4eb6bb027c`.
+- Features: **4 visual, 8 hydraulic, 1 roof with a versioned receiving geometry**.
 
 ```text
 urban-gis/{city_id}/{pilot_area_id}/{urban_gis_id}/
@@ -43,76 +88,15 @@ urban-gis/{city_id}/{pilot_area_id}/{urban_gis_id}/
   audit.json
 ```
 
-The audit explicitly records `surface_cell_ids_assigned = false`.
-
-## Automated reference fixture
-
-The controlled reference package exercises every Sequence 7 class without representing it as real Kolkata evidence:
-
-- package SHA-256: `03b2390c74c767bc37007b28ec791381b4dfae05be4e5042a6cbde86e556801a`
-- fingerprint: `81b1ad3ebc673871344c1841e3677cc044b957f73958705e03bc47024a83dad5`
-- deterministic `urban_gis_id`: `4346f39d-77a5-5a25-9dcb-2c4eb6bb027c`
-
-## Sandbox validation executed
-
-A local shadow of the Sequence 7 contracts/service/reference/development-gate logic was executed with the dependencies available in this environment.
-
-Results:
-
-```text
-13 passed
-python -m compileall: PASSED
-```
-
-The focused cases cover:
-
-1. all eight hydraulic classes;
-2. visual/hydraulic representation separation;
-3. hydraulic-domain ownership rejection rules;
-4. mutually exclusive hydrologic-loss modes;
-5. roof-rule completeness;
-6. rejection of premature `surface_cell_ids`;
-7. versioned roof receiving geometry;
-8. effective-rain and roof-volume calculations;
-9. conservation failure detection;
-10. immutable/idempotent product creation;
-11. SHA-256 corruption failure;
-12. CRS mismatch rejection;
-13. reference-ready development-gate classification without false final acceptance.
-
-Sandbox runtime limitations:
-
-- Python: `3.13.5`, not the required `3.12.x`;
-- Pydantic/Shapely/PyProj matched the versions used by the focused work;
-- sandbox SQLAlchemy was `2.0.50`, while the repository lock declares `2.0.52`;
-- Ruff and mypy are not installed/cached and network installation is unavailable;
-- Docker/services/MinIO are unavailable in this sandbox;
-- therefore the new Sequence 7 full pinned gate has **not** been truthfully claimed as passed here.
-
-The previously supplied Sequence 6 local evidence established a healthy Python 3.12 environment, full-suite baseline, services and real MinIO conditional-write concurrency for the predecessor branch. That evidence is useful continuity, but it is not substituted for the new Sequence 7 gate.
-
-## Required final technical-freeze gate
-
-Run on a clean pinned checkout after pulling this branch:
-
-```text
-python scripts/sequence7_development_gate.py --run-checks
-```
-
-That single command executes the repository verifier with Sequence 7 service/reference bootstrap, Ruff, mypy, the complete pytest suite, API/source/runtime checks and the real conditional-storage concurrency probe.
-
-A zero exit with:
-
-```text
-development_status = PASSED
-technical_development_freeze_status = ELIGIBLE
-freeze_status = TECHNICAL_DEVELOPMENT_FREEZE_ELIGIBLE
-```
-
-is the required evidence to change this file from `TECHNICAL FREEZE CANDIDATE` to `TECHNICAL_DEVELOPMENT_FROZEN`.
+The audit records `surface_cell_ids_assigned = false`. A regression confirms that typing repairs
+preserved the published candidate's canonical package bytes and identity.
 
 ## Deferred human review
 
-Real-pilot visual geometry/source acceptance, hydraulic surface classification/domain ownership, every real roof receiving geometry/drain target, and exact-browser artifact acceptance are registered in `docs/validation/final-human-review-register.md` as HR-07-01 through HR-07-04.
+`docs/validation/final-human-review-register.md` retains HR-07-01 through HR-07-04 for real-pilot
+geometry/source acceptance, hydraulic classification/domain ownership, every real roof target,
+and exact-browser artifact acceptance. The reference fixture does not satisfy those items.
 
-They do not block implementation of Sequence 8 under the owner-approved deferral policy once the automated technical gate is green, but they must be closed during Sequence 20 before final scientific/engineering acceptance.
+Live final-completion status remains false and human acceptance remains pending under
+`docs/validation/final-human-review-policy.md`. Sequence 8 may develop against these frozen technical
+interfaces. Rejection of an earlier real-pilot decision must reopen affected downstream products.
