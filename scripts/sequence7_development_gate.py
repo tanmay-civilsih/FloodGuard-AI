@@ -15,9 +15,6 @@ from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-
-from floodguard.common.release_evidence import lock_mismatches, source_fingerprint
-
 MAX_RESPONSE_BYTES = 4 * 1024 * 1024
 HUMAN_REVIEW_SEQUENCE = 20
 DEFERRED_HUMAN_REVIEW = [
@@ -84,6 +81,8 @@ def urban_readiness_blockers(readiness: dict[str, Any]) -> list[str]:
 
 
 def collect(base: str, *, run_checks: bool) -> dict[str, Any]:
+    from floodguard.common.release_evidence import lock_mismatches, source_fingerprint
+
     blockers: list[str] = []
     report: dict[str, Any] = {
         "schema_version": 1,

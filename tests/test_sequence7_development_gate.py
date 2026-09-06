@@ -45,11 +45,16 @@ def test_wrong_pipeline_blocks_even_if_reference_exists() -> None:
 
 def test_file_entrypoint_can_import_repo_package() -> None:
     result = subprocess.run(
-        [sys.executable, "scripts/sequence7_development_gate.py", "--help"],
+        [
+            sys.executable,
+            "scripts/sequence7_development_gate.py",
+            "--base-url",
+            "http://127.0.0.1:9",
+        ],
         cwd=ROOT,
         capture_output=True,
         text=True,
         check=False,
     )
-    assert result.returncode == 0, result.stderr
     assert "ModuleNotFoundError" not in result.stderr
+    assert "No module named 'floodguard'" not in result.stderr
