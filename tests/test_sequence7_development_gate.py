@@ -1,4 +1,12 @@
+from __future__ import annotations
+
+import subprocess
+import sys
+from pathlib import Path
+
 from scripts.sequence7_development_gate import urban_readiness_blockers
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_reference_ready_passes_without_final_human_acceptance() -> None:
@@ -33,3 +41,15 @@ def test_wrong_pipeline_blocks_even_if_reference_exists() -> None:
         "reviewed_real_ready": 0,
     }
     assert urban_readiness_blockers(payload)
+
+
+def test_file_entrypoint_can_import_repo_package() -> None:
+    result = subprocess.run(
+        [sys.executable, "scripts/sequence7_development_gate.py", "--help"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "ModuleNotFoundError" not in result.stderr
