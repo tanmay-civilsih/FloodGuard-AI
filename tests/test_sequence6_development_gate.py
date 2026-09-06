@@ -12,7 +12,10 @@ def base_report() -> dict[str, object]:
         ],
         "engineering_acceptance_remaining": [
             "Independent cross-layer alignment evidence bound to the current normalized products.",
-            "Real-browser QA of the selected artifacts and explicit acceptance of coarse-data limitations.",
+            (
+                "Real-browser QA of the selected artifacts and explicit acceptance of "
+                "coarse-data limitations."
+            ),
         ],
     }
 
