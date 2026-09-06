@@ -1,7 +1,9 @@
 """FloodGuard-AI FastAPI application."""
 
 import logging
+import sys
 from collections.abc import Awaitable, Callable
+from pathlib import Path
 from typing import Literal
 from uuid import UUID, uuid4
 
@@ -20,6 +22,7 @@ from floodguard.common.auth import require_write_access
 from floodguard.common.config import get_settings
 from floodguard.common.logging import configure_logging
 from floodguard.common.readiness import platform_readiness
+from floodguard.common.release_evidence import lock_mismatches, source_fingerprint
 from floodguard.contracts.time import UtcDateTime, utc_now
 from floodguard.terrain.jobs import TerrainJobStore
 
@@ -57,6 +60,9 @@ class VersionResponse(BaseModel):
     name: Literal["FloodGuard-AI"] = "FloodGuard-AI"
     version: str
     sequence: Literal[6] = 6
+    source_fingerprint: str | None
+    runtime_python: str
+    dependency_lock_mismatches: list[str]
 
 
 @app.middleware("http")
@@ -105,4 +111,13 @@ def ready() -> ReadyResponse | JSONResponse:
 
 @app.get("/version", response_model=VersionResponse, tags=["platform"])
 def version() -> VersionResponse:
-    return VersionResponse(version=__version__)
+    root = Path(__file__).resolve().parents[2]
+    try:
+        fingerprint = source_fingerprint(root)
+        mismatches = lock_mismatches(root / "requirements.lock")
+    except (OSError, ValueError, ImportError):
+        fingerprint = None
+        mismatches = ["Release source/lockfile evidence unavailable"]
+    return VersionResponse(version=__version__, source_fingerprint=fingerprint,
+                           runtime_python=sys.version.split()[0],
+                           dependency_lock_mismatches=mismatches)

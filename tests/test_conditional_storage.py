@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from io import BytesIO
 from threading import Lock
+from typing import ClassVar
 
 import pytest
 from urllib3.exceptions import HTTPError
@@ -33,9 +34,9 @@ class Response:
 @pytest.fixture
 def transport(monkeypatch):
     class Pool:
-        objects = {}
-        requests = []
-        responses = []
+        objects: ClassVar[dict[str, bytes]] = {}
+        requests: ClassVar[list[tuple[str, dict[str, object]]]] = []
+        responses: ClassVar[list[Response]] = []
         lock = Lock()
         forced_status = None
         ignore_condition = False

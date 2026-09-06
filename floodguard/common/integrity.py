@@ -41,7 +41,7 @@ def verified_spatial_pair(
     if not isinstance(metadata, dict) or metadata.get("pipeline_version") != pipeline_version:
         raise PayloadIntegrityError("historical spatial policy: rebuild from the original source")
     digest, size = metadata.get("qa_sha256"), metadata.get("qa_byte_size")
-    if not isinstance(digest, str) or type(size) is not int:
+    if not isinstance(digest, str) or not isinstance(size, int) or isinstance(size, bool):
         raise PayloadIntegrityError("working artifact lacks QA integrity metadata")
     verified_payload(qa, expected_sha256=digest, expected_size=size, max_bytes=max_bytes)
     return document
