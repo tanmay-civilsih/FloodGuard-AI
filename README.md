@@ -5,40 +5,46 @@ FloodGuard-AI is a scientifically defensible urban flood digital-twin and 0–3 
 Development is governed by:
 
 - `docs/Urban_Flood_Digital_Twin_Authoritative_20_Sequence_Plan_FROZEN.md`
+- `docs/validation/final-human-review-policy.md`
 - `agent.md`
 
 ## Current milestone
 
-**Sequence 6 — Hydraulically Conditioned Terrain and Multi-Level Urban Structures (v0.6 checkpoint)**
+**Sequence 7 — Urban GIS Reconstruction, Hydraulic Surface Classes and Roof Runoff Policy (v0.7)**
 
-Sequence 6 adds a deterministic `terrain-worker` that keeps raw elevation, visual terrain, and
-hydraulic terrain as separate immutable products. It applies only explicit, provenance-backed
-conditioning interventions, preserves genuine depressions, catalogs multi-level structures, and
-assigns conservative readiness from vertical validation evidence.
+Sequence 7 keeps the visual city representation separate from the simplified hydraulic surface representation. The hydraulic contract supports exactly:
 
-Atomic follow-on checkpoints harden input/readiness rules, recompute supplied control-observation
-residuals, and make the QA map's sampling and selected-product status explicit. These checkpoints
-are not the Sequence 6 freeze; real pilot terrain evidence and service/engineering QA remain required.
+```text
+ROAD
+ROOF
+BUILDING_BARRIER
+OPEN_SOIL
+PARK
+WATER
+RAILWAY
+OTHER_IMPERVIOUS
+```
 
-The checkpoint accepts a versioned metric `*.terrain.json` package as a small, deterministic
-interchange contract. Automatic acquisition traces the latest approved reconstruction to its
-SRTMGL1 tile on the public ESA STEP mirror, downloads it without login, and prepares the package.
-An explicit local importer also accepts original HGT files. Neither path fabricates a DEM, silently converts DSM to DTM, or
-claim hydraulic validation where vertical observations are unavailable. Sequence 5's real Ward 7
-reconstruction remains available through its human-reviewed QA record.
+Every hydraulic feature has an explicit domain owner. Sequence 7 surface features are owned by `SURFACE_2D`; water may also be a `BOUNDARY`. `NETWORK_1D` ownership is reserved for the drainage model introduced in Sequence 8.
 
-The SRTM importer also accepts a documented terrain assessment bound to the exact source and pilot
-grid. It can export an incomplete assessment form, validate the completed review without writing,
-and store it with the original raster in a new immutable version. See the
-[assessment and freeze workflow](docs/architecture/sequence-06-terrain-conditioning.md#atomic-increment-66--versioned-terrain-assessments).
-`verify.py --services` checks software and services; `--terrain-bootstrap` separately checks terrain
-completion. A successful software run alone does not freeze Sequence 6.
+Runoff-producing classes use one and only one hydrologic-loss formulation:
+
+```text
+SIMPLIFIED_RUNOFF:  Re = Cr R
+EXPLICIT_LOSS:      Re = max(0, R - I - L)
+```
+
+Every roof has one documented runoff rule pointing to either a versioned receiving geometry or an explicit drain target. Sequence 7 deliberately does **not** assign `surface_cell_ids`; cell binding belongs to a later numerical-grid sequence.
+
+The project-owner policy defers human-only GIS/engineering acceptance to Sequence 20. The deterministic Sequence 7 bootstrap therefore uses a clearly labelled `REFERENCE_FIXTURE` to validate all eight surface classes, both loss modes, roof-volume accounting, immutable artifacts and API/readiness contracts without pretending that synthetic geometry is real Ward 7 evidence.
+
+See `docs/architecture/sequence-07-urban-gis.md`.
 
 ## Requirements
 
 - Python **3.12.x**
 - Docker Engine + Docker Compose v2
-- Node.js (optional: enables terrain-viewer JavaScript behavior tests)
+- Node.js where browser-behavior tests require it
 
 ## Local setup
 
@@ -46,140 +52,88 @@ completion. A successful software run alone does not freeze Sequence 6.
 python -m venv .venv
 ```
 
-Activate the environment and install the pinned dependency set:
+Linux/macOS:
 
 ```bash
-# Linux/macOS
 source .venv/bin/activate
 python -m pip install -r requirements.lock
 ```
 
-On Windows PowerShell:
+Windows PowerShell:
 
 ```powershell
 .venv\Scripts\Activate.ps1
 python -m pip install -r requirements.lock
 ```
 
-Copy `.env.example` to `.env` if needed. Never commit `.env`, tokens, passwords, or API keys.
+Copy `.env.example` to `.env` if needed. Never commit `.env`, tokens, passwords, API keys or local evidence drafts.
 
-## Verify
+## Verification
 
-Static checks and unit tests:
+Static checks and unit/integration tests:
 
 ```bash
 python scripts/verify.py
 ```
 
-Start/rebuild the complete platform and verify services:
+Start/rebuild the platform and verify the running services/API:
 
 ```bash
 docker compose up -d --build
 python scripts/verify.py --services
 ```
 
-If a clean environment has no real Kolkata raw versions yet, first run the frozen Sequence 3 acquisition gate:
+Run the Sequence 7 deterministic automated-development bootstrap:
 
 ```bash
-python scripts/verify.py --bootstrap
+python scripts/verify.py --services --urban-gis-bootstrap
 ```
 
-The explicit Sequence 4 completion gate is:
+Run the complete Sequence 7 technical-development gate, including the real conditional-storage concurrency probe:
 
 ```bash
-python scripts/verify.py --spatial-bootstrap
+python scripts/sequence7_development_gate.py --run-checks
 ```
 
-`--spatial-bootstrap` does not redownload public source data. It consumes the latest COMPLETE immutable raw versions already present in the Sequence 3 vault, normalizes supported vector layers, checks metric alignment and rainfall conservation, validates vertical metadata policy, and verifies the QA viewer.
+A passing Sequence 7 development gate means the interfaces and automatable scientific invariants are stable enough for Sequence 8. It does **not** mean real-pilot GIS/roof classification has received human engineering acceptance; those items remain in `docs/validation/final-human-review-register.md` for Sequence 20.
 
-Build the calibrated real Ward 7 reconstruction:
+## Sequence 7 immutable products
 
-```bash
-docker compose exec -T api python -m floodguard.reconstruction.bootstrap --city-id kolkata
+A valid urban-GIS package produces separate immutable artifacts:
+
+```text
+urban-gis/{city_id}/{pilot_area_id}/{urban_gis_id}/visual_city.geojson
+urban-gis/{city_id}/{pilot_area_id}/{urban_gis_id}/hydraulic_surface.geojson
+urban-gis/{city_id}/{pilot_area_id}/{urban_gis_id}/roof_runoff.json
+urban-gis/{city_id}/{pilot_area_id}/{urban_gis_id}/qa.geojson
+urban-gis/{city_id}/{pilot_area_id}/{urban_gis_id}/audit.json
 ```
 
-Then inspect `http://localhost:8000/reconstruction/qa` and record a human review. The formal
-Sequence 5 completion gate is:
+The database stores the SHA-256 of every artifact. Reads recompute the hash and fail closed on corruption. Rebuilding an identical package is idempotent and does not silently overwrite an existing object.
 
-```bash
-python scripts/verify.py --reconstruction-bootstrap
+The roof-runoff artifact explicitly records:
+
+```text
+surface_cell_binding = DEFERRED_TO_LATER_SEQUENCE
 ```
 
-The gate requires the recorded human QA approval for the real reconstruction; it remains a separate
-gate from Sequence 6 terrain readiness.
+## Earlier immutable products
 
-If no terrain product exists, open `http://localhost:8000/terrain/qa?city_id=kolkata` and click
-**Acquire pilot terrain**. The page shows progress and loads the resulting product automatically.
-It uses the latest recorded approval for Ward 7; `ward_id` in the page URL selects another ward.
-Opening the page alone does not download data. The current Compose deployment uses one API process;
-acquisition progress is temporary, while completed terrain remains stored across restarts.
-
-The equivalent CLI workflow can show the plan before acquiring the pilot tile:
-
-```bash
-docker compose exec -T api python -m floodguard.terrain.acquire_srtm --plan
-docker compose exec -T api python -m floodguard.terrain.acquire_srtm --city-id kolkata
-```
-
-This uses a separately registered, unauthenticated ESA mirror; the NASA Earthdata portal's access
-rules remain recorded separately. The worker preserves the ZIP, original HGT, metric package and
-acquisition receipt in an immutable version. Repeating acquisition reuses the verified download and
-preserves completed assessments. `--plan` makes no network request; `--dry-run` may download but
-writes no data. Initial terrain is visual-ready and still needs documented terrain assessments.
-See [automatic acquisition](docs/architecture/sequence-06-terrain-conditioning.md#atomic-increment-67--automatic-public-srtm-acquisition)
-or the guide's **Local PowerShell workflow** for an already downloaded HGT.
-
-Build Sequence 6 products when a versioned terrain package is available:
-
-```bash
-docker compose exec -T api python -m floodguard.terrain.bootstrap --city-id kolkata
-```
-
-Inspect `http://localhost:8000/terrain/qa`. The terrain completion gate is explicit and conservative:
-
-```bash
-python scripts/verify.py --terrain-bootstrap
-```
-
-The command reports a clear limitation when no versioned metric terrain package is present; it never
-uses an arbitrary elevation object as a substitute.
-
-After pulling a terrain pipeline update, rebuild the API image and rerun the terrain bootstrap.
-This preserves historical artifacts while creating current-policy products. Historical products
-remain inspectable but cannot pass the current readiness gate. The viewer reports sampling
-omissions and product-specific limitations, and links to `/terrain/products/{terrain_id}/audit`.
-
-On container startup, Alembic migrates registry, harvester, spatial, reconstruction, and review
-schemas, terrain products, and the audited Kolkata source catalogue is seeded idempotently.
-
-## Sequence 3 immutable raw vault
-
-Raw data remain unchanged under:
+Raw acquisition remains immutable under:
 
 ```text
 raw/{city_id}/{source_id}/{dataset_version_id}/objects/...
 raw/{city_id}/{source_id}/{dataset_version_id}/manifest.json
 ```
 
-Sequence 4 never edits these raw objects.
-
-## Sequence 4 normalized spatial vault
-
-Normalized products use a separate immutable bucket and deterministic lineage:
+Spatial normalization remains separate:
 
 ```text
 normalized/{city_id}/{source_id}/{dataset_version_id}/{normalization_id}/working.json
 normalized/{city_id}/{source_id}/{dataset_version_id}/{normalization_id}/qa.geojson
 ```
 
-The working representation uses the configured metric CRS. The QA derivative is WGS 84 GeoJSON for MapLibre display. Every record preserves the source dataset version, source raw-object key, source SHA-256 lineage, CRS metadata, geometry statistics, numerical round-trip error, resampling policy, vertical-reference metadata, and resolution/information-quality fields.
-
-Rerunning the same normalization reuses the existing deterministic result. Spatial object keys are never silently overwritten.
-
-## Sequence 5 reconstruction artifacts
-
-The initial real calibration is pinned to the Ward 7 PDF SHA-256 and the 2022 KMC ward-reference
-KML SHA-256. Reconstruction artifacts are immutable and deterministic:
+Drainage reconstruction remains immutable:
 
 ```text
 reconstruction/{city_id}/{source_id}/{dataset_version_id}/{reconstruction_id}/working.geojson
@@ -187,14 +141,7 @@ reconstruction/{city_id}/{source_id}/{dataset_version_id}/{reconstruction_id}/qa
 reconstruction/{city_id}/{source_id}/{dataset_version_id}/{reconstruction_id}/audit.json
 ```
 
-The working and WGS 84 QA layers preserve feature confidence, extraction method, source object,
-dataset version, page, and deterministic IDs. Diameter, invert, flow direction, and material remain
-`NULL`; source labels are annotations, not automatically accepted hydraulic parameters.
-
-## Sequence 6 conditioned terrain artifacts
-
-Terrain inputs remain immutable in the raw vault. A successful terrain build writes deterministic
-artifacts to the spatial bucket:
+Terrain remains split into raw/visual/hydraulic products:
 
 ```text
 terrain/{city_id}/{source_id}/{dataset_version_id}/{terrain_id}/visual_terrain.json
@@ -204,17 +151,7 @@ terrain/{city_id}/{source_id}/{dataset_version_id}/{terrain_id}/qa.geojson
 terrain/{city_id}/{source_id}/{dataset_version_id}/{terrain_id}/audit.json
 ```
 
-The source package records `native_horizontal_resolution_m`, `computational_resolution_m`,
-`effective_information_resolution_m`, and `vertical_quality` separately. Vertical validation keeps
-the method, RMSE, control count, road-sag check, underpass check, drain-rim consistency, and
-limitations. With incomplete validation the status is `HYDRAULIC_SCENARIO_READY` or lower; it never
-becomes `HYDRAULIC_VALIDATED` from CRS metadata alone.
-
-The package contract is documented in
-`docs/architecture/sequence-06-terrain-conditioning.md`. The SRTMGL1 HGT importer preserves and
-verifies original raster bytes. General GeoTIFF/COG adapters remain future work.
-
-## Horizontal reference
+## Coordinate and vertical-reference rules
 
 The default Kolkata working CRS is:
 
@@ -222,129 +159,37 @@ The default Kolkata working CRS is:
 EPSG:32645  # WGS 84 / UTM zone 45N
 ```
 
-It is configurable through `FLOODGUARD_WORKING_CRS`. Startup validation requires a projected CRS whose axes use metres.
+It is configurable through `FLOODGUARD_WORKING_CRS`; metric-working-CRS validation is mandatory.
 
-## Vertical-reference rule
+Known source vertical datum/unit metadata do not prove compatibility with future drain invert, river/canal/tide stage or survey elevations. Cross-datum comparisons remain prohibited until references are compatible or explicitly transformed with provenance.
 
-Every elevation-bearing dataset must explicitly carry:
-
-```text
-vertical_datum
-vertical_unit
-vertical_offset_m
-datum_transform_status
-vertical_reference_confidence
-```
-
-Elevation data are rejected by the vertical-reference gate if their datum is unresolved. FloodGuard does not silently compare terrain, drainage inverts, river/canal stage, or tide levels that use incompatible vertical references.
-
-The current Sequence 4 Kolkata bootstrap normalizes the real non-elevation vector layers harvested in Sequence 3. Elevation products that require credentials remain outside this real bootstrap until approved access is available.
-
-## Variable-specific resampling
-
-Sequence 4 does not use one generic interpolation policy:
-
-- **categorical:** nearest-neighbour by source cell centre;
-- **elevation:** rectilinear bilinear interpolation with source uncertainty retained;
-- **rainfall:** area-overlap conservative remapping.
-
-Rainfall conservation uses the frozen volume definition:
-
-```text
-V = sum_t sum_i [R_i,t / (1000 * 3600)] * A_i * dt
-```
-
-and checks:
-
-```text
-relative_error = abs(V_before - V_after) / max(abs(V_before), numerical_epsilon)
-```
-
-The accepted tolerance is configured by `FLOODGUARD_RAINFALL_CONSERVATION_TOLERANCE`.
-
-Resolution metadata keep native, computational, and effective information resolution separate. Resampling a coarse dataset onto a finer numerical grid never upgrades its claimed information resolution.
-
-## Kolkata spatial bootstrap
-
-Run directly inside the API container if desired:
-
-```bash
-docker compose exec -T api python -m floodguard.spatial.bootstrap --city-id kolkata
-```
-
-The core real-data categories are:
-
-```text
-WARD_BOUNDARY
-CATCHMENT
-WATER_BODY
-```
-
-Municipal drainage PDF objects are deliberately skipped by Sequence 4 and preserved in the raw
-vault. The Sequence 5 worker reads the calibrated Ward 7 object without modifying it.
-
-## Engineering QA viewer
-
-After the Sequence 4 spatial bootstrap, open:
+## QA endpoints
 
 ```text
 http://localhost:8000/spatial/qa
-```
-
-The spatial MapLibre page displays normalized layers and their CRS/quality metadata. The Sequence 5
-review page is:
-
-```text
 http://localhost:8000/reconstruction/qa
+http://localhost:8000/terrain/qa
+http://localhost:8000/urban-gis/qa
 ```
 
-It renders reconstructed drainage, manhole candidates, labels, confidence, counts, source hash,
-and georeference error. Both basemaps are visual context only, not hydraulic inputs.
+The Sequence 7 QA page exposes the latest urban-GIS package, readiness status and links to the separate visual, hydraulic, roof-runoff, QA and audit artifacts. A `REFERENCE_FIXTURE` is clearly distinguished from real-pilot evidence.
 
-## API endpoints
+## Main API additions in Sequence 7
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /health` | process liveness |
-| `GET /ready` | application readiness |
-| `GET /version` | software version and active sequence |
-| `GET /registry/sources` | list/filter governed data sources |
-| `GET /registry/readiness` | source-catalogue readiness |
-| `GET /harvester/readiness` | immutable raw-vault readiness |
-| `GET /harvester/sources/{source_id}/versions` | list immutable raw versions |
-| `GET /harvester/versions/{dataset_version_id}` | inspect one raw version |
-| `GET /spatial/readiness` | reference/resampling/normalization readiness |
-| `GET /spatial/layers` | list normalized spatial layers |
-| `GET /spatial/layers/{normalization_id}` | inspect one normalized layer |
-| `GET /spatial/layers/{normalization_id}/geojson` | QA-display GeoJSON |
-| `GET /spatial/qa` | MapLibre engineering QA page |
-| `GET /reconstruction/readiness` | Sequence 5 reconstruction and human-review gate |
-| `GET /reconstruction/maps` | list drainage reconstructions and provenance |
-| `GET /reconstruction/maps/{reconstruction_id}/geojson` | WGS 84 reconstruction QA layer |
-| `GET /reconstruction/maps/{reconstruction_id}/reviews` | append-only review history |
-| `POST /reconstruction/maps/{reconstruction_id}/reviews` | record human approval/rejection |
-| `GET /reconstruction/qa` | MapLibre drainage reconstruction QA page |
-| `GET /terrain/readiness` | Sequence 6 terrain readiness and completion gate |
-| `GET /terrain/acquisition/plan` | Trace the approved ward to its public SRTM tile without downloading |
-| `POST /terrain/acquisitions` | Queue a bounded background acquisition and return its progress ID |
-| `GET /terrain/acquisitions/{job_id}` | Read acquisition progress, result or retryable failure |
-| `GET /terrain/products` | List immutable terrain products and lineage |
-| `GET /terrain/products/{terrain_id}` | Inspect one terrain product and validation metadata |
-| `GET /terrain/products/{terrain_id}/raw` | Read the immutable raw terrain package |
-| `GET /terrain/products/{terrain_id}/visual` | Read the visual terrain artifact |
-| `GET /terrain/products/{terrain_id}/hydraulic` | Read the explicitly conditioned hydraulic artifact |
-| `GET /terrain/products/{terrain_id}/multi-level-structures` | Read the separate structure catalog |
-| `GET /terrain/products/{terrain_id}/qa` | Read WGS 84 terrain QA GeoJSON |
-| `GET /terrain/qa` | MapLibre terrain engineering QA page |
-
-CLI and background workers own computation. FastAPI exposes metadata, QA artifacts, explicit review
-records and acquisition submission/progress. Terrain downloading and building run after the HTTP
-response in a background task with its own database session.
+| `GET /urban-gis/readiness` | Sequence 7 automated/final readiness distinction |
+| `GET /urban-gis/products` | list immutable urban-GIS products |
+| `GET /urban-gis/products/{urban_gis_id}` | inspect one product record |
+| `GET /urban-gis/products/{urban_gis_id}/visual` | separate visual-city GeoJSON |
+| `GET /urban-gis/products/{urban_gis_id}/hydraulic` | separate hydraulic-surface GeoJSON |
+| `GET /urban-gis/products/{urban_gis_id}/roof-runoff` | versioned roof-runoff rules |
+| `GET /urban-gis/products/{urban_gis_id}/qa` | combined QA GeoJSON |
+| `GET /urban-gis/products/{urban_gis_id}/audit` | immutable lineage/policy audit |
+| `GET /urban-gis/qa` | Sequence 7 QA inspector |
 
 ## Scientific scope boundary
 
-Passing Sequence 6 means a pilot terrain package has separate documented visual/hydraulic products,
-explicit depression and multi-level decisions, source-resolution limitations, and conservative
-readiness. It does **not** mean the terrain is hydraulically validated unless the declared vertical
-validation gate passes, nor that street-scale forecasts are ready. Those claims depend on later
-frozen sequences and their validation gates.
+Passing the automated Sequence 7 gate proves the declared data contracts, hydraulic ownership rules, mutually exclusive loss modes, roof-volume conservation helper, receiving-geometry policy, immutable storage behavior and reference-package execution path.
+
+It does **not** prove that real Kolkata buildings/roads/parks/roofs have been correctly classified, that every real roof target is accepted, or that any hydraulic forecast is validated. Those claims depend on the deferred Sequence 20 human review and later drainage, forcing, hydraulics, validation and forecast sequences.

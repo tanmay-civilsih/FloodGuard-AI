@@ -22,6 +22,10 @@ This register contains human-only or engineering-judgement acceptance items that
 | HR-06-02 | 6 | Multi-level structure classification for Ward 7 terrain | `PENDING_SEQUENCE_20` | Review exact pilot; record structures or evidence-backed `CONFIRMED_NONE` |
 | HR-06-03 | 6 | Real-browser QA and explicit acceptance of coarse SRTM limitations | `PENDING_SEQUENCE_20` | Review exact visual/hydraulic/QA artifacts and record acceptance/limitations |
 | HR-06-04 | 6 | Local vertical-reference compatibility with future drain/stage/survey elevations | `OPEN_CONSTRAINT` | Establish compatible/explicitly transformed reference before any cross-datum hydraulic comparison; may be resolved before Sequence 20 if later inputs require it |
+| HR-07-01 | 7 | Real-pilot visual-city geometry and source acceptance | `PENDING_SEQUENCE_20` | Review exact real-pilot building/road/water/park/railway visual features and source lineage |
+| HR-07-02 | 7 | Real-pilot hydraulic surface classification and hydraulic-domain ownership | `PENDING_SEQUENCE_20` | Review every real hydraulic feature class/domain against exact immutable geometry and policy version |
+| HR-07-03 | 7 | Roof receiving geometry or explicit drain target for every real roof | `PENDING_SEQUENCE_20` | Verify each real roof has one accepted, versioned receiving geometry or evidence-backed drain target; no guessed surface-cell IDs |
+| HR-07-04 | 7 | Real-browser acceptance of separate visual/hydraulic/roof-runoff artifacts and limitations | `PENDING_SEQUENCE_20` | Review exact Sequence 7 artifacts/hashes and record acceptance of classification/parameter limitations |
 
 Future sequences must append their own human-only items here when a deterministic automated check cannot establish final acceptance.
 
@@ -40,3 +44,17 @@ Current pilot terrain selected during the last successful technical preflight:
 - audit SHA-256: `0c9e789b48fa0320d3c88d18b5932c37da104833bc2c61bcc13d0f0d883cb90d`
 
 These hashes are an evidence anchor, not human approval. If a newer current-policy terrain supersedes this product before Sequence 20, the register must be updated and the final review must target the superseding artifact.
+
+## Sequence 7 automated reference anchor
+
+The deterministic Sequence 7 reference fixture is deliberately synthetic and exists only to exercise the automated contracts before real-pilot human review:
+
+- evidence scope: `REFERENCE_FIXTURE`
+- pipeline: `sequence-7-urban-gis-v1`
+- reference pilot ID: `kolkata-sequence7-reference`
+- canonical reference package SHA-256: `03b2390c74c767bc37007b28ec791381b4dfae05be4e5042a6cbde86e556801a`
+- deterministic package fingerprint: `81b1ad3ebc673871344c1841e3677cc044b957f73958705e03bc47024a83dad5`
+- deterministic `urban_gis_id`: `4346f39d-77a5-5a25-9dcb-2c4eb6bb027c`
+- exercised hydraulic classes: `ROAD`, `ROOF`, `BUILDING_BARRIER`, `OPEN_SOIL`, `PARK`, `WATER`, `RAILWAY`, `OTHER_IMPERVIOUS`
+
+This reference anchor is **not** a substitute for HR-07-01 through HR-07-04. Final review must target the then-current real-pilot immutable products, not this synthetic fixture.
