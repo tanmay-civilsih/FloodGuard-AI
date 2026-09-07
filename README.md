@@ -37,6 +37,10 @@ The planning revision does not close DATA-08-01. Implementation status is tracke
 
 **Sequence 11 - Historical Rainfall and Compatibility (v1.1)**
 
+The R2 historical-data gate passed and the Sequence 11 data interfaces are technically frozen
+on source `4c139b5`: **771 tests passed**, **164 files type-checked**, real 24-hour rainfall replay,
+eight immutable forcing windows and retained v1 artifact recreation. DATA-08-01 stays open.
+
 Sequence 11 adds immutable historical events, source-availability and observation contracts,
 an actual NASA POWER historical precipitation adapter, authorized station-interval normalization,
 whole-event evaluation split checks, and a read-only rainfall preview. Long events reference

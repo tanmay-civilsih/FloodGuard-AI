@@ -1,0 +1,258 @@
+{
+  "sequence": 11,
+  "release": "1.1.0",
+  "roadmap": "ROADMAP-R2-2026-09-07",
+  "created_at": "2026-09-07T01:08:54.459891+00:00",
+  "repository_commit": "4c139b54b3e2b24f077af36b127121de3a182ac0",
+  "source_fingerprint": "a32c3e022e9843c39a826f61a82f5d2753f041586fa6fa9d601d2e71056053ee",
+  "measured_flood_validation": false,
+  "strict_backtest_eligible": false,
+  "final_human_acceptance_pending": true,
+  "software_checks": {
+    "ruff": true,
+    "mypy": true,
+    "pytest": true
+  },
+  "deployed_version": {
+    "name": "FloodGuard-AI",
+    "version": "1.1.0",
+    "sequence": 11,
+    "source_fingerprint": "a32c3e022e9843c39a826f61a82f5d2753f041586fa6fa9d601d2e71056053ee",
+    "runtime_python": "3.12.11",
+    "dependency_lock_mismatches": []
+  },
+  "inherited_twin_freeze_blockers": [
+    "DATA-08-01: genuine source-bound adjacent-ward drainage to a defensible destination is mandatory for Sequence 9 technical freeze; human review deferral does not waive it."
+  ],
+  "inherited_readiness": {
+    "drainage": {
+      "city_id": "kolkata",
+      "current_pipeline_version": "sequence-8-drain-model-v1",
+      "total_products": 2,
+      "eligible_products": 2,
+      "real_pilot_imports": 1,
+      "reference_ready": 1,
+      "provisional_real_graphs": 0,
+      "real_cross_ward_path_available": false,
+      "technical_development_gate_passed": true,
+      "final_human_acceptance_pending": true,
+      "final_completion_gate_passed": false,
+      "sequence9_real_cross_ward_gate_passed": false,
+      "completion_reason": "Reference and real-source import verified; final acceptance remains pending.",
+      "qa_viewer_path": "/drainage/qa"
+    },
+    "twin": {
+      "city_id": "kolkata",
+      "current_pipeline_version": "sequence-9-twin-v1",
+      "total_twins": 5,
+      "verified_twins": 5,
+      "reference_scenario_ready": 3,
+      "provisional_real_twins": 2,
+      "real_cross_ward_twins": 0,
+      "assembly_development_gate_passed": true,
+      "technical_development_gate_passed": false,
+      "checkpoint_a_status": "REFERENCE_ONLY",
+      "freeze_blockers": [
+        "DATA-08-01: genuine source-bound adjacent-ward drainage is still required."
+      ],
+      "final_human_acceptance_pending": true,
+      "final_completion_gate_passed": false,
+      "qa_viewer_path": "/twins/qa"
+    },
+    "forcing": {
+      "city_id": "kolkata",
+      "total_packages": 9,
+      "verified_packages": 9,
+      "eligible_packages": 1,
+      "integrity_failures": [],
+      "assembly_development_gate_passed": true,
+      "inherited_freeze_blockers": [
+        "DATA-08-01: genuine source-bound adjacent-ward drainage is still required."
+      ],
+      "final_human_acceptance_pending": true,
+      "operational_validation_claimed": false
+    }
+  },
+  "manifest": {
+    "schema_version": "historical-event-v1",
+    "historical_event_id": "ed49b4f8-ea39-5d65-818a-9ac679756534",
+    "event_key": "kolkata-power-20210920-rainfall",
+    "title": "Kolkata rainfall \u00b7 20 September 2021",
+    "city_id": "kolkata",
+    "catchment_id": "kolkata-ward-7",
+    "event_start": "2021-09-20T00:00:00Z",
+    "event_end": "2021-09-21T00:00:00Z",
+    "timezone": "UTC",
+    "twin_id": "a73bc1b5-ec4e-5291-825f-aed596d97999",
+    "dataset_version_id": "454d4fd3-e0f1-4820-80f7-5f7b34969529",
+    "raw_object": {
+      "object_key": "raw/kolkata/92528bb9-b067-55f8-ba2b-0a0ecdc71a4a/454d4fd3-e0f1-4820-80f7-5f7b34969529/objects/0000-point",
+      "sha256": "a9837a5e18b3b04538730a74a9d45320377191d9446eb9bb83af11a7c266c891",
+      "byte_size": 1844
+    },
+    "availability": {
+      "schema_version": "source-availability-v1",
+      "source_id": "92528bb9-b067-55f8-ba2b-0a0ecdc71a4a",
+      "dataset_version_id": "454d4fd3-e0f1-4820-80f7-5f7b34969529",
+      "source_revision": "a9837a5e18b3b04538730a74a9d45320377191d9446eb9bb83af11a7c266c891",
+      "acquired_at": "2026-09-06T20:22:37.463632Z",
+      "valid_from": "2021-09-19T00:00:00Z",
+      "valid_to": "2021-09-22T00:00:00Z",
+      "source_issue_time": null,
+      "provider_available_at": null,
+      "availability_status": "UNKNOWN",
+      "availability_evidence": "Download does not evidence historical provider availability.",
+      "estimated_latency_seconds": null
+    },
+    "windows": [
+      {
+        "start": "2021-09-20T00:00:00Z",
+        "end": "2021-09-20T03:00:00Z",
+        "forcing_package_id": "92d7babf-1556-5c40-b44c-2e72e8395179",
+        "missing_intervals": 0,
+        "status": "PREPARED",
+        "blockers": [
+          "Exact twin lacks drainage definitions; required forcing cannot be established.",
+          "Forcing horizon is INSUFFICIENT; no temporal extension is permitted.",
+          "Twin is not scenario-ready; hydraulic use is refused.",
+          "Twin vertical reference is unresolved; hydraulic use is refused."
+        ]
+      },
+      {
+        "start": "2021-09-20T03:00:00Z",
+        "end": "2021-09-20T06:00:00Z",
+        "forcing_package_id": "affbece3-ee45-5541-858b-a31d97900bac",
+        "missing_intervals": 0,
+        "status": "PREPARED",
+        "blockers": [
+          "Exact twin lacks drainage definitions; required forcing cannot be established.",
+          "Forcing horizon is INSUFFICIENT; no temporal extension is permitted.",
+          "Twin is not scenario-ready; hydraulic use is refused.",
+          "Twin vertical reference is unresolved; hydraulic use is refused."
+        ]
+      },
+      {
+        "start": "2021-09-20T06:00:00Z",
+        "end": "2021-09-20T09:00:00Z",
+        "forcing_package_id": "4e87cafb-4d3c-5ff8-bbec-cf2bc4508d21",
+        "missing_intervals": 0,
+        "status": "PREPARED",
+        "blockers": [
+          "Exact twin lacks drainage definitions; required forcing cannot be established.",
+          "Forcing horizon is INSUFFICIENT; no temporal extension is permitted.",
+          "Twin is not scenario-ready; hydraulic use is refused.",
+          "Twin vertical reference is unresolved; hydraulic use is refused."
+        ]
+      },
+      {
+        "start": "2021-09-20T09:00:00Z",
+        "end": "2021-09-20T12:00:00Z",
+        "forcing_package_id": "99701a66-74fe-5e51-9ce5-d8ccd2632681",
+        "missing_intervals": 0,
+        "status": "PREPARED",
+        "blockers": [
+          "Exact twin lacks drainage definitions; required forcing cannot be established.",
+          "Forcing horizon is INSUFFICIENT; no temporal extension is permitted.",
+          "Twin is not scenario-ready; hydraulic use is refused.",
+          "Twin vertical reference is unresolved; hydraulic use is refused."
+        ]
+      },
+      {
+        "start": "2021-09-20T12:00:00Z",
+        "end": "2021-09-20T15:00:00Z",
+        "forcing_package_id": "9e092457-d5b4-5fb8-9e4f-fa470d632c4a",
+        "missing_intervals": 0,
+        "status": "PREPARED",
+        "blockers": [
+          "Exact twin lacks drainage definitions; required forcing cannot be established.",
+          "Forcing horizon is INSUFFICIENT; no temporal extension is permitted.",
+          "Twin is not scenario-ready; hydraulic use is refused.",
+          "Twin vertical reference is unresolved; hydraulic use is refused."
+        ]
+      },
+      {
+        "start": "2021-09-20T15:00:00Z",
+        "end": "2021-09-20T18:00:00Z",
+        "forcing_package_id": "93364bea-c3e9-5009-a2e3-29114fcd1066",
+        "missing_intervals": 0,
+        "status": "PREPARED",
+        "blockers": [
+          "Exact twin lacks drainage definitions; required forcing cannot be established.",
+          "Forcing horizon is INSUFFICIENT; no temporal extension is permitted.",
+          "Twin is not scenario-ready; hydraulic use is refused.",
+          "Twin vertical reference is unresolved; hydraulic use is refused."
+        ]
+      },
+      {
+        "start": "2021-09-20T18:00:00Z",
+        "end": "2021-09-20T21:00:00Z",
+        "forcing_package_id": "5009f80e-12dd-5c3b-b60f-4a8185afdbb2",
+        "missing_intervals": 0,
+        "status": "PREPARED",
+        "blockers": [
+          "Exact twin lacks drainage definitions; required forcing cannot be established.",
+          "Forcing horizon is INSUFFICIENT; no temporal extension is permitted.",
+          "Twin is not scenario-ready; hydraulic use is refused.",
+          "Twin vertical reference is unresolved; hydraulic use is refused."
+        ]
+      },
+      {
+        "start": "2021-09-20T21:00:00Z",
+        "end": "2021-09-21T00:00:00Z",
+        "forcing_package_id": "c4a585c6-e197-5d25-b68f-5c1e89754c00",
+        "missing_intervals": 0,
+        "status": "PREPARED",
+        "blockers": [
+          "Exact twin lacks drainage definitions; required forcing cannot be established.",
+          "Forcing horizon is INSUFFICIENT; no temporal extension is permitted.",
+          "Twin is not scenario-ready; hydraulic use is refused.",
+          "Twin vertical reference is unresolved; hydraulic use is refused."
+        ]
+      }
+    ],
+    "state_continuity": "NOT_INITIALIZED_RAINFALL_ONLY",
+    "artifacts": {
+      "adapter.json": {
+        "object_key": "forcing/blobs/3ebad4134d9829f9de7538f910a4e6d7584c0b751c6c2972b243b5669e976ffe",
+        "sha256": "3ebad4134d9829f9de7538f910a4e6d7584c0b751c6c2972b243b5669e976ffe",
+        "byte_size": 733
+      },
+      "observations.json": {
+        "object_key": "forcing/blobs/9c1e06c646d46665f11af44cab80fd8e8d72d341f20a98f84e671bfcf352414f",
+        "sha256": "9c1e06c646d46665f11af44cab80fd8e8d72d341f20a98f84e671bfcf352414f",
+        "byte_size": 78341
+      },
+      "request.json": {
+        "object_key": "forcing/blobs/8771d2b7ce5d49b5e9e1c41566a5505ae9c5aa5ccfc63057bfd547ef79ccfba1",
+        "sha256": "8771d2b7ce5d49b5e9e1c41566a5505ae9c5aa5ccfc63057bfd547ef79ccfba1",
+        "byte_size": 1579
+      }
+    },
+    "software_version": "1.1.0",
+    "software_source_sha256": "a32c3e022e9843c39a826f61a82f5d2753f041586fa6fa9d601d2e71056053ee",
+    "scientific_label": "COARSE_REANALYSIS_RAINFALL_REPLAY",
+    "measured_flood_validation": false,
+    "strict_backtest_eligible": false,
+    "evidence_gaps": [
+      "DATA-08-01: source-bound adjacent-ward drainage to a destination unresolved.",
+      "No measured flood depths/extents or numerical local gauge/radar archive acquired.",
+      "Historical provider availability unknown; strict issue-time backtest ineligible.",
+      "Event-date drain condition, pump operations and downstream stages are missing.",
+      "MERRA-2 is coarse reanalysis; street-scale rainfall skill unestablished."
+    ]
+  },
+  "rainfall_total_mm": 51.90375,
+  "rainfall_coverage": {
+    "valid": 24,
+    "total": 24
+  },
+  "legacy_compatibility": {
+    "forcing_package_id": "e82ca9de-a4da-5ec1-b9cc-f097a8f1aa1c",
+    "verified_artifacts_including_manifest": 6,
+    "fresh_catalogue_recreation_passed": true
+  },
+  "migration_revision": "0010_sequence_11_history",
+  "data_gate_errors": [],
+  "historical_data_gate": "PASSED",
+  "freeze_status": "ELIGIBLE_FOR_R2_DATA_INTERFACE_FREEZE"
+}
