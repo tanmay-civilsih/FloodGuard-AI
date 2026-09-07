@@ -15,6 +15,7 @@ from starlette.responses import Response
 from apps.api.routers.drainage import router as drainage_router
 from apps.api.routers.forcing import router as forcing_router
 from apps.api.routers.harvester import router as harvester_router
+from apps.api.routers.history import router as history_router
 from apps.api.routers.reconstruction import router as reconstruction_router
 from apps.api.routers.registry import router as registry_router
 from apps.api.routers.spatial import router as spatial_router
@@ -50,6 +51,7 @@ app.include_router(urban_gis_router)
 app.include_router(drainage_router)
 app.include_router(twin_router)
 app.include_router(forcing_router)
+app.include_router(history_router)
 
 
 class HealthResponse(BaseModel):
@@ -67,7 +69,7 @@ class ReadyResponse(BaseModel):
 class VersionResponse(BaseModel):
     name: Literal["FloodGuard-AI"] = "FloodGuard-AI"
     version: str
-    sequence: Literal[10] = 10
+    sequence: Literal[11] = 11
     source_fingerprint: str | None
     runtime_python: str
     dependency_lock_mismatches: list[str]

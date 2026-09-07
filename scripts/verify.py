@@ -1,4 +1,4 @@
-"""Local verification entry point through Sequence 10."""
+"""Local verification entry point through Sequence 11."""
 
 from __future__ import annotations
 
@@ -42,6 +42,8 @@ def verify_files() -> None:
         ROOT / "migrations" / "versions" / "0007_sequence_8_drain_model.py",
         ROOT / "migrations" / "versions" / "0008_sequence_9_twin.py",
         ROOT / "migrations" / "versions" / "0009_sequence_10_forcing.py",
+        ROOT / "migrations" / "versions" / "0010_sequence_11_history.py",
+        ROOT / "floodguard" / "history" / "service.py",
         ROOT / "floodguard" / "forcing" / "service.py",
         ROOT / "floodguard" / "twin" / "service.py",
         ROOT / "floodguard" / "drainage" / "service.py",
@@ -158,7 +160,7 @@ def verify_services() -> None:
     print("OK API /ready and current migration head")
 
     version = get_json("http://localhost:8000/version")
-    if version.get("sequence") != 10 or version.get("version") != "1.0.0":
+    if version.get("sequence") != 11 or version.get("version") != "1.1.0":
         raise SystemExit("API is not serving FloodGuard-AI Sequence 10 / v1.0.0")
     print("OK API /version")
 

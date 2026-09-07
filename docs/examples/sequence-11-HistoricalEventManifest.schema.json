@@ -1,0 +1,345 @@
+{
+  "$defs": {
+    "BlobReference": {
+      "additionalProperties": false,
+      "properties": {
+        "object_key": {
+          "title": "Object Key",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "byte_size": {
+          "exclusiveMinimum": 0,
+          "title": "Byte Size",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "object_key",
+        "sha256",
+        "byte_size"
+      ],
+      "title": "BlobReference",
+      "type": "object"
+    },
+    "SourceAvailabilityRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "source-availability-v1",
+          "default": "source-availability-v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_id": {
+          "format": "uuid",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "dataset_version_id": {
+          "format": "uuid",
+          "title": "Dataset Version Id",
+          "type": "string"
+        },
+        "source_revision": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Source Revision",
+          "type": "string"
+        },
+        "acquired_at": {
+          "format": "date-time",
+          "title": "Acquired At",
+          "type": "string"
+        },
+        "valid_from": {
+          "format": "date-time",
+          "title": "Valid From",
+          "type": "string"
+        },
+        "valid_to": {
+          "format": "date-time",
+          "title": "Valid To",
+          "type": "string"
+        },
+        "source_issue_time": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Issue Time"
+        },
+        "provider_available_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Available At"
+        },
+        "availability_status": {
+          "enum": [
+            "VERIFIED",
+            "ESTIMATED",
+            "UNKNOWN"
+          ],
+          "title": "Availability Status",
+          "type": "string"
+        },
+        "availability_evidence": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Availability Evidence",
+          "type": "string"
+        },
+        "estimated_latency_seconds": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Estimated Latency Seconds"
+        }
+      },
+      "required": [
+        "source_id",
+        "dataset_version_id",
+        "source_revision",
+        "acquired_at",
+        "valid_from",
+        "valid_to",
+        "availability_status",
+        "availability_evidence"
+      ],
+      "title": "SourceAvailabilityRecord",
+      "type": "object"
+    },
+    "WindowReference": {
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "format": "date-time",
+          "title": "Start",
+          "type": "string"
+        },
+        "end": {
+          "format": "date-time",
+          "title": "End",
+          "type": "string"
+        },
+        "forcing_package_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Forcing Package Id"
+        },
+        "missing_intervals": {
+          "minimum": 0,
+          "title": "Missing Intervals",
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "PREPARED",
+            "MISSING_RAIN"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "blockers": {
+          "items": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Blockers",
+          "type": "array"
+        }
+      },
+      "required": [
+        "start",
+        "end",
+        "missing_intervals",
+        "status",
+        "blockers"
+      ],
+      "title": "WindowReference",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "historical-event-v1",
+      "default": "historical-event-v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "historical_event_id": {
+      "format": "uuid",
+      "title": "Historical Event Id",
+      "type": "string"
+    },
+    "event_key": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Event Key",
+      "type": "string"
+    },
+    "title": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "city_id": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "City Id",
+      "type": "string"
+    },
+    "catchment_id": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Catchment Id",
+      "type": "string"
+    },
+    "event_start": {
+      "format": "date-time",
+      "title": "Event Start",
+      "type": "string"
+    },
+    "event_end": {
+      "format": "date-time",
+      "title": "Event End",
+      "type": "string"
+    },
+    "timezone": {
+      "const": "UTC",
+      "default": "UTC",
+      "title": "Timezone",
+      "type": "string"
+    },
+    "twin_id": {
+      "format": "uuid",
+      "title": "Twin Id",
+      "type": "string"
+    },
+    "dataset_version_id": {
+      "format": "uuid",
+      "title": "Dataset Version Id",
+      "type": "string"
+    },
+    "raw_object": {
+      "$ref": "#/$defs/BlobReference"
+    },
+    "availability": {
+      "$ref": "#/$defs/SourceAvailabilityRecord"
+    },
+    "windows": {
+      "items": {
+        "$ref": "#/$defs/WindowReference"
+      },
+      "title": "Windows",
+      "type": "array"
+    },
+    "state_continuity": {
+      "const": "NOT_INITIALIZED_RAINFALL_ONLY",
+      "default": "NOT_INITIALIZED_RAINFALL_ONLY",
+      "title": "State Continuity",
+      "type": "string"
+    },
+    "artifacts": {
+      "additionalProperties": {
+        "$ref": "#/$defs/BlobReference"
+      },
+      "title": "Artifacts",
+      "type": "object"
+    },
+    "software_version": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Software Version",
+      "type": "string"
+    },
+    "software_source_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Software Source Sha256",
+      "type": "string"
+    },
+    "scientific_label": {
+      "const": "COARSE_REANALYSIS_RAINFALL_REPLAY",
+      "default": "COARSE_REANALYSIS_RAINFALL_REPLAY",
+      "title": "Scientific Label",
+      "type": "string"
+    },
+    "measured_flood_validation": {
+      "const": false,
+      "default": false,
+      "title": "Measured Flood Validation",
+      "type": "boolean"
+    },
+    "strict_backtest_eligible": {
+      "const": false,
+      "default": false,
+      "title": "Strict Backtest Eligible",
+      "type": "boolean"
+    },
+    "evidence_gaps": {
+      "items": {
+        "maxLength": 2000,
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Evidence Gaps",
+      "type": "array"
+    }
+  },
+  "required": [
+    "historical_event_id",
+    "event_key",
+    "title",
+    "city_id",
+    "catchment_id",
+    "event_start",
+    "event_end",
+    "twin_id",
+    "dataset_version_id",
+    "raw_object",
+    "availability",
+    "windows",
+    "artifacts",
+    "software_version",
+    "software_source_sha256",
+    "evidence_gaps"
+  ],
+  "title": "HistoricalEventManifest",
+  "type": "object"
+}

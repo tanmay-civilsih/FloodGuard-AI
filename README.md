@@ -31,11 +31,25 @@ Use [the authoritative plan](docs/Urban_Flood_Digital_Twin_Authoritative_20_Sequ
 for detailed dependencies, changes to existing modules and completion gates.
 [ROADMAP_R2_CONTINUATION.txt](ROADMAP_R2_CONTINUATION.txt) is the planning handoff.
 Previous sequence numbering in retained historical receipts is not the new execution order.
-The revision does not close DATA-08-01 or claim that any new model, solver or viewer is implemented.
+The planning revision does not close DATA-08-01. Implementation status is tracked below.
 
 ## Current milestone
 
-**Sequence 10 - Dynamic Forcing Service (v1.0)**
+**Sequence 11 - Historical Rainfall and Compatibility (v1.1)**
+
+Sequence 11 adds immutable historical events, source-availability and observation contracts,
+an actual NASA POWER historical precipitation adapter, authorized station-interval normalization,
+whole-event evaluation split checks, and a read-only rainfall preview. Long events reference
+consecutive three-hour Sequence 10 packages and declared antecedent rain. Missing rain remains
+missing; no hydraulic state is inferred. The event/source inventory distinguishes retained data
+from blocked or unverified feeds. See [SEQUENCE_11_STATUS.md](SEQUENCE_11_STATUS.md) for the
+current gate and [the implementation guide](docs/architecture/sequence-11-history.md) for commands.
+
+Open [the local rainfall preview](http://localhost:8000/history/preview) after preparing an event.
+It displays coarse reanalysis rainfall, the retained study area, interval and accumulation charts,
+coverage, provenance and limitations. It does not display simulated flood depth or a live forecast.
+
+The preceding Sequence 10 implementation remains available:
 
 Sequence 10 implementation and deployed assembly validation passed on `2c39b70` (730 tests,
 148 type-checked files, six verified HTTP artifacts, Windows/Linux RainCube byte parity).

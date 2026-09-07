@@ -1,0 +1,266 @@
+{
+  "$defs": {
+    "SourceAvailabilityRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "source-availability-v1",
+          "default": "source-availability-v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_id": {
+          "format": "uuid",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "dataset_version_id": {
+          "format": "uuid",
+          "title": "Dataset Version Id",
+          "type": "string"
+        },
+        "source_revision": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Source Revision",
+          "type": "string"
+        },
+        "acquired_at": {
+          "format": "date-time",
+          "title": "Acquired At",
+          "type": "string"
+        },
+        "valid_from": {
+          "format": "date-time",
+          "title": "Valid From",
+          "type": "string"
+        },
+        "valid_to": {
+          "format": "date-time",
+          "title": "Valid To",
+          "type": "string"
+        },
+        "source_issue_time": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Issue Time"
+        },
+        "provider_available_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Available At"
+        },
+        "availability_status": {
+          "enum": [
+            "VERIFIED",
+            "ESTIMATED",
+            "UNKNOWN"
+          ],
+          "title": "Availability Status",
+          "type": "string"
+        },
+        "availability_evidence": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Availability Evidence",
+          "type": "string"
+        },
+        "estimated_latency_seconds": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Estimated Latency Seconds"
+        }
+      },
+      "required": [
+        "source_id",
+        "dataset_version_id",
+        "source_revision",
+        "acquired_at",
+        "valid_from",
+        "valid_to",
+        "availability_status",
+        "availability_evidence"
+      ],
+      "title": "SourceAvailabilityRecord",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "observation-v1",
+      "default": "observation-v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "observation_id": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Observation Id",
+      "type": "string"
+    },
+    "station_or_geometry_id": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Station Or Geometry Id",
+      "type": "string"
+    },
+    "quantity": {
+      "enum": [
+        "RAINFALL_RATE",
+        "RAINFALL_ACCUMULATION",
+        "FLOOD_DEPTH",
+        "WATER_LEVEL"
+      ],
+      "title": "Quantity",
+      "type": "string"
+    },
+    "value": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Value"
+    },
+    "units": {
+      "enum": [
+        "mm/h",
+        "mm",
+        "m"
+      ],
+      "title": "Units",
+      "type": "string"
+    },
+    "interval_start": {
+      "format": "date-time",
+      "title": "Interval Start",
+      "type": "string"
+    },
+    "interval_end": {
+      "format": "date-time",
+      "title": "Interval End",
+      "type": "string"
+    },
+    "longitude": {
+      "maximum": 180,
+      "minimum": -180,
+      "title": "Longitude",
+      "type": "number"
+    },
+    "latitude": {
+      "maximum": 90,
+      "minimum": -90,
+      "title": "Latitude",
+      "type": "number"
+    },
+    "evidence_kind": {
+      "enum": [
+        "MEASURED",
+        "REANALYSIS",
+        "SATELLITE_ESTIMATE",
+        "FORECAST",
+        "SYNTHETIC"
+      ],
+      "title": "Evidence Kind",
+      "type": "string"
+    },
+    "support": {
+      "enum": [
+        "POINT",
+        "GRID_CELL_ESTIMATE"
+      ],
+      "title": "Support",
+      "type": "string"
+    },
+    "native_resolution_m": {
+      "exclusiveMinimum": 0,
+      "title": "Native Resolution M",
+      "type": "number"
+    },
+    "qc": {
+      "enum": [
+        "VALID",
+        "MISSING",
+        "REJECTED"
+      ],
+      "title": "Qc",
+      "type": "string"
+    },
+    "uncertainty": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Uncertainty"
+    },
+    "vertical_reference": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Vertical Reference"
+    },
+    "source": {
+      "$ref": "#/$defs/SourceAvailabilityRecord"
+    }
+  },
+  "required": [
+    "observation_id",
+    "station_or_geometry_id",
+    "quantity",
+    "value",
+    "units",
+    "interval_start",
+    "interval_end",
+    "longitude",
+    "latitude",
+    "evidence_kind",
+    "support",
+    "native_resolution_m",
+    "qc",
+    "source"
+  ],
+  "title": "ObservationRecord",
+  "type": "object"
+}

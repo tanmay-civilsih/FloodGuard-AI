@@ -169,7 +169,10 @@ def prepare(
         else None
     )
     model = None
-    if "drain-input" in twin_artifacts:
+    # Imported linework retains an acquisition input envelope without an assembled model.
+    # Only an AVAILABLE drain graph has model definitions. A visual-only draft stays blocked.
+    if ("drain-input" in twin_artifacts
+            and manifest.component(ComponentRole.DRAIN_GRAPH).status == "AVAILABLE"):
         model = DrainModelInput.model_validate(object_data(twin_artifacts["drain-input"])["model"])
     coverage, low, high, blockers, dynamic = window_assessment(
         request.forecast,

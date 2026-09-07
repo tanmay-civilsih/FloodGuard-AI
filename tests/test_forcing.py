@@ -416,7 +416,8 @@ def test_required_fixed_stage_cannot_be_omitted(context):
     assert any("Missing required boundary" in b for b in result[3])
 
 
-def test_visual_twin_remains_ineligible(context):
+@pytest.mark.parametrize("retained_draft", [False, True])
+def test_visual_twin_remains_ineligible(context, retained_draft):
     from floodguard.twin.contracts import ComponentRole as R
 
     service, request, _ = context
@@ -426,6 +427,10 @@ def test_visual_twin_remains_ineligible(context):
         del snapshot.sources[role]
         snapshot.missing[role] = "Controlled missing-component test."
     snapshot.evidence.pop("drain-input")
+    if retained_draft:
+        snapshot.evidence["drain-input"] = canonical_bytes({
+            "source_info": {"evidence": "imported linework only; no assembled model"}
+        })
     built = service.twins.build(snapshot)
     request.twin_id = built.twin_id
     request.forecast.boundaries.clear()

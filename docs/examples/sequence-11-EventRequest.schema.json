@@ -1,0 +1,214 @@
+{
+  "$defs": {
+    "Grid": {
+      "additionalProperties": false,
+      "properties": {
+        "horizontal_crs": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Horizontal Crs",
+          "type": "string"
+        },
+        "x_edges_m": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 2049,
+          "minItems": 2,
+          "title": "X Edges M",
+          "type": "array"
+        },
+        "y_edges_m": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 2049,
+          "minItems": 2,
+          "title": "Y Edges M",
+          "type": "array"
+        }
+      },
+      "required": [
+        "horizontal_crs",
+        "x_edges_m",
+        "y_edges_m"
+      ],
+      "title": "Grid",
+      "type": "object"
+    },
+    "PowerSelection": {
+      "additionalProperties": false,
+      "properties": {
+        "latitude": {
+          "maximum": 89,
+          "minimum": -89,
+          "title": "Latitude",
+          "type": "number"
+        },
+        "longitude": {
+          "maximum": 179,
+          "minimum": -179,
+          "title": "Longitude",
+          "type": "number"
+        },
+        "start": {
+          "format": "date-time",
+          "title": "Start",
+          "type": "string"
+        },
+        "end": {
+          "format": "date-time",
+          "title": "End",
+          "type": "string"
+        }
+      },
+      "required": [
+        "latitude",
+        "longitude",
+        "start",
+        "end"
+      ],
+      "title": "PowerSelection",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "history-request-v1",
+      "default": "history-request-v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "event_key": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Event Key",
+      "type": "string"
+    },
+    "title": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "city_id": {
+      "default": "kolkata",
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "City Id",
+      "type": "string"
+    },
+    "catchment_id": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Catchment Id",
+      "type": "string"
+    },
+    "catchment_status": {
+      "enum": [
+        "VERIFIED",
+        "STUDY_AREA"
+      ],
+      "title": "Catchment Status",
+      "type": "string"
+    },
+    "catchment_evidence": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Catchment Evidence",
+      "type": "string"
+    },
+    "selection": {
+      "$ref": "#/$defs/PowerSelection"
+    },
+    "dataset_version_id": {
+      "format": "uuid",
+      "title": "Dataset Version Id",
+      "type": "string"
+    },
+    "raw_object_id": {
+      "format": "uuid",
+      "title": "Raw Object Id",
+      "type": "string"
+    },
+    "twin_id": {
+      "format": "uuid",
+      "title": "Twin Id",
+      "type": "string"
+    },
+    "replay_grid": {
+      "$ref": "#/$defs/Grid"
+    },
+    "event_start": {
+      "format": "date-time",
+      "title": "Event Start",
+      "type": "string"
+    },
+    "event_end": {
+      "format": "date-time",
+      "title": "Event End",
+      "type": "string"
+    },
+    "antecedent_hours": {
+      "default": 3,
+      "maximum": 24,
+      "minimum": 0,
+      "title": "Antecedent Hours",
+      "type": "integer"
+    },
+    "spatial_application": {
+      "const": "UNIFORM_REGIONAL_ESTIMATE",
+      "default": "UNIFORM_REGIONAL_ESTIMATE",
+      "title": "Spatial Application",
+      "type": "string"
+    },
+    "spatial_application_reason": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Spatial Application Reason",
+      "type": "string"
+    },
+    "evidence_gaps": {
+      "items": {
+        "maxLength": 2000,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 50,
+      "minItems": 1,
+      "title": "Evidence Gaps",
+      "type": "array"
+    },
+    "infrastructure_assumptions": {
+      "items": {
+        "maxLength": 2000,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 50,
+      "minItems": 1,
+      "title": "Infrastructure Assumptions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "event_key",
+    "title",
+    "catchment_id",
+    "catchment_status",
+    "catchment_evidence",
+    "selection",
+    "dataset_version_id",
+    "raw_object_id",
+    "twin_id",
+    "replay_grid",
+    "event_start",
+    "event_end",
+    "spatial_application_reason",
+    "evidence_gaps",
+    "infrastructure_assumptions"
+  ],
+  "title": "EventRequest",
+  "type": "object"
+}

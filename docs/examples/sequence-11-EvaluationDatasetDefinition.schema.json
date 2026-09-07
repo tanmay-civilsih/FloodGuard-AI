@@ -1,0 +1,111 @@
+{
+  "$defs": {
+    "EventSplit": {
+      "additionalProperties": false,
+      "properties": {
+        "historical_event_id": {
+          "format": "uuid",
+          "title": "Historical Event Id",
+          "type": "string"
+        },
+        "storm_group": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Storm Group",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "TRAIN",
+            "TUNE",
+            "TEST"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "start": {
+          "format": "date-time",
+          "title": "Start",
+          "type": "string"
+        },
+        "end": {
+          "format": "date-time",
+          "title": "End",
+          "type": "string"
+        },
+        "geography": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Geography",
+          "type": "string"
+        }
+      },
+      "required": [
+        "historical_event_id",
+        "storm_group",
+        "role",
+        "start",
+        "end",
+        "geography"
+      ],
+      "title": "EventSplit",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "evaluation-dataset-v1",
+      "default": "evaluation-dataset-v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "target_definition": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Target Definition",
+      "type": "string"
+    },
+    "feature_definition": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Feature Definition",
+      "type": "string"
+    },
+    "label_quality": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Label Quality",
+      "type": "string"
+    },
+    "events": {
+      "items": {
+        "$ref": "#/$defs/EventSplit"
+      },
+      "minItems": 3,
+      "title": "Events",
+      "type": "array"
+    },
+    "base_model_training_cutoff": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Base Model Training Cutoff"
+    }
+  },
+  "required": [
+    "target_definition",
+    "feature_definition",
+    "label_quality",
+    "events"
+  ],
+  "title": "EvaluationDatasetDefinition",
+  "type": "object"
+}
